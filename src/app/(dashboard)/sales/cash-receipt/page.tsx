@@ -1,27 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import { useInvoiceQuery } from "@/modules/sales/invoice/hooks/use-invoice-query";
+import { useCashReceiptQuery } from "@/modules/sales/cash-receipt/hooks/use-cash-receipt-query";
 
-import InvoiceTable from "@/modules/sales/invoice/components/list/invoice-table";
+import CashReceiptTable from "@/modules/sales/cash-receipt/components/list/cash-receipt-table";
 
 export default function CashReceiptListPage() {
   const router = useRouter();
 
   const {
-    invoices,
+    cashReceipts,
     loading,
-    getInvoices,
-  } = useInvoiceQuery();
-
-  useEffect(() => {
-    getInvoices();
-  }, [getInvoices]);
+    pagination,
+  } = useCashReceiptQuery();
 
   return (
     <div className="space-y-6">
@@ -38,7 +33,11 @@ export default function CashReceiptListPage() {
         </div>
 
         <Button
-          onClick={() => router.push("/sales/cash-receipt/create")}
+          onClick={() =>
+            router.push(
+              "/sales/cash-receipt/create",
+            )
+          }
           className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -47,9 +46,11 @@ export default function CashReceiptListPage() {
       </div>
 
       {/* Cash Receipt List */}
-      <InvoiceTable
-        invoices={invoices}
+      <CashReceiptTable
+        cashReceipts={cashReceipts}
         loading={loading}
+        page={pagination.page}
+        totalPages={pagination.totalPages}
       />
     </div>
   );

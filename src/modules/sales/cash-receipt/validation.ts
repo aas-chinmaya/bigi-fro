@@ -1,20 +1,59 @@
-// /modules/sales/receipt/
-// ├── api/
-// │   └── receipt.api.ts
-// ├── services/
-// │   └── receipt.service.ts
-// ├── store/
-// │   └── receipt.slice.ts
-// ├── hooks/
-// │   ├── use-receipt-query.ts
-// │   └── use-receipt-actions.ts
-// ├── components/
-// │   ├── receipt-table.tsx
-// │   ├── receipt-form.tsx
-// │   ├── receipt-details.tsx
-// │   ├── receipt-filters.tsx
-// │   └── receipt-allocation.tsx
-// ├── types/
-// │   └── receipt.types.ts
-// └── lib/
-//     └── receipt.utils.ts
+import { z } from "zod";
+
+export const cashReceiptSchema = z.object({
+  receiptDate: z
+    .string()
+    .min(1, "Receipt date is required"),
+
+  customerId: z
+    .string()
+    .min(1, "Customer is required"),
+
+  receiptType: z.enum([
+    "INVOICE_PAYMENT",
+    "CUSTOMER_ADVANCE",
+    "OTHER_RECEIPT",
+  ]),
+
+  amount: z
+    .number({
+      message: "Amount is required",
+    })
+    .positive("Amount must be greater than 0"),
+
+  paymentMethod: z.enum([
+    "CASH",
+    "BANK_TRANSFER",
+    "UPI",
+    "CHEQUE",
+    "CARD",
+    "OTHER",
+  ]),
+
+  accountId: z
+    .string()
+    .min(1, "Account is required"),
+
+  referenceNo: z
+    .string()
+    .trim()
+    .max(
+      100,
+      "Reference number cannot exceed 100 characters",
+    )
+    .optional()
+    .or(z.literal("")),
+
+  remarks: z
+    .string()
+    .trim()
+    .max(
+      500,
+      "Remarks cannot exceed 500 characters",
+    )
+    .optional()
+    .or(z.literal("")),
+});
+
+export type CashReceiptFormValues =
+  z.infer<typeof cashReceiptSchema>;
