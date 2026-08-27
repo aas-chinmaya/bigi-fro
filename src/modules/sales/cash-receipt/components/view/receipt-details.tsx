@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import {
@@ -36,7 +35,6 @@ interface ReceiptDetailsProps {
 
 export default function ReceiptDetails({ id }: ReceiptDetailsProps) {
   const router = useRouter();
-
   const { cashReceipt, loading, error } = useCashReceiptQuery(undefined, id);
 
   if (loading) {
@@ -48,51 +46,27 @@ export default function ReceiptDetails({ id }: ReceiptDetailsProps) {
     );
   }
 
-  if (error) {
+  if (error || !cashReceipt) {
     return (
       <div className="space-y-4">
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 size-4" />
           Back
         </Button>
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
-          {error}
-        </div>
-      </div>
-    );
-  }
-
-  if (!cashReceipt) {
-    return (
-      <div className="space-y-4">
-        <Button type="button" variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 size-4" />
-          Back
-        </Button>
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          Cash receipt not found.
+        <div
+          className={`rounded-lg border p-6 text-sm ${
+            error
+              ? "border-destructive/30 bg-destructive/5 text-destructive"
+              : "text-muted-foreground"
+          }`}
+        >
+          {error || "Cash receipt not found."}
         </div>
       </div>
     );
   }
 
   const amount = Number(cashReceipt.amount ?? 0);
-
-  const handleDownloadPdf = () => {
-    try {
-      generateCashReceiptPdf(cashReceipt);
-    notify.success("PDF downloaded successfully");
-
-    } catch {
-     notify.error("Unable to generate PDF. Please try again.");
-
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   const status = (cashReceipt.status ?? "").toUpperCase();
   const statusVariant =
     status === "POSTED"
@@ -101,8 +75,18 @@ export default function ReceiptDetails({ id }: ReceiptDetailsProps) {
         ? "secondary"
         : "outline";
 
+  const handleDownloadPdf = () => {
+    try {
+      generateCashReceiptPdf(cashReceipt);
+      notify.success("PDF downloaded successfully");
+    } catch {
+      notify.error("Unable to generate PDF. Please try again.");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Actions – hidden on print */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div className="flex items-center gap-3">
           <Button
@@ -114,9 +98,8 @@ export default function ReceiptDetails({ id }: ReceiptDetailsProps) {
           >
             <ArrowLeft className="size-4" />
           </Button>
-
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight">
               Cash Receipt
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -129,112 +112,119 @@ export default function ReceiptDetails({ id }: ReceiptDetailsProps) {
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => router.push(`/sales/cash-receipt/${id}/edit`)}
           >
-            <Pencil className="mr-2 size-4" />
+            <Pencil className="mr-2 size-3.5" />
             Edit
           </Button>
-
-          <Button type="button" variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 size-4" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+          >
+            <Printer className="mr-2 size-3.5" />
             Print
           </Button>
-
-          <Button type="button" onClick={handleDownloadPdf}>
-            <Download className="mr-2 size-4" />
+          <Button type="button" size="sm" onClick={handleDownloadPdf}>
+            <Download className="mr-2 size-3.5" />
             Download PDF
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="border-b">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Receipt className="size-5" />
+      {/* Receipt card */}
+      <Card className="overflow-hidden print:border print:shadow-none">
+        <CardHeader className="border-b bg-muted/30 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Receipt className="size-4" />
               </div>
               <div>
-                <CardTitle>Cash Receipt</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <CardTitle className="text-base">Cash Receipt</CardTitle>
+                <p className="text-xs text-muted-foreground">
                   {cashReceipt.receiptNo ?? "-"}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              <Badge variant={statusVariant as any}>{status || "-"}</Badge>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Receipt Date</p>
-                <p className="font-medium">
-                  {formatDate(cashReceipt.receiptDate)}
-                </p>
-              </div>
+            <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
+              <Badge variant={statusVariant as any} className="text-xs">
+                {status || "-"}
+              </Badge>
+              <p className="text-xs text-muted-foreground">
+                {formatDate(cashReceipt.receiptDate)}
+              </p>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-6">
-          <div className="mb-8">
-            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <User className="size-3.5" />
+        <CardContent className="space-y-6 p-5">
+          {/* Customer */}
+          <div>
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <User className="size-3" />
               Received From
             </p>
-            <p className="text-lg font-semibold">
+            <p className="text-base font-semibold leading-snug">
               {cashReceipt.customerName ?? "No customer"}
             </p>
             {cashReceipt.customerId && (
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 ID: {cashReceipt.customerId}
               </p>
             )}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Grid details */}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <DetailItem
-              icon={<FileText className="size-3.5" />}
+              icon={<FileText className="size-3" />}
               label="Receipt Type"
               value={formatLabel(cashReceipt.receiptType)}
             />
-
             <DetailItem
-              icon={<Wallet className="size-3.5" />}
+              icon={<Wallet className="size-3" />}
               label="Payment Method"
               value={formatLabel(cashReceipt.paymentMethod)}
             />
-
             <DetailItem
-              icon={<Hash className="size-3.5" />}
+              icon={<Hash className="size-3" />}
               label="Reference No"
               value={cashReceipt.referenceNo ?? "-"}
             />
-
             <DetailItem
-              icon={<IndianRupee className="size-3.5" />}
+              icon={<IndianRupee className="size-3" />}
               label="Amount"
               value={`₹ ${amount.toLocaleString("en-IN", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}`}
-              valueClassName="text-lg font-semibold text-primary"
+              valueClassName="text-base font-semibold text-primary"
             />
           </div>
 
+          {/* Remarks */}
           {cashReceipt.remarks && (
-            <div className="mt-8 border-t pt-6">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <MessageSquare className="size-3.5" />
+            <div className="border-t pt-5">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <MessageSquare className="size-3" />
                 Remarks
               </p>
-              <p className="text-sm leading-relaxed">{cashReceipt.remarks}</p>
+              <p className="text-sm leading-relaxed text-foreground/90">
+                {cashReceipt.remarks}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="text-center text-xs text-muted-foreground print:block">
+      {/* Footer – only visible when printing */}
+      <p className="hidden text-center text-[10px] text-muted-foreground print:block">
         This is a system generated cash receipt.
-      </div>
+      </p>
     </div>
   );
 }
@@ -251,12 +241,12 @@ function DetailItem({
   valueClassName?: string;
 }) {
   return (
-    <div className="space-y-1">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-0.5">
+      <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}
       </p>
-      <p className={valueClassName || "font-medium"}>{value}</p>
+      <p className={valueClassName || "text-sm font-medium"}>{value}</p>
     </div>
   );
 }
