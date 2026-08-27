@@ -1,3 +1,5 @@
+
+
 export type CashReceiptType =
   | "INVOICE_PAYMENT"
   | "CUSTOMER_ADVANCE"
@@ -27,9 +29,6 @@ export interface CashReceipt {
 
   paymentMethod: CashReceiptPaymentMethod;
 
-  accountId: string;
-  accountName?: string;
-
   referenceNo?: string;
   remarks?: string;
 
@@ -41,7 +40,9 @@ export interface CashReceipt {
 
 export interface CreateCashReceiptPayload {
   receiptDate: string;
+
   customerId?: string;
+  customerName?: string;
 
   receiptType: CashReceiptType;
 
@@ -49,14 +50,11 @@ export interface CreateCashReceiptPayload {
 
   paymentMethod: CashReceiptPaymentMethod;
 
-  accountId: string;
-
   referenceNo?: string;
   remarks?: string;
 }
 
-export type UpdateCashReceiptPayload =
-  Partial<CreateCashReceiptPayload>;
+export type UpdateCashReceiptPayload = Partial<CreateCashReceiptPayload>;
 
 export interface CashReceiptQueryParams {
   page?: number;

@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import {
@@ -23,41 +25,25 @@ export default function CashReceiptFilters({
 }: CashReceiptFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Status */}
       <Select
         value={value || "all"}
-        onValueChange={(next) =>
-          onChange(
-            next === "all" ? "" : next,
-          )
-        }
+        onValueChange={(next) => onChange(next === "all" ? "" : next)}
       >
         <SelectTrigger className="w-44">
           <SelectValue placeholder="All statuses" />
         </SelectTrigger>
 
         <SelectContent>
-          <SelectItem value="all">
-            All statuses
-          </SelectItem>
-
-          <SelectItem value="POSTED">
-            Posted
-          </SelectItem>
-
-          <SelectItem value="DRAFT">
-            Draft
-          </SelectItem>
+          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="POSTED">Posted</SelectItem>
+          <SelectItem value="DRAFT">Draft</SelectItem>
         </SelectContent>
       </Select>
 
-      {/* Period */}
       <Select
         value={period || "all"}
         onValueChange={(next) =>
-          onPeriodChange?.(
-            next === "all" ? "all" : next,
-          )
+          onPeriodChange?.(next === "all" ? "all" : next)
         }
       >
         <SelectTrigger className="w-44">
@@ -65,29 +51,12 @@ export default function CashReceiptFilters({
         </SelectTrigger>
 
         <SelectContent>
-          <SelectItem value="all">
-            All time
-          </SelectItem>
-
-          <SelectItem value="today">
-            Today
-          </SelectItem>
-
-          <SelectItem value="7d">
-            Last 7 days
-          </SelectItem>
-
-          <SelectItem value="30d">
-            Last 30 days
-          </SelectItem>
-
-          <SelectItem value="month">
-            This month
-          </SelectItem>
-
-          <SelectItem value="year">
-            This year
-          </SelectItem>
+          <SelectItem value="all">All time</SelectItem>
+          <SelectItem value="today">Today</SelectItem>
+          <SelectItem value="7d">Last 7 days</SelectItem>
+          <SelectItem value="30d">Last 30 days</SelectItem>
+          <SelectItem value="month">This month</SelectItem>
+          <SelectItem value="year">This year</SelectItem>
         </SelectContent>
       </Select>
     </div>

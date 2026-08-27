@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
@@ -18,13 +19,9 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
 
       return (
         <div className="min-w-[160px]">
-          <p className="font-medium">
-            {cashReceipt.receiptNo ?? "-"}
-          </p>
-
+          <p className="font-medium">{cashReceipt.receiptNo ?? "-"}</p>
           <p className="text-xs text-muted-foreground">
-            {cashReceipt.customerName ??
-              "No customer"}
+            {cashReceipt.customerName ?? "No customer"}
           </p>
         </div>
       );
@@ -39,23 +36,16 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
       const date = row.original.receiptDate;
 
       if (!date) {
-        return (
-          <span className="text-muted-foreground">
-            -
-          </span>
-        );
+        return <span className="text-muted-foreground">-</span>;
       }
 
       return (
         <span>
-          {new Date(date).toLocaleDateString(
-            "en-IN",
-            {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            },
-          )}
+          {new Date(date).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
         </span>
       );
     },
@@ -66,9 +56,7 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
     header: "Amount",
 
     cell: ({ row }) => {
-      const amount = Number(
-        row.original.amount ?? 0,
-      );
+      const amount = Number(row.original.amount ?? 0);
 
       return (
         <p className="font-medium">
@@ -87,14 +75,10 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
     header: "Payment Method",
 
     cell: ({ row }) => {
-      const method = (
-        row.original.paymentMethod ?? ""
-      ).replaceAll("_", " ");
+      const method = (row.original.paymentMethod ?? "").replaceAll("_", " ");
 
       return (
-        <span className="capitalize">
-          {method.toLowerCase() || "-"}
-        </span>
+        <span className="capitalize">{method.toLowerCase() || "-"}</span>
       );
     },
   },
@@ -104,15 +88,9 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
     header: "Receipt Type",
 
     cell: ({ row }) => {
-      const type = (
-        row.original.receiptType ?? ""
-      ).replaceAll("_", " ");
+      const type = (row.original.receiptType ?? "").replaceAll("_", " ");
 
-      return (
-        <span className="capitalize">
-          {type.toLowerCase() || "-"}
-        </span>
-      );
+      return <span className="capitalize">{type.toLowerCase() || "-"}</span>;
     },
   },
 
@@ -121,9 +99,7 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
     header: "Status",
 
     cell: ({ row }) => {
-      const status = (
-        row.original.status ?? ""
-      ).toUpperCase();
+      const status = (row.original.status ?? "").toUpperCase();
 
       const variant =
         status === "POSTED"
@@ -132,22 +108,14 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
             ? "secondary"
             : "outline";
 
-      return (
-        <Badge variant={variant}>
-          {status || "-"}
-        </Badge>
-      );
+      return <Badge variant={variant}>{status || "-"}</Badge>;
     },
   },
 
   {
     id: "actions",
 
-    header: () => (
-      <div className="text-right">
-        Actions
-      </div>
-    ),
+    header: () => <div className="text-right">Actions</div>,
 
     cell: ({ row }) => {
       const cashReceipt = row.original;
@@ -156,10 +124,7 @@ export const CashReceiptColumns: ColumnDef<CashReceipt>[] = [
         <div className="text-right">
           <CashReceiptActions
             id={cashReceipt.id}
-            receiptNo={
-              cashReceipt.receiptNo ??
-              undefined
-            }
+            receiptNo={cashReceipt.receiptNo ?? undefined}
             status={cashReceipt.status}
           />
         </div>

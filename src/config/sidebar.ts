@@ -260,8 +260,8 @@ export const sidebarItems: SidebarItem[] = [
         icon: RotateCcw,
       },
       {
-        title: "Payments",
-        href: "/sales/payments",
+        title: "Cash Receipts",
+        href: "/sales/cash-receipt",
         icon: CreditCard,
       },
     ],

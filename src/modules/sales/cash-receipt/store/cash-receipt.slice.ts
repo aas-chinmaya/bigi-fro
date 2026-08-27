@@ -1,7 +1,6 @@
-import {
-  createAsyncThunk,
-  createSlice,
-} from "@reduxjs/toolkit";
+
+
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { cashReceiptService } from "../services/cash-receipt.service";
 
@@ -47,61 +46,43 @@ export const fetchCashReceipts = createAsyncThunk<
   CashReceiptListResponse,
   CashReceiptQueryParams | undefined,
   { rejectValue: string }
->(
-  "cashReceipt/fetchCashReceipts",
-  async (params, { rejectWithValue }) => {
-    try {
-      return await cashReceiptService.getCashReceipts(
-        params,
-      );
-    } catch (error: any) {
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          "Failed to fetch cash receipts",
-      );
-    }
-  },
-);
+>("cashReceipt/fetchCashReceipts", async (params, { rejectWithValue }) => {
+  try {
+    return await cashReceiptService.getCashReceipts(params);
+  } catch (error: any) {
+    return rejectWithValue(
+      error?.response?.data?.message || "Failed to fetch cash receipts",
+    );
+  }
+});
 
 export const fetchCashReceiptById = createAsyncThunk<
   CashReceipt,
   string,
   { rejectValue: string }
->(
-  "cashReceipt/fetchCashReceiptById",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await cashReceiptService.getCashReceiptById(
-        id,
-      );
-    } catch (error: any) {
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          "Failed to fetch cash receipt",
-      );
-    }
-  },
-);
+>("cashReceipt/fetchCashReceiptById", async (id, { rejectWithValue }) => {
+  try {
+    return await cashReceiptService.getCashReceiptById(id);
+  } catch (error: any) {
+    return rejectWithValue(
+      error?.response?.data?.message || "Failed to fetch cash receipt",
+    );
+  }
+});
 
 export const addCashReceipt = createAsyncThunk<
   CashReceipt,
   CreateCashReceiptPayload,
   { rejectValue: string }
->(
-  "cashReceipt/addCashReceipt",
-  async (payload, { rejectWithValue }) => {
-    try {
-      return await cashReceiptService.createCashReceipt(
-        payload,
-      );
-    } catch (error: any) {
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          "Failed to create cash receipt",
-      );
-    }
-  },
-);
+>("cashReceipt/addCashReceipt", async (payload, { rejectWithValue }) => {
+  try {
+    return await cashReceiptService.createCashReceipt(payload);
+  } catch (error: any) {
+    return rejectWithValue(
+      error?.response?.data?.message || "Failed to create cash receipt",
+    );
+  }
+});
 
 export const editCashReceipt = createAsyncThunk<
   CashReceipt,
@@ -114,14 +95,10 @@ export const editCashReceipt = createAsyncThunk<
   "cashReceipt/editCashReceipt",
   async ({ id, payload }, { rejectWithValue }) => {
     try {
-      return await cashReceiptService.updateCashReceipt(
-        id,
-        payload,
-      );
+      return await cashReceiptService.updateCashReceipt(id, payload);
     } catch (error: any) {
       return rejectWithValue(
-        error?.response?.data?.message ||
-          "Failed to update cash receipt",
+        error?.response?.data?.message || "Failed to update cash receipt",
       );
     }
   },
@@ -144,150 +121,72 @@ const cashReceiptSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      .addCase(fetchCashReceipts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCashReceipts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.cashReceipts = action.payload.data;
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(fetchCashReceipts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch cash receipts";
+      })
 
-      // Fetch all
-      .addCase(
-        fetchCashReceipts.pending,
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        },
-      )
+      .addCase(fetchCashReceiptById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCashReceiptById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedCashReceipt = action.payload;
+      })
+      .addCase(fetchCashReceiptById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch cash receipt";
+      })
 
-      .addCase(
-        fetchCashReceipts.fulfilled,
-        (state, action) => {
-          state.loading = false;
+      .addCase(addCashReceipt.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addCashReceipt.fulfilled, (state, action) => {
+        state.loading = false;
+        state.cashReceipts.unshift(action.payload);
+        state.selectedCashReceipt = action.payload;
+      })
+      .addCase(addCashReceipt.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to create cash receipt";
+      })
 
-          state.cashReceipts =
-            action.payload.data;
+      .addCase(editCashReceipt.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(editCashReceipt.fulfilled, (state, action) => {
+        state.loading = false;
 
-          state.pagination =
-            action.payload.pagination;
-        },
-      )
+        const index = state.cashReceipts.findIndex(
+          (item) => item.id === action.payload.id,
+        );
 
-      .addCase(
-        fetchCashReceipts.rejected,
-        (state, action) => {
-          state.loading = false;
+        if (index !== -1) {
+          state.cashReceipts[index] = action.payload;
+        }
 
-          state.error =
-            action.payload ||
-            "Failed to fetch cash receipts";
-        },
-      )
-
-      // Fetch single
-      .addCase(
-        fetchCashReceiptById.pending,
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        },
-      )
-
-      .addCase(
-        fetchCashReceiptById.fulfilled,
-        (state, action) => {
-          state.loading = false;
-
-          state.selectedCashReceipt =
-            action.payload;
-        },
-      )
-
-      .addCase(
-        fetchCashReceiptById.rejected,
-        (state, action) => {
-          state.loading = false;
-
-          state.error =
-            action.payload ||
-            "Failed to fetch cash receipt";
-        },
-      )
-
-      // Create
-      .addCase(
-        addCashReceipt.pending,
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        },
-      )
-
-      .addCase(
-        addCashReceipt.fulfilled,
-        (state, action) => {
-          state.loading = false;
-
-          state.cashReceipts.unshift(
-            action.payload,
-          );
-
-          state.selectedCashReceipt =
-            action.payload;
-        },
-      )
-
-      .addCase(
-        addCashReceipt.rejected,
-        (state, action) => {
-          state.loading = false;
-
-          state.error =
-            action.payload ||
-            "Failed to create cash receipt";
-        },
-      )
-
-      // Update
-      .addCase(
-        editCashReceipt.pending,
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        },
-      )
-
-      .addCase(
-        editCashReceipt.fulfilled,
-        (state, action) => {
-          state.loading = false;
-
-          const index =
-            state.cashReceipts.findIndex(
-              (item) =>
-                item.id === action.payload.id,
-            );
-
-          if (index !== -1) {
-            state.cashReceipts[index] =
-              action.payload;
-          }
-
-          state.selectedCashReceipt =
-            action.payload;
-        },
-      )
-
-      .addCase(
-        editCashReceipt.rejected,
-        (state, action) => {
-          state.loading = false;
-
-          state.error =
-            action.payload ||
-            "Failed to update cash receipt";
-        },
-      );
+        state.selectedCashReceipt = action.payload;
+      })
+      .addCase(editCashReceipt.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update cash receipt";
+      });
   },
 });
 
-export const {
-  clearSelectedCashReceipt,
-  clearCashReceiptError,
-} = cashReceiptSlice.actions;
+export const { clearSelectedCashReceipt, clearCashReceiptError } =
+  cashReceiptSlice.actions;
 
 export default cashReceiptSlice.reducer;
