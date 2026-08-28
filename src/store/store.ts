@@ -8,9 +8,8 @@ import businessReducer from "@/modules/business/store/businessSlice";
 
 //sales modules
 import invoiceReducer from "@/modules/sales/invoice/store/invoice.slice";
-// import invoiceItemReducer from "@/modules/sales/invoice/store/invoiceItem-slice";
 import customersReducer from "@/modules/customers/store/customers.slice";
-import cashReceiptReducer  from "@/modules/sales/cash-receipt/store/cash-receipt.slice";
+import moneyReceiptReducer  from "@/modules/sales/money-receipt/store/money-receipt.slice";
 
 const store = configureStore({
   reducer: {
@@ -20,10 +19,9 @@ const store = configureStore({
     auth: authReducer,
     vendors: vendorReducer,
     invoice: invoiceReducer,
-    // invoiceItem: invoiceItemReducer,
     business: businessReducer,
     customers: customersReducer,
-    cashReceipt: cashReceiptReducer ,
+    moneyReceipt: moneyReceiptReducer ,
   },
 });
 

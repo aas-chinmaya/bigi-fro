@@ -255,14 +255,14 @@ export const sidebarItems: SidebarItem[] = [
         icon: FileCheck,
       },
       {
+        title: "Money Receipts",
+        href: "/sales/money-receipt",
+        icon: CreditCard,
+      },
+      {
         title: "Returns",
         href: "/sales/returns",
         icon: RotateCcw,
-      },
-      {
-        title: "Cash Receipts",
-        href: "/sales/cash-receipt",
-        icon: CreditCard,
       },
     ],
   },
