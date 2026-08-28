@@ -10,7 +10,7 @@ import { notify } from "@/lib/toast";
 import {
   cancelInvoice,
   deleteDraft,
-} from "@/modules/sales/invoice/slice/invoice.slice";
+} from "@/modules/sales/invoice/store/invoice.slice";
 
 import { Button } from "@/components/ui/button";
 

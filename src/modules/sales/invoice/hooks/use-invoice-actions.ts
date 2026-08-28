@@ -12,7 +12,7 @@ import {
   createInvoice,
   cancelInvoice,
   deleteInvoice,
-} from "../slice/invoice.slice";
+} from "../store/invoice.slice";
 
 import type {
   CreateDraftPayload,

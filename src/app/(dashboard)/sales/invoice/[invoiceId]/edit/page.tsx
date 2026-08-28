@@ -1,5 +1,5 @@
 
-import EditInvoiceWrapper from "@/modules/sales/invoice/components/forms/EditInvoiceWrapper";
+import EditInvoiceWrapper from "@/modules/sales/invoice/components/edit/EditInvoiceWrapper";
 
 type Props = {
   params: Promise<{

@@ -45,7 +45,7 @@ import {
 import type { InvoiceFormValues } from "../../types/invoice-form.types";
 
 import CustomerQuickCreateDrawer from "./customer-quick-create-drawer";
-import { getStateCode } from "./invoice-form-utils";
+import { getStateCode } from "../../lib/state-code";
 
 // ==========================================================
 // TYPES

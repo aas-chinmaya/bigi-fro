@@ -13,7 +13,7 @@ import {
   fetchDrafts,
   fetchInvoiceById,
   fetchDraftById,
-} from "../slice/invoice.slice";
+} from "../store/invoice.slice";
 
 export function useInvoiceQuery() {
   const dispatch = useDispatch<AppDispatch>();

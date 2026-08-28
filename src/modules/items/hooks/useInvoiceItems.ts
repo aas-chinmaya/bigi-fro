@@ -1,199 +1,99 @@
-"use client";
+import { useEffect, useState } from "react";
+import { productservice } from "../services/product.service";
+import { serviceservice } from "../services/service.service";
 
-import { useMemo } from "react";
+export const useInvoiceItems = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export function useInvoiceItems() {
-  // Dummy response from products API
-  const productsState = {
-    products: [
-      {
-        id: "product-001",
-        itemName: "Laptop",
-        description: "Business laptop",
-        itemCode: "LAP-001",
-        salePrice: 55000,
-        inventoryUnit: {
-          shortName: "PCS",
-        },
-        hsnCode: "8471",
-        tax: {
-          cgst: 9,
-          sgst: 9,
-          igst: 18,
-          cess: 0,
-        },
-        category: {
-          categoryName: "Electronics",
-        },
-        brand: {
-          brandName: "Dell",
-        },
-      },
-      {
-        id: "product-002",
-        itemName: "Wireless Mouse",
-        description: "Wireless optical mouse",
-        itemCode: "MOU-001",
-        salePrice: 1200,
-        inventoryUnit: {
-          shortName: "PCS",
-        },
-        hsnCode: "8471",
-        tax: {
-          cgst: 9,
-          sgst: 9,
-          igst: 18,
-          cess: 0,
-        },
-        category: {
-          categoryName: "Accessories",
-        },
-        brand: {
-          brandName: "Logitech",
-        },
-      },
-    ],
-    loading: false,
+  const getInvoiceItems = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [productResponse, serviceResponse] = await Promise.all([
+        productservice.getAllProducts(),
+        serviceservice.getAllServices(),
+      ]);
+
+      const products =
+        productResponse?.data?.data?.data ??
+        productResponse?.data?.data ??
+        productResponse?.data ??
+        productResponse ??
+        [];
+
+      const services =
+        serviceResponse?.data?.data?.data ??
+        serviceResponse?.data?.data ??
+        serviceResponse?.data ??
+        serviceResponse ??
+        [];
+
+      const normalizedProducts = products.map((product: any) => ({
+        id: product.id,
+        name: product.itemName,
+        description: product.description,
+
+        type: "PRODUCT" as const,
+        classification: "GOODS" as const,
+
+        itemCode: product.itemCode,
+        salePrice: product.salePrice ?? 0,
+
+        unit: product.inventoryUnit?.shortName,
+        hsnSacCode: product.hsnCode,
+
+        tax: product.tax,
+
+        categoryName: product.category?.categoryName,
+        brandName: product.brand?.brandName,
+
+        rawItem: product,
+      }));
+
+      const normalizedServices = services.map((service: any) => ({
+        id: service.id,
+        name: service.serviceName,
+        description: service.description,
+
+        type: "SERVICE" as const,
+        classification: "SERVICES" as const,
+
+        itemCode: service.serviceCode,
+        salePrice: service.serviceCharge ?? 0,
+
+        unit: service.unit,
+        hsnSacCode: service.sacCode,
+
+        tax: service.tax,
+
+        categoryName: service.category?.categoryName,
+        brandName: service.brand?.brandName,
+
+        rawItem: service,
+      }));
+
+      setItems([
+        ...normalizedProducts,
+        ...normalizedServices,
+      ]);
+    } catch (error: any) {
+      setError(error?.message || "Failed to fetch invoice items");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Dummy response from services API
-  const servicesState = {
-    services: [
-      {
-        id: "service-001",
-        serviceName: "Web Development",
-        description: "Frontend web development service",
-        serviceCode: "WEB-001",
-        serviceCharge: 25000,
-        unit: "HOUR",
-        sacCode: "998314",
-        tax: {
-          cgst: 9,
-          sgst: 9,
-          igst: 18,
-          cess: 0,
-        },
-        category: {
-          categoryName: "Development",
-        },
-        brand: null,
-      },
-      {
-        id: "service-002",
-        serviceName: "UI/UX Design",
-        description: "Website UI/UX design service",
-        serviceCode: "DES-001",
-        serviceCharge: 15000,
-        unit: "PROJECT",
-        sacCode: "998391",
-        tax: {
-          cgst: 9,
-          sgst: 9,
-          igst: 18,
-          cess: 0,
-        },
-        category: {
-          categoryName: "Design",
-        },
-        brand: null,
-      },
-    ],
-    loading: false,
-  };
-
-  const items = useMemo(() => {
-    const products = (productsState.products || []).map((product) => ({
-      id: product.id,
-      name: product.itemName,
-      description: product.description,
-      type: "PRODUCT" as const,
-      classification: "GOODS" as const,
-      itemCode: product.itemCode,
-      salePrice: product.salePrice || 100,
-      unit: product.inventoryUnit?.shortName,
-      hsnSacCode: product.hsnCode,
-      tax: product.tax,
-      categoryName: product.category?.categoryName,
-      brandName: product.brand?.brandName,
-    }));
-
-    const services = (servicesState.services || []).map((service) => ({
-      id: service.id,
-      name: service.serviceName,
-      description: service.description,
-      type: "SERVICE" as const,
-      classification: "SERVICES" as const,
-      itemCode: service.serviceCode,
-      salePrice: service.serviceCharge || 100,
-      unit: service.unit,
-      hsnSacCode: service.sacCode,
-      tax: service.tax,
-      categoryName: service.category?.categoryName,
-      brandName: service.brand?.brandName,
-    }));
-
-    return [...products, ...services];
-  }, [productsState.products, servicesState.services]);
+  useEffect(() => {
+    getInvoiceItems();
+  }, []);
 
   return {
     items,
-    loading: productsState.loading || servicesState.loading,
+    loading,
+    error,
+    refetch: getInvoiceItems,
   };
-}
-
-
-
-// "use client";
-
-// import { useMemo } from "react";
-// import { useProducts } from "./useProducts";
-// import { useServices } from "./useServices";
-
-// export function useInvoiceItems() {
-//   const productsState = useProducts();
-//   const servicesState = useServices();
-
-//   const items = useMemo(() => {
-//     const products = (productsState.products || []).map((product) => ({
-//       id: product.id,
-//       name: product.itemName,
-//       description: product.description,
-//       type: "PRODUCT" as const,
-//       classification: "GOODS" as const,
-//       itemCode: product.itemCode,
-//       salePrice: product.salePrice ?? 0,
-//       unit: product.inventoryUnit?.shortName,
-//       hsnSacCode: product.hsnCode,
-//       // Flattened so invoice-form-utils.ts (which reads rawItem.gstRate / rawItem.cess) works
-//       gstRate: product.tax?.igst ?? 0,
-//       cess: product.tax?.cess ?? 0,
-//       tax: product.tax, // keep the breakdown too, in case any UI displays cgst/sgst/igst separately
-//       categoryName: product.category?.categoryName,
-//       brandName: product.brand?.brandName,
-//     }));
-
-//     const services = (servicesState.services || []).map((service) => ({
-//       id: service.id,
-//       name: service.serviceName,
-//       description: service.description,
-//       type: "SERVICE" as const,
-//       classification: "SERVICES" as const,
-//       itemCode: service.serviceCode,
-//       salePrice: service.serviceCharge ?? 0,
-//       unit: service.unit,
-//       hsnSacCode: service.sacCode,
-//       gstRate: service.tax?.igst ?? 0,
-//       cess: service.tax?.cess ?? 0,
-//       tax: service.tax,
-//       categoryName: service.category?.categoryName,
-//       brandName: service.brand?.brandName,
-//     }));
-
-//     return [...products, ...services];
-//   }, [productsState.products, servicesState.services]);
-
-//   return {
-//     items,
-//     loading: productsState.loading || servicesState.loading,
-//   };
-// }
+};
