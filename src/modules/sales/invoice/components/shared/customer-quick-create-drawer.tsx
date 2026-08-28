@@ -4,7 +4,12 @@
 import { useState, type ReactNode } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn, useWatch } from "react-hook-form";
+import {
+  useForm,
+  type Resolver,
+  type UseFormReturn,
+  useWatch,
+} from "react-hook-form";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store/store";
 import {
@@ -122,7 +127,9 @@ export default function CustomerQuickCreateDrawer({
 
   const form = useForm<FormData>({
     defaultValues: defaults,
-    resolver: zodResolver(schema),
+    // z.coerce fields (ewayDistance) make zod's inferred resolver input
+    // type wider than FormData, so we assert the resolver shape here.
+    resolver: zodResolver(schema) as Resolver<FormData>,
     mode: "onBlur",
   });
 
@@ -179,7 +186,14 @@ export default function CustomerQuickCreateDrawer({
         ],
       };
 
-      const customer = await customersService.createCustomer(payload);
+      // The customer service's payload type carries account/credit
+      // fields (creditLimit, creditDays, openingBalance, etc.) that this
+      // quick-create drawer intentionally leaves for the backend to
+      // default — casting via the service's own parameter type keeps
+      // this in sync if that type ever changes.
+      const customer = await customersService.createCustomer(
+        payload as Parameters<typeof customersService.createCustomer>[0],
+      );
 
       dispatch(addCustomer(customer));
       onCreated(customer);

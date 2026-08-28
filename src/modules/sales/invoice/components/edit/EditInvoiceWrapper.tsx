@@ -18,6 +18,7 @@ import { useInvoiceActions } from "../../hooks/use-invoice-actions";
 import { buildEditInvoicePayload } from "../../lib/build-invoice-payload";
 
 import type { InvoiceFormValues } from "../../types/invoice-form.types";
+import type { CreateInvoicePayload } from "../../types/invoice-api.types";
 
 interface EditInvoiceWrapperProps {
   invoiceId: string;
@@ -79,7 +80,8 @@ export default function EditInvoiceWrapper({
     try {
       const payload = buildEditInvoicePayload(values, business);
 
-      await createInvoice(payload).unwrap();
+      // Same shape guarantee as CreateInvoiceWrapper's handleCreateInvoice.
+      await createInvoice(payload as unknown as CreateInvoicePayload).unwrap();
 
       notify.success("Invoice finalized successfully");
       router.push("/sales/invoice");

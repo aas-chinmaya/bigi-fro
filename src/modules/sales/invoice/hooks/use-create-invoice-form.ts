@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { InvoiceFormValues } from "../types/invoice-form.types";
@@ -47,7 +47,10 @@ export function useCreateInvoiceForm() {
   const { business } = useBusiness();
 
   const form = useForm<InvoiceFormValues>({
-    resolver: zodResolver(invoiceSchema),
+    // zod's inferred resolver type doesn't line up 1:1 with the hand
+    // written InvoiceFormValues interface (coerced/defaulted fields),
+    // so we assert the resolver shape explicitly.
+    resolver: zodResolver(invoiceSchema) as Resolver<InvoiceFormValues>,
     defaultValues: DEFAULT_VALUES,
     mode: "onSubmit",
     reValidateMode: "onChange",

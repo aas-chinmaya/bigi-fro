@@ -1,5 +1,5 @@
 
-import type { Invoice } from "../../types/invoice.";
+import type { Invoice } from "../../types/invoice";
 
 interface InvoiceDocumentProps {
   inv: Invoice;

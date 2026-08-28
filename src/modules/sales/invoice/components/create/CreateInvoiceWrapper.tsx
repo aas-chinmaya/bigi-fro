@@ -14,6 +14,10 @@ import { useInvoiceActions } from "../../hooks/use-invoice-actions";
 import { buildCreateInvoicePayload } from "../../lib/build-invoice-payload";
 
 import type { InvoiceFormValues } from "../../types/invoice-form.types";
+import type {
+  CreateDraftPayload,
+  CreateInvoicePayload,
+} from "../../types/invoice-api.types";
 
 // ==========================================================
 // CREATE INVOICE WRAPPER
@@ -40,7 +44,10 @@ export default function CreateInvoiceWrapper() {
     try {
       const payload = buildCreateInvoicePayload(values, business);
 
-      await createDraft(payload).unwrap();
+      // buildCreateInvoicePayload returns a loosely-typed Record built by
+      // the shared mapper; the required draft fields (invoiceType, items)
+      // are always populated by the form/schema, so this cast is safe.
+      await createDraft(payload as unknown as CreateDraftPayload).unwrap();
 
       notify.success("Draft saved successfully");
       router.push("/sales/invoice");
@@ -58,7 +65,9 @@ export default function CreateInvoiceWrapper() {
     try {
       const payload = buildCreateInvoicePayload(values, business);
 
-      await createInvoice(payload).unwrap();
+      // Same rationale as handleSaveDraft — invoiceDate/customerId/items
+      // are guaranteed by validation before this handler ever runs.
+      await createInvoice(payload as unknown as CreateInvoicePayload).unwrap();
 
       notify.success("Invoice created successfully");
       router.push("/sales/invoice");

@@ -3,7 +3,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { InvoiceFormValues } from "../types/invoice-form.types";
@@ -20,7 +20,8 @@ export function useEditInvoiceForm(invoiceId: string) {
   const { selectedDraft, loading, error, getDraftById } = useInvoiceQuery();
 
   const form = useForm<InvoiceFormValues>({
-    resolver: zodResolver(invoiceSchema),
+    // See use-create-invoice-form.ts for why this cast is needed.
+    resolver: zodResolver(invoiceSchema) as Resolver<InvoiceFormValues>,
     defaultValues: DEFAULT_VALUES,
     mode: "onSubmit",
     reValidateMode: "onChange",
@@ -47,7 +48,11 @@ export function useEditInvoiceForm(invoiceId: string) {
   // --------------------------------------------------------
 
   const initialValues = useMemo<InvoiceFormValues | null>(
-    () => mapDraftToFormValues(selectedDraft as Record<string, unknown>, business),
+    () =>
+      mapDraftToFormValues(
+        selectedDraft as unknown as Record<string, unknown>,
+        business,
+      ),
     [selectedDraft, business],
   );
 
@@ -61,7 +66,7 @@ export function useEditInvoiceForm(invoiceId: string) {
     if (!selectedDraft || !initialValues) return;
 
     const draftId = String(
-      (selectedDraft as Record<string, unknown>).id ?? invoiceId,
+      (selectedDraft as unknown as Record<string, unknown>).id ?? invoiceId,
     );
 
     if (initializedInvoiceRef.current === draftId) return;
@@ -85,8 +90,8 @@ export function useEditInvoiceForm(invoiceId: string) {
   // --------------------------------------------------------
 
   const invoiceStatus = String(
-    (selectedDraft as Record<string, unknown> | undefined)?.invoiceStatus ??
-      "DRAFT",
+    (selectedDraft as unknown as Record<string, unknown> | undefined)
+      ?.invoiceStatus ?? "DRAFT",
   ).toUpperCase();
 
   const isFinalized = invoiceStatus !== "DRAFT";

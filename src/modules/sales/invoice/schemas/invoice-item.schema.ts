@@ -16,11 +16,11 @@ export const invoiceItemSchema = z.object({
   classification: z.enum(["GOODS", "SERVICES"]),
 
   quantity: z.coerce
-    .number({ invalid_type_error: "Quantity must be a number." })
+    .number({ error: "Quantity must be a number." })
     .positive("Quantity must be greater than 0."),
 
   rate: z.coerce
-    .number({ invalid_type_error: "Rate must be a number." })
+    .number({ error: "Rate must be a number." })
     .nonnegative("Rate cannot be negative."),
 
 
