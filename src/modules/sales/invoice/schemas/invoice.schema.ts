@@ -2,26 +2,7 @@ import { z } from "zod";
 
 import { invoiceItemSchema } from "./invoice-item.schema";
 
-// ==========================================================
-// INVOICE FORM SCHEMA
-//
-// This replaces the old manual `getRequiredFieldErrors()` in
-// invoice-form-utils.ts. It mirrors InvoiceFormValues field
-// for field (types/invoice-form.types.ts) and reproduces the
-// exact same conditional required-field rules that used to
-// live in that function, so validation behaviour is unchanged
-// — only the *mechanism* moved to Zod + react-hook-form's
-// zodResolver.
-//
-// RULES (same as before):
-//   1. A buyer is required: either an existing customerId is
-//      selected, OR a manual buyerName/buyerCompanyName is
-//      typed in.
-//   2. Place of supply is required.
-//   3. If no existing customerId is selected (manual buyer),
-//      the billing address (line 1, city, state, pincode) is
-//      required too.
-// ==========================================================
+
 
 const optionalString = z.string().optional().default("");
 
@@ -33,9 +14,7 @@ export const invoiceSchema = z
     invoiceType: z.enum(["B2B", "B2C", "EXPORT", "SEZ"]),
 
     invoiceNumber: optionalString,
-    // NOTE: not required here — InvoiceDetailsCard auto-fills this with
-    // the current date/time on mount, same as before. Kept optional to
-    // match the old getRequiredFieldErrors behaviour exactly.
+ 
     invoiceDate: optionalString,
     dueDate: optionalString,
 

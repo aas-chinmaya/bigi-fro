@@ -1,14 +1,7 @@
+
+
 import { z } from "zod";
 
-// ==========================================================
-// INVOICE ITEM SCHEMA
-//
-// Mirrors InvoiceItemFormValues (types/invoice-form.types.ts).
-// Line items are computed/read-only in the UI (rates & totals
-// come from the product/service picker + tax engine), so this
-// schema mainly guards against bad/empty rows rather than
-// re-implementing the tax math.
-// ==========================================================
 
 export const invoiceItemSchema = z.object({
   id: z.string().optional(),
@@ -29,6 +22,9 @@ export const invoiceItemSchema = z.object({
   rate: z.coerce
     .number({ invalid_type_error: "Rate must be a number." })
     .nonnegative("Rate cannot be negative."),
+
+
+  gstRate: z.coerce.number().nonnegative().optional().default(0),
 
   discountType: z.enum(["fixed", "percentage"]),
   discountValue: z.coerce.number().nonnegative().default(0),

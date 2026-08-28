@@ -1,3 +1,7 @@
+
+
+
+
 import type {
   InvoiceFormValues,
   InvoiceItemFormValues,
@@ -10,6 +14,14 @@ import {
   round,
   optionalText,
 } from "./shared-helpers";
+
+
+function toEnumCase(value: unknown): string | undefined {
+  const str = text(value);
+  if (!str) return undefined;
+
+  return str.trim().toUpperCase().replace(/\s+/g, "_");
+}
 
 // ==========================================================
 // FORM → API PAYLOAD
@@ -606,7 +618,7 @@ const pendingAmount = round(
       ),
 
     invoiceStatus:
-      optionalText(
+      toEnumCase(
         values.invoiceStatus,
       ),
 
@@ -878,7 +890,7 @@ const pendingAmount = round(
     // ======================================================
 
     paymentStatus:
-      optionalText(
+      toEnumCase(
         values.paymentStatus,
       ),
 

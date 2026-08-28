@@ -1,3 +1,7 @@
+
+
+
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -18,17 +22,7 @@ import type { InvoiceFormValues } from "../../types/invoice-form.types";
 interface EditInvoiceWrapperProps {
   invoiceId: string;
 }
-
-// ==========================================================
-// EDIT INVOICE WRAPPER
-//
-// Validation lives in schemas/invoice.schema.ts (Zod), wired
-// up via useEditInvoiceForm's resolver — same as Create.
-// Draft-loading, business-context injection, and the
-// billing/shipping sync are all handled inside the hook
-// (hooks/use-edit-invoice-form.ts + lib/edit-invoice-mapping.ts).
-// ==========================================================
-
+ 
 export default function EditInvoiceWrapper({
   invoiceId,
 }: EditInvoiceWrapperProps) {
@@ -41,6 +35,7 @@ export default function EditInvoiceWrapper({
     isLoading,
     notFound,
     isFinalized,
+    error,
   } = useEditInvoiceForm(invoiceId);
 
   const { updateDraft, createInvoice } = useInvoiceActions();
@@ -98,12 +93,34 @@ export default function EditInvoiceWrapper({
   // Loading / not found
   // --------------------------------------------------------
 
-  if (isLoading || notFound) {
+  if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-[1600px]">
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           <div className="flex min-h-[400px] items-center justify-center">
             <div className="text-sm text-gray-400">Loading invoice...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Previously this branch was folded into the loading check
+  // above (`isLoading || notFound`), so a failed fetch — wrong
+  // id, 404, network error — showed "Loading invoice..."
+  // forever instead of telling the user anything.
+  if (notFound) {
+    return (
+      <div className="mx-auto w-full max-w-[1600px]">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex min-h-[400px] flex-col items-center justify-center gap-2 text-center">
+            <div className="text-sm font-medium text-gray-700">
+              Invoice not found
+            </div>
+            <div className="text-sm text-gray-400">
+              {error ??
+                "We couldn't load this invoice. It may have been deleted, or the link may be incorrect."}
+            </div>
           </div>
         </div>
       </div>

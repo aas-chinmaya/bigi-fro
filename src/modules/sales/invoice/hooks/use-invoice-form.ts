@@ -4,13 +4,6 @@ import type { DefaultValues } from "react-hook-form";
 
 import type { InvoiceFormValues } from "../types/invoice-form.types";
 
-// ==========================================================
-// DEFAULT VALUES
-//
-// Shared by useCreateInvoiceForm and useEditInvoiceForm, and
-// by lib/invoice-form-values.ts (API response -> form values).
-// Kept in one place so Create/Edit never drift apart.
-// ==========================================================
 
 export const DEFAULT_VALUES: DefaultValues<InvoiceFormValues> = {
   // ========================================================

@@ -10,12 +10,6 @@ import { invoiceSchema } from "../schemas/invoice.schema";
 import { DEFAULT_VALUES } from "./use-invoice-form";
 import { useBusiness, type BusinessContext } from "./use-business";
 
-// ==========================================================
-// SELLER FIELDS FROM BUSINESS CONTEXT
-//
-// Small helper so we don't repeat this object literal in both
-// the "populate on mount" effect and handleReset.
-// ==========================================================
 
 function businessDefaults(
   business: BusinessContext,

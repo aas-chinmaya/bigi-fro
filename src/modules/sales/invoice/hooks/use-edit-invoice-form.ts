@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
@@ -15,7 +17,7 @@ import { mapDraftToFormValues } from "../lib/edit-invoice-mapping";
 export function useEditInvoiceForm(invoiceId: string) {
   const { business } = useBusiness();
 
-  const { selectedDraft, loading, getDraftById } = useInvoiceQuery();
+  const { selectedDraft, loading, error, getDraftById } = useInvoiceQuery();
 
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
@@ -88,8 +90,13 @@ export function useEditInvoiceForm(invoiceId: string) {
   ).toUpperCase();
 
   const isFinalized = invoiceStatus !== "DRAFT";
+
+
+  const hasAttemptedFetch = fetchedInvoiceRef.current === invoiceId;
+
   const isLoading = loading && !selectedDraft;
-  const notFound = !loading && !selectedDraft;
+  const notFound =
+    hasAttemptedFetch && !loading && !selectedDraft;
 
   return {
     form,
@@ -100,5 +107,6 @@ export function useEditInvoiceForm(invoiceId: string) {
     isLoading,
     notFound,
     isFinalized,
+    error,
   };
 }

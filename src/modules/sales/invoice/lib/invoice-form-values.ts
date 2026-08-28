@@ -1,8 +1,41 @@
+
+
 import { DEFAULT_VALUES } from "../hooks/use-invoice-form";
 
-import type { InvoiceFormValues } from "../types/invoice-form.types";
+import type {
+  InvoiceFormValues,
+  InvoiceItemFormValues,
+} from "../types/invoice-form.types";
 
 import { text, numberValue, optionalText } from "./shared-helpers";
+
+
+const INVOICE_STATUS_MAP: Record<string, InvoiceFormValues["invoiceStatus"]> = {
+  DRAFT: "Draft",
+  PENDING: "Pending",
+  ISSUED: "Issued",
+  CANCELLED: "Cancelled",
+};
+
+const PAYMENT_STATUS_MAP: Record<string, InvoiceFormValues["paymentStatus"]> = {
+  PAID: "Paid",
+  PENDING: "Pending",
+  "PARTIALLY PAID": "Partially Paid",
+  PARTIALLY_PAID: "Partially Paid",
+  UNPAID: "Unpaid",
+  OVERDUE: "Overdue",
+};
+
+function normalizeStatus<T extends string>(
+  value: unknown,
+  map: Record<string, T>,
+  fallback: T,
+): T {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+
+  const key = value.trim().toUpperCase().replace(/\s+/g, " ");
+  return map[key] ?? (value as T);
+}
 
 // ==========================================================
 // API RESPONSE → FORM VALUES
@@ -34,11 +67,27 @@ export function toInvoiceFormValues(
       continue;
     }
 
-    const value =
+    let value =
       key === "grandTotal"
         ? invoice.grandTotal ??
           invoice.totalAmount
         : invoice[key];
+
+    if (key === "invoiceStatus") {
+      value = normalizeStatus(
+        value,
+        INVOICE_STATUS_MAP,
+        DEFAULT_VALUES.invoiceStatus as InvoiceFormValues["invoiceStatus"],
+      );
+    }
+
+    if (key === "paymentStatus") {
+      value = normalizeStatus(
+        value,
+        PAYMENT_STATUS_MAP,
+        DEFAULT_VALUES.paymentStatus as InvoiceFormValues["paymentStatus"],
+      );
+    }
 
     if (
       value !== null &&
@@ -194,6 +243,3 @@ export function toInvoiceFormValues(
 
   return values;
 }
-
-
-

@@ -40,7 +40,7 @@ export const useInvoiceItems = () => {
         classification: "GOODS" as const,
 
         itemCode: product.itemCode,
-        salePrice: product.salePrice ?? 0,
+        salePrice: product.salePrice ?? 100,
 
         unit: product.inventoryUnit?.shortName,
         hsnSacCode: product.hsnCode,

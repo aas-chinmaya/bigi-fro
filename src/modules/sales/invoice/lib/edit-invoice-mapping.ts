@@ -4,28 +4,6 @@ import type { BusinessContext } from "../hooks/use-business";
 import { getStateCode } from "./state-code";
 import { toInvoiceFormValues } from "./invoice-form-values";
 
-// ==========================================================
-// mapDraftToFormValues
-//
-// Turns a fetched draft/invoice (API shape) into a fully
-// populated InvoiceFormValues, ready to hand to form.reset().
-//
-// This is used both when a draft first loads AND when the
-// user clicks "Discard changes" — previously this ~250 line
-// object literal was duplicated three times across
-// EditInvoiceWrapper.tsx (initial load effect, form-reset
-// effect, and handleReset). It's consolidated here into one
-// function so there's a single source of truth.
-//
-// NOTE: the original code resolved the billing/place-of-supply
-// state codes slightly differently in each of the three spots
-// (one used `||` chaining, the others used `??`, which meant an
-// already-resolved empty string could short-circuit the
-// fallback to business.sellerStateCode). This version always
-// uses `||`, i.e. an empty string is treated as "not set" and
-// falls through to the next option — this was clearly the
-// intent, so it's fixed here rather than reproduced.
-// ==========================================================
 
 export function mapDraftToFormValues(
   draft: Record<string, unknown> | null | undefined,
