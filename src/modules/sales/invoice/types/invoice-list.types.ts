@@ -21,7 +21,8 @@ export interface InvoiceListItem {
 
   invoiceType: InvoiceType;
 
-  totalAmount: number;
+  
+  grandTotal: number;
 
   paymentStatus: PaymentStatus;
   invoiceStatus: InvoiceStatus;

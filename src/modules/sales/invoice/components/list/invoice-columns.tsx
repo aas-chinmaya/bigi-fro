@@ -61,11 +61,11 @@ export const InvoiceColumns: ColumnDef<InvoiceListItem>[] = [
   },
 
   {
-    accessorKey: "totalAmount",
+    accessorKey: "grandTotal",
     header: "Total",
 
     cell: ({ row }) => {
-      const amount = Number(row.original.totalAmount ?? 0);
+      const amount = Number(row.original.grandTotal ?? 0);
 
       return (
         <div>
