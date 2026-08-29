@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -42,64 +43,18 @@ import {
   setSelectedCustomer as setSelectedCustomerAction,
 } from "@/modules/customers/store/customers.slice";
 
+import type { Customer, CustomerAddress } from "@/modules/customers/types";
 import type { InvoiceFormValues } from "../../types/invoice-form.types";
 
 import CustomerQuickCreateDrawer from "./customer-quick-create-drawer";
 import { getStateCode } from "../../lib/state-code";
 
 // ==========================================================
-// TYPES
-// ==========================================================
-
-type CustomerAddress = {
-  id: string;
-  type: "BILLING" | "SHIPPING" | string;
-
-  label?: string | null;
-  contactPerson?: string | null;
-  contactNumber?: string | null;
-
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  landmark?: string | null;
-
-  city?: string | null;
-  district?: string | null;
-  state?: string | null;
-  country?: string | null;
-  pincode?: string | null;
-  stateCode?: string | null;
-
-  isDefault?: boolean;
-  isActive?: boolean;
-};
-
-type CustomerDetails = {
-  id: string;
-
-  customerType?: string | null;
-  name?: string | null;
-  mobile?: string | null;
-  alternateMobile?: string | null;
-  email?: string | null;
-
-  gstin?: string | null;
-  pan?: string | null;
-  companyName?: string | null;
-
-  isActive?: boolean;
-
-  addresses?: CustomerAddress[] | null;
-};
-
-// ==========================================================
 // HELPERS
 // ==========================================================
 
 function clean(value?: string | null) {
-  return value && value.trim()
-    ? value.trim()
-    : "";
+  return value && value.trim() ? value.trim() : "";
 }
 
 function formatCustomerType(type?: string | null) {
@@ -109,86 +64,45 @@ function formatCustomerType(type?: string | null) {
     .toLowerCase()
     .split("_")
     .filter(Boolean)
-    .map(
-      (word) =>
-        word[0].toUpperCase() +
-        word.slice(1),
-    )
+    .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
 }
 
-// ==========================================================
-// GET BILLING ADDRESS
-// ==========================================================
-
 function getAddressByType(
-  customer: CustomerDetails | undefined,
+  customer: Customer | undefined,
   type: "BILLING" | "SHIPPING",
 ) {
-  const addresses = (
-    customer?.addresses ?? []
-  ).filter(
-    (address) =>
-      address.isActive !== false,
+  const addresses = (customer?.addresses ?? []).filter(
+    (address) => address.isActive !== false,
   );
 
   return (
     addresses.find(
-      (address) =>
-        address.type === type &&
-        address.isDefault,
+      (address) => address.type === type && address.isDefault,
     ) ??
-    addresses.find(
-      (address) =>
-        address.type === type,
-    ) ??
+    addresses.find((address) => address.type === type) ??
     null
   );
 }
 
-// ==========================================================
-// GET SHIPPING ADDRESSES
-// DEFAULT SHIPPING FIRST
-// ==========================================================
-
-function getShippingAddresses(
-  customer: CustomerDetails | undefined,
-) {
-  const addresses = (
-    customer?.addresses ?? []
-  ).filter(
+function getShippingAddresses(customer: Customer | undefined) {
+  const addresses = (customer?.addresses ?? []).filter(
     (address) =>
-      address.type === "SHIPPING" &&
-      address.isActive !== false,
+      address.type === "SHIPPING" && address.isActive !== false,
   );
 
   return [
-    ...addresses.filter(
-      (address) => address.isDefault,
-    ),
-    ...addresses.filter(
-      (address) => !address.isDefault,
-    ),
+    ...addresses.filter((address) => address.isDefault),
+    ...addresses.filter((address) => !address.isDefault),
   ];
 }
 
-// ==========================================================
-// FORMAT ADDRESS
-// ==========================================================
-
-function formatAddress(
-  address?: CustomerAddress | null,
-) {
+function formatAddress(address?: CustomerAddress | null) {
   if (!address) {
-    return {
-      first: "",
-      rest: "",
-    };
+    return { first: "", rest: "" };
   }
 
-  const first = clean(
-    address.addressLine1,
-  );
+  const first = clean(address.addressLine1);
 
   const rest =
     [
@@ -200,23 +114,12 @@ function formatAddress(
     ]
       .filter(Boolean)
       .join(", ") +
-    (clean(address.pincode)
-      ? ` - ${clean(address.pincode)}`
-      : "");
+    (clean(address.pincode) ? ` - ${clean(address.pincode)}` : "");
 
-  return {
-    first,
-    rest,
-  };
+  return { first, rest };
 }
 
-// ==========================================================
-// ADDRESS LABEL
-// ==========================================================
-
-function addressLabel(
-  address: CustomerAddress,
-) {
+function addressLabel(address: CustomerAddress) {
   return (
     clean(address.label) ||
     clean(address.addressLine1) ||
@@ -234,43 +137,24 @@ export default function BuyerInformationCard() {
     watch,
     setValue,
     formState: { errors },
-  } =
-    useFormContext<InvoiceFormValues>();
+  } = useFormContext<InvoiceFormValues>();
 
   const dispatch = useDispatch();
 
-  const {
-    customers,
-    loading,
-  } = useSelector(
-    (state: any) =>
-      state.customers,
+  const { customers, loading } = useSelector(
+    (state: any) => state.customers,
   ) as {
-    customers: CustomerDetails[];
+    customers: Customer[];
     loading: boolean;
   };
 
-  const [isOpen, setIsOpen] =
-    useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [customerQuery, setCustomerQuery] = useState("");
+  const [shipSelection, setShipSelection] = useState<string>("");
 
-  const [isSelecting, setIsSelecting] =
-    useState(false);
-
-  const [customerQuery, setCustomerQuery] =
-    useState("");
-
-  const [shipSelection, setShipSelection] =
-    useState<string>("");
-
-  // ========================================================
-  // FORM VALUES
-  // ========================================================
-
-  const customerId =
-    watch("customerId");
-
-  const sameAsBilling =
-    watch("sameAsBilling") ?? false;
+  const customerId = watch("customerId");
+  const sameAsBilling = watch("sameAsBilling") ?? false;
 
   // ========================================================
   // LOAD CUSTOMERS
@@ -279,58 +163,37 @@ export default function BuyerInformationCard() {
   useEffect(() => {
     let active = true;
 
-    const loadCustomers =
-      async () => {
-        dispatch(
-          setLoadingAction(true),
-        );
+    const loadCustomers = async () => {
+      dispatch(setLoadingAction(true));
 
-        try {
-          const data =
-            await customersService.getCustomers();
+      try {
+        const data = await customersService.getCustomers();
 
-          const list: CustomerDetails[] =
-            Array.isArray(data)
-              ? data
-              : data?.customers ??
-                data?.data ??
-                [];
+        const list: Customer[] = Array.isArray(data)
+          ? data
+          : data?.customers ?? data?.data ?? [];
 
-          if (active) {
-            dispatch(
-              setCustomersAction(
-                list as never,
-              ),
-            );
-          }
-        } catch (error) {
-          console.error(
-            "Failed to load customers:",
-            error,
-          );
-
-          if (active) {
-            dispatch(
-              setErrorAction(
-                "Failed to load customers",
-              ),
-            );
-          }
-        } finally {
-          if (active) {
-            dispatch(
-              setLoadingAction(false),
-            );
-          }
+        if (active) {
+          dispatch(setCustomersAction(list as never));
         }
-      };
+      } catch (error) {
+        console.error("Failed to load customers:", error);
+
+        if (active) {
+          dispatch(setErrorAction("Failed to load customers"));
+        }
+      } finally {
+        if (active) {
+          dispatch(setLoadingAction(false));
+        }
+      }
+    };
 
     void loadCustomers();
 
     return () => {
       active = false;
     };
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -338,342 +201,147 @@ export default function BuyerInformationCard() {
   // CUSTOMER SEARCH
   // ========================================================
 
-  const matchingCustomers =
-    useMemo(() => {
-      const query =
-        customerQuery
-          .trim()
-          .toLowerCase();
+  const matchingCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase();
+    const list = customers ?? [];
 
-      const list =
-        customers ?? [];
+    if (!query) return list;
 
-      if (!query) {
-        return list;
-      }
-
-      return list.filter(
-        (customer) =>
-          [
-            customer.name,
-            customer.companyName,
-            customer.mobile,
-            customer.email,
-          ]
-            .filter(Boolean)
-            .some(
-              (value) =>
-                value!
-                  .toLowerCase()
-                  .includes(query),
-            ),
-      );
-    }, [
-      customerQuery,
-      customers,
-    ]);
+    return list.filter((customer) =>
+      [customer.name, customer.companyName, customer.mobile, customer.email]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query)),
+    );
+  }, [customerQuery, customers]);
 
   // ========================================================
   // SELECTED CUSTOMER
   // ========================================================
 
-  const selectedCustomer =
-    (customers ?? []).find(
-      (customer) =>
-        customer.id ===
-        customerId,
-    );
+  const selectedCustomer = (customers ?? []).find(
+    (customer) => customer.id === customerId,
+  );
 
-  const billingAddress =
-    getAddressByType(
-      selectedCustomer,
-      "BILLING",
-    );
-
-  const shippingAddresses =
-    getShippingAddresses(
-      selectedCustomer,
-    );
+  const billingAddress = getAddressByType(selectedCustomer, "BILLING");
+  const shippingAddresses = getShippingAddresses(selectedCustomer);
 
   // ========================================================
   // APPLY CUSTOMER
   // ========================================================
 
-  const applyCustomer = (
-    customer: CustomerDetails,
-  ) => {
-    const billing =
-      getAddressByType(
-        customer,
-        "BILLING",
-      );
+  const applyCustomer = (customer: Customer) => {
+    const billing = getAddressByType(customer, "BILLING");
+    const shippingList = getShippingAddresses(customer);
 
-    const shippingAddresses =
-      getShippingAddresses(
-        customer,
-      );
+    // Prefer SHIPPING; fall back to BILLING
+    const shipping = shippingList[0] ?? billing;
 
-    // ------------------------------------------------------
-    // IMPORTANT
-    //
-    // Prefer SHIPPING address.
-    // Only use BILLING when there is no SHIPPING address.
-    // ------------------------------------------------------
+    const billingStateCode = getStateCode(
+      billing?.state,
+      billing?.stateCode,
+    );
 
-    const shipping =
-      shippingAddresses[0] ??
-      billing;
+    const values: Partial<InvoiceFormValues> = {
+      customerId: customer.id,
 
-    const billingStateCode =
-      getStateCode(
-        billing?.state,
-        billing?.stateCode,
-      );
+      buyerName: clean(customer.name),
+      buyerCompanyName: clean(customer.companyName),
 
-    const values: Partial<InvoiceFormValues> =
-      {
-        customerId:
-          customer.id,
+      buyerContactPerson:
+        clean(billing?.contactPerson) || clean(customer.name),
 
-        buyerName:
-          clean(customer.name),
+      buyerPhone:
+        clean(billing?.contactNumber) || clean(customer.mobile),
 
-        buyerCompanyName:
-          clean(
-            customer.companyName,
-          ),
+      buyerGSTIN: clean(customer.gstin) || clean(customer.pan),
 
-        buyerContactPerson:
-          clean(
-            billing?.contactPerson,
-          ) ||
-          clean(
-            customer.name,
-          ),
+      billingAddressLine1: billing?.addressLine1 ?? "",
+      billingAddressLine2: billing?.addressLine2 ?? "",
+      billingCity: billing?.city ?? "",
+      billingState: billing?.state ?? "",
+      billingStateCode,
+      billingPincode: billing?.pincode ?? "",
+      billingCountry: billing?.country ?? "India",
 
-        buyerPhone:
-          clean(
-            billing?.contactNumber,
-          ) ||
-          clean(
-            customer.mobile,
-          ),
-
-        buyerGSTIN:
-          clean(customer.gstin) ||
-          clean(customer.pan),
-
-        // --------------------------------------------------
-        // BILLING
-        // --------------------------------------------------
-
-        billingAddressLine1:
-          billing?.addressLine1 ??
-          "",
-
-        billingAddressLine2:
-          billing?.addressLine2 ??
-          "",
-
-        billingCity:
-          billing?.city ?? "",
-
-        billingState:
-          billing?.state ?? "",
-
-        billingStateCode:
-          billingStateCode,
-
-        billingPincode:
-          billing?.pincode ?? "",
-
-        billingCountry:
-          billing?.country ??
-          "India",
-
-        // --------------------------------------------------
-        // PLACE OF SUPPLY
-        // --------------------------------------------------
-
-        placeOfSupply:
-          clean(
-            billing?.state,
-          ),
-
-        placeOfSupplyCode:
-          billingStateCode,
-      };
-
-    // ======================================================
-    // SHIPPING
-    // ======================================================
+      placeOfSupply: clean(billing?.state),
+      placeOfSupplyCode: billingStateCode,
+    };
 
     if (shipping) {
-      const shippingStateCode =
-        getStateCode(
-          shipping.state,
-          shipping.stateCode,
-        );
-
-      values.shippingAddressLine1 =
-        shipping.addressLine1 ??
-        "";
-
-      values.shippingAddressLine2 =
-        shipping.addressLine2 ??
-        "";
-
-      values.shippingCity =
-        shipping.city ?? "";
-
-      values.shippingState =
-        shipping.state ?? "";
-
-      values.shippingStateCode =
-        shippingStateCode;
-
-      values.shippingPincode =
-        shipping.pincode ?? "";
-
-      values.shippingCountry =
-        shipping.country ??
-        "India";
-
-      // ----------------------------------------------------
-      // REAL SHIPPING ADDRESS
-      // ----------------------------------------------------
-
-      if (
-        shipping.type ===
-        "SHIPPING"
-      ) {
-        setShipSelection(
-          shipping.id,
-        );
-
-        setValue(
-          "sameAsBilling",
-          false,
-          {
-            shouldDirty: true,
-            shouldValidate: true,
-          },
-        );
-      }
-
-      // ----------------------------------------------------
-      // NO SHIPPING ADDRESS
-      // FALLBACK TO BILLING
-      // ----------------------------------------------------
-
-      else {
-        setShipSelection(
-          "billing",
-        );
-
-        setValue(
-          "sameAsBilling",
-          true,
-          {
-            shouldDirty: true,
-            shouldValidate: true,
-          },
-        );
-      }
-    }
-
-    // ======================================================
-    // NO ADDRESS
-    // ======================================================
-
-    else {
-      setShipSelection("");
-
-      setValue(
-        "sameAsBilling",
-        false,
-        {
-          shouldDirty: true,
-          shouldValidate: true,
-        },
+      const shippingStateCode = getStateCode(
+        shipping.state,
+        shipping.stateCode,
       );
 
-      values.shippingAddressLine1 =
-        "";
+      values.shippingAddressLine1 = shipping.addressLine1 ?? "";
+      values.shippingAddressLine2 = shipping.addressLine2 ?? "";
+      values.shippingCity = shipping.city ?? "";
+      values.shippingState = shipping.state ?? "";
+      values.shippingStateCode = shippingStateCode;
+      values.shippingPincode = shipping.pincode ?? "";
+      values.shippingCountry = shipping.country ?? "India";
 
-      values.shippingAddressLine2 =
-        "";
+      if (shipping.type === "SHIPPING") {
+        setShipSelection(shipping.id ?? "");
+        setValue("sameAsBilling", false, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      } else {
+        setShipSelection("billing");
+        setValue("sameAsBilling", true, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    } else {
+      setShipSelection("");
+      setValue("sameAsBilling", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
 
-      values.shippingCity =
-        "";
-
-      values.shippingState =
-        "";
-
-      values.shippingStateCode =
-        "";
-
-      values.shippingPincode =
-        "";
-
-      values.shippingCountry =
-        "";
+      values.shippingAddressLine1 = "";
+      values.shippingAddressLine2 = "";
+      values.shippingCity = "";
+      values.shippingState = "";
+      values.shippingStateCode = "";
+      values.shippingPincode = "";
+      values.shippingCountry = "";
     }
 
-    // ======================================================
-    // APPLY VALUES
-    // ======================================================
+    Object.entries(values).forEach(([name, value]) => {
+      setValue(name as keyof InvoiceFormValues, value as never, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
 
-    Object.entries(values).forEach(
-      ([name, value]) => {
-        setValue(
-          name as keyof InvoiceFormValues,
-          value as never,
-          {
-            shouldDirty: true,
-            shouldValidate: true,
-          },
-        );
-      },
-    );
-
-    dispatch(
-      setSelectedCustomerAction(
-        customer as never,
-      ),
-    );
+    dispatch(setSelectedCustomerAction(customer as never));
   };
 
   // ========================================================
-  // NEW CUSTOMER
+  // NEW CUSTOMER (matches drawer onCreated: Customer)
   // ========================================================
 
-  const applyNewCustomer = (
-    customer: CustomerDetails,
-  ) => {
+  const applyNewCustomer = (customer: Customer) => {
     applyCustomer(customer);
 
     dispatch(
       setCustomersAction(
         [
           customer,
-          ...(customers ?? []).filter(
-            (existing) =>
-              existing.id !==
-              customer.id,
-          ),
+          ...(customers ?? []).filter((c) => c.id !== customer.id),
         ] as never,
       ),
     );
   };
 
   // ========================================================
-  // SELECT CUSTOMER
+  // SELECT / CLEAR
   // ========================================================
 
-  const selectCustomer = async (
-    customer: CustomerDetails,
-  ) => {
+  const selectCustomer = async (customer: Customer) => {
     setIsSelecting(true);
 
     try {
@@ -685,79 +353,44 @@ export default function BuyerInformationCard() {
     }
   };
 
-  // ========================================================
-  // CLEAR CUSTOMER
-  // ========================================================
-
   const clearCustomer = () => {
-    setValue(
-      "customerId",
-      "",
-      {
-        shouldDirty: true,
-        shouldValidate: true,
-      },
-    );
+    setValue("customerId", "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
 
-    setValue(
-      "sameAsBilling",
-      false,
-      {
-        shouldDirty: true,
-        shouldValidate: true,
-      },
-    );
+    setValue("sameAsBilling", false, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
 
     setShipSelection("");
-
-    dispatch(
-      setSelectedCustomerAction(
-        null as never,
-      ),
-    );
+    dispatch(setSelectedCustomerAction(null as never));
   };
 
   // ========================================================
   // DISPLAY
   // ========================================================
 
-  const msLabel =
-    selectedCustomer
-      ? [
-          selectedCustomer.companyName,
-          selectedCustomer.gstin,
-          selectedCustomer.name,
-          billingAddress?.addressLine1,
-        ]
-          .map(clean)
-          .filter(Boolean)
-          .join(", ")
-      : "";
+  const msLabel = selectedCustomer
+    ? [
+        selectedCustomer.companyName,
+        selectedCustomer.gstin,
+        selectedCustomer.name,
+        billingAddress?.addressLine1,
+      ]
+        .map(clean)
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
-  // ========================================================
-  // RESOLVED SHIPPING
-  // ========================================================
-
-  const resolvedShipTo:
-    | CustomerAddress
-    | null =
+  const resolvedShipTo: CustomerAddress | null =
     shipSelection === "billing"
       ? billingAddress
-      : shippingAddresses.find(
-          (address) =>
-            address.id ===
-            shipSelection,
-        ) ?? null;
+      : shippingAddresses.find((a) => a.id === shipSelection) ?? null;
 
-  const shipAddress =
-    formatAddress(
-      resolvedShipTo,
-    );
-
-  const billingDisplay =
-    formatAddress(
-      billingAddress,
-    );
+  const shipAddress = formatAddress(resolvedShipTo);
+  const billingDisplay = formatAddress(billingAddress);
 
   // ========================================================
   // RENDER
@@ -765,10 +398,6 @@ export default function BuyerInformationCard() {
 
   return (
     <section className="min-w-0">
-      {/* ==================================================
-          HEADER
-      ================================================== */}
-
       <div className="flex items-center justify-between gap-3 border-b border-gray-200 pb-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-violet-50 text-violet-600">
@@ -780,11 +409,7 @@ export default function BuyerInformationCard() {
           </h2>
         </div>
 
-        <CustomerQuickCreateDrawer
-          onCreated={
-            applyNewCustomer
-          }
-        >
+        <CustomerQuickCreateDrawer onCreated={applyNewCustomer}>
           <Button
             type="button"
             variant="outline"
@@ -798,31 +423,16 @@ export default function BuyerInformationCard() {
       </div>
 
       <div className="divide-y divide-gray-100">
-        {/* ==================================================
-            M/S.
-        ================================================== */}
-
-        <Row
-          label="M/S."
-          required
-        >
+        {/* M/S. */}
+        <Row label="M/S." required>
           <div className="flex min-w-0 items-center gap-2">
-            <DropdownMenu
-              open={isOpen}
-              onOpenChange={
-                setIsOpen
-              }
-            >
-              <DropdownMenuTrigger
-                asChild
-              >
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+              <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
                   role="combobox"
-                  aria-expanded={
-                    isOpen
-                  }
+                  aria-expanded={isOpen}
                   className="h-10 min-w-0 flex-1 justify-between font-normal"
                 >
                   <span className="min-w-0 flex-1 truncate text-left">
@@ -831,7 +441,6 @@ export default function BuyerInformationCard() {
                         ? "Loading customers..."
                         : "Search or select customer")}
                   </span>
-
                   <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
@@ -842,82 +451,51 @@ export default function BuyerInformationCard() {
               >
                 <div className="relative mb-2">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
                   <Input
                     autoFocus
-                    value={
-                      customerQuery
-                    }
-                    onChange={(e) =>
-                      setCustomerQuery(
-                        e.target.value,
-                      )
-                    }
-                    onKeyDown={(e) =>
-                      e.stopPropagation()
-                    }
+                    value={customerQuery}
+                    onChange={(e) => setCustomerQuery(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
                     placeholder="Search customers..."
                     className="pl-9"
                   />
                 </div>
 
                 <div className="max-h-[200px] overflow-y-auto pr-1">
-                  {loading ||
-                  isSelecting ? (
+                  {loading || isSelecting ? (
                     <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
-
                       {isSelecting
                         ? "Loading customer details..."
                         : "Loading customers..."}
                     </div>
                   ) : matchingCustomers.length ? (
-                    matchingCustomers.map(
-                      (
-                        customer,
-                      ) => (
-                        <DropdownMenuItem
-                          key={
-                            customer.id
-                          }
-                          onSelect={(
-                            e,
-                          ) => {
-                            e.preventDefault();
-
-                            void selectCustomer(
-                              customer,
-                            );
-                          }}
-                          className="flex-col items-start gap-0.5 px-3 py-2.5"
-                        >
-                          <span className="flex w-full items-center gap-2 font-medium text-gray-900">
-                            {
-                              customer.name
-                            }
-
-                            {customerId ===
-                              customer.id && (
-                              <Check className="ml-auto size-4 text-primary" />
-                            )}
-                          </span>
-
-                          <span className="text-xs text-muted-foreground">
-                            {[
-                              customer.companyName,
-                              customer.mobile,
-                              customer.email,
-                            ]
-                              .filter(
-                                Boolean,
-                              )
-                              .join(
-                                " · ",
-                              )}
-                          </span>
-                        </DropdownMenuItem>
-                      ),
-                    )
+                    matchingCustomers.map((customer) => (
+                      <DropdownMenuItem
+                        key={customer.id}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          void selectCustomer(customer);
+                        }}
+                        className="flex-col items-start gap-0.5 px-3 py-2.5"
+                      >
+                        <span className="flex w-full items-center gap-2 font-medium text-gray-900">
+                          {customer.name}
+                          {customerId === customer.id && (
+                            <Check className="ml-auto size-4 text-primary" />
+                          )}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {[
+                            customer.companyName,
+                            customer.mobile,
+                            customer.email,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </DropdownMenuItem>
+                    ))
                   ) : (
                     <div className="px-3 py-3 text-sm text-muted-foreground">
                       No customers found.
@@ -932,9 +510,7 @@ export default function BuyerInformationCard() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={
-                  clearCustomer
-                }
+                onClick={clearCustomer}
                 className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
                 aria-label="Clear customer"
                 title="Clear customer"
@@ -944,32 +520,18 @@ export default function BuyerInformationCard() {
             )}
           </div>
 
-          <FormError
-            message={
-              errors.customerId
-                ?.message
-            }
-          />
+          <FormError message={errors.customerId?.message} />
         </Row>
 
-        {/* ==================================================
-            CUSTOMER TYPE
-        ================================================== */}
-
+        {/* Customer Type */}
         <Row label="Customer Type">
           <div className="flex h-10 items-center gap-2 rounded-md bg-gray-50 px-3 text-sm text-gray-700">
             <Tag className="size-4 shrink-0 text-muted-foreground" />
-
-            {formatCustomerType(
-              selectedCustomer?.customerType,
-            )}
+            {formatCustomerType(selectedCustomer?.customerType)}
           </div>
         </Row>
 
-        {/* ==================================================
-            ADDRESS
-        ================================================== */}
-
+        {/* Address */}
         <Row label="Address">
           <Textarea
             readOnly
@@ -982,104 +544,52 @@ export default function BuyerInformationCard() {
           />
         </Row>
 
-        {/* ==================================================
-            CONTACT PERSON
-        ================================================== */}
-
+        {/* Contact Person */}
         <Row label="Contact Person">
           <div className="relative">
             <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
             <Input
-              {...register(
-                "buyerContactPerson",
-              )}
+              {...register("buyerContactPerson")}
               placeholder="Contact Person"
               className="pl-9"
             />
           </div>
-
-          <FormError
-            message={
-              errors
-                .buyerContactPerson
-                ?.message
-            }
-          />
+          <FormError message={errors.buyerContactPerson?.message} />
         </Row>
 
-        {/* ==================================================
-            PHONE
-        ================================================== */}
-
+        {/* Phone */}
         <Row label="Phone No">
           <div className="relative">
             <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
             <Input
               type="tel"
               inputMode="numeric"
               maxLength={15}
               placeholder="Phone No"
               className="pl-9"
-              {...register(
-                "buyerPhone",
-                {
-                  onChange: (
-                    e,
-                  ) => {
-                    e.target.value =
-                      e.target.value.replace(
-                        /[^\d+ ]/g,
-                        "",
-                      );
-                  },
+              {...register("buyerPhone", {
+                onChange: (e) => {
+                  e.target.value = e.target.value.replace(/[^\d+ ]/g, "");
                 },
-              )}
+              })}
             />
           </div>
-
-          <FormError
-            message={
-              errors.buyerPhone
-                ?.message
-            }
-          />
+          <FormError message={errors.buyerPhone?.message} />
         </Row>
 
-        {/* ==================================================
-            GSTIN / PAN
-        ================================================== */}
-
+        {/* GSTIN / PAN */}
         <Row label="GSTIN / PAN">
           <div className="relative">
             <Fingerprint className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-            <Input
-              {...register(
-                "buyerGSTIN",
-              )}
-              className="pl-9"
-            />
+            <Input {...register("buyerGSTIN")} className="pl-9" />
           </div>
-
-          <FormError
-            message={
-              errors.buyerGSTIN
-                ?.message
-            }
-          />
+          <FormError message={errors.buyerGSTIN?.message} />
         </Row>
 
-        {/* ==================================================
-            SHIP TO
-        ================================================== */}
-
+        {/* Ship To */}
         <Row label="Ship To">
           <DropdownMenu>
-            <DropdownMenuTrigger
-              asChild
-            >
+            <DropdownMenuTrigger asChild>
               <Button
                 type="button"
                 variant="outline"
@@ -1087,23 +597,16 @@ export default function BuyerInformationCard() {
               >
                 <span className="flex items-center gap-2 truncate">
                   <Truck className="size-4 shrink-0 text-muted-foreground" />
-
                   <span className="truncate">
-                    {shipSelection ===
-                    "billing"
+                    {shipSelection === "billing"
                       ? billingAddress
-                        ? addressLabel(
-                            billingAddress,
-                          )
+                        ? addressLabel(billingAddress)
                         : "Same as billing address"
                       : resolvedShipTo
-                        ? addressLabel(
-                            resolvedShipTo,
-                          )
+                        ? addressLabel(resolvedShipTo)
                         : "--"}
                   </span>
                 </span>
-
                 <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
@@ -1112,379 +615,152 @@ export default function BuyerInformationCard() {
               align="start"
               className="w-[var(--radix-dropdown-menu-trigger-width)]"
             >
-              {/* NONE */}
-
               <DropdownMenuItem
                 onSelect={() => {
-                  setShipSelection(
-                    "",
-                  );
-
-                  setValue(
-                    "sameAsBilling",
-                    false,
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingAddressLine1",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingAddressLine2",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingCity",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingState",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingStateCode",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingPincode",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
-
-                  setValue(
-                    "shippingCountry",
-                    "",
-                    {
-                      shouldDirty:
-                        true,
-                    },
-                  );
+                  setShipSelection("");
+                  setValue("sameAsBilling", false, { shouldDirty: true });
+                  setValue("shippingAddressLine1", "", { shouldDirty: true });
+                  setValue("shippingAddressLine2", "", { shouldDirty: true });
+                  setValue("shippingCity", "", { shouldDirty: true });
+                  setValue("shippingState", "", { shouldDirty: true });
+                  setValue("shippingStateCode", "", { shouldDirty: true });
+                  setValue("shippingPincode", "", { shouldDirty: true });
+                  setValue("shippingCountry", "", { shouldDirty: true });
                 }}
               >
                 --
               </DropdownMenuItem>
 
-              {/* ==================================================
-                  SAME AS BILLING
-              ================================================== */}
-
               {billingAddress && (
                 <DropdownMenuItem
                   onSelect={() => {
-                    setShipSelection(
-                      "billing",
-                    );
+                    setShipSelection("billing");
+                    setValue("sameAsBilling", true, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
 
-                    setValue(
-                      "sameAsBilling",
-                      true,
-                      {
-                        shouldDirty:
-                          true,
-                        shouldValidate:
-                          true,
-                      },
+                    const code = getStateCode(
+                      billingAddress.state,
+                      billingAddress.stateCode,
                     );
-
-                    const code =
-                      getStateCode(
-                        billingAddress.state,
-                        billingAddress.stateCode,
-                      );
 
                     setValue(
                       "shippingAddressLine1",
-                      billingAddress.addressLine1 ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
+                      billingAddress.addressLine1 ?? "",
+                      { shouldDirty: true },
                     );
-
                     setValue(
                       "shippingAddressLine2",
-                      billingAddress.addressLine2 ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
+                      billingAddress.addressLine2 ?? "",
+                      { shouldDirty: true },
                     );
-
-                    setValue(
-                      "shippingCity",
-                      billingAddress.city ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
-                    );
-
-                    setValue(
-                      "shippingState",
-                      billingAddress.state ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
-                    );
-
-                    setValue(
-                      "shippingStateCode",
-                      code,
-                      {
-                        shouldDirty:
-                          true,
-                      },
-                    );
-
+                    setValue("shippingCity", billingAddress.city ?? "", {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingState", billingAddress.state ?? "", {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingStateCode", code, {
+                      shouldDirty: true,
+                    });
                     setValue(
                       "shippingPincode",
-                      billingAddress.pincode ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
+                      billingAddress.pincode ?? "",
+                      { shouldDirty: true },
                     );
-
                     setValue(
                       "shippingCountry",
-                      billingAddress.country ??
-                        "",
-                      {
-                        shouldDirty:
-                          true,
-                      },
+                      billingAddress.country ?? "",
+                      { shouldDirty: true },
                     );
                   }}
                 >
-                  Same as billing —{" "}
-                  {addressLabel(
-                    billingAddress,
-                  )}
+                  Same as billing — {addressLabel(billingAddress)}
                 </DropdownMenuItem>
               )}
 
-              {/* ==================================================
-                  SHIPPING ADDRESSES
-              ================================================== */}
+              {shippingAddresses.map((address) => (
+                <DropdownMenuItem
+                  key={
+                    address.id ??
+                    `${address.type}-${address.addressLine1}`
+                  }
+                  onSelect={() => {
+                    setShipSelection(address.id ?? "");
+                    setValue("sameAsBilling", false, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
 
-              {shippingAddresses.map(
-                (address) => (
-                  <DropdownMenuItem
-                    key={
-                      address.id
-                    }
-                    onSelect={() => {
-                      setShipSelection(
-                        address.id,
-                      );
+                    const code = getStateCode(
+                      address.state,
+                      address.stateCode,
+                    );
 
-                      setValue(
-                        "sameAsBilling",
-                        false,
-                        {
-                          shouldDirty:
-                            true,
-                          shouldValidate:
-                            true,
-                        },
-                      );
-
-                      const code =
-                        getStateCode(
-                          address.state,
-                          address.stateCode,
-                        );
-
-                      setValue(
-                        "shippingAddressLine1",
-                        address.addressLine1 ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingAddressLine2",
-                        address.addressLine2 ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingCity",
-                        address.city ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingState",
-                        address.state ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingStateCode",
-                        code,
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingPincode",
-                        address.pincode ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-
-                      setValue(
-                        "shippingCountry",
-                        address.country ??
-                          "",
-                        {
-                          shouldDirty:
-                            true,
-                        },
-                      );
-                    }}
-                  >
-                    {addressLabel(
-                      address,
-                    )}
-                  </DropdownMenuItem>
-                ),
-              )}
+                    setValue(
+                      "shippingAddressLine1",
+                      address.addressLine1 ?? "",
+                      { shouldDirty: true },
+                    );
+                    setValue(
+                      "shippingAddressLine2",
+                      address.addressLine2 ?? "",
+                      { shouldDirty: true },
+                    );
+                    setValue("shippingCity", address.city ?? "", {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingState", address.state ?? "", {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingStateCode", code, {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingPincode", address.pincode ?? "", {
+                      shouldDirty: true,
+                    });
+                    setValue("shippingCountry", address.country ?? "", {
+                      shouldDirty: true,
+                    });
+                  }}
+                >
+                  {addressLabel(address)}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* ==================================================
-              SHIPPING PREVIEW
-          ================================================== */}
-
-          {resolvedShipTo &&
-            shipAddress.first && (
-              <div className="mt-2 rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700">
-                <p>
-                  {
-                    shipAddress.first
-                  }
-                </p>
-
-                <p>
-                  {
-                    shipAddress.rest
-                  }
-                </p>
-              </div>
-            )}
+          {resolvedShipTo && shipAddress.first && (
+            <div className="mt-2 rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700">
+              <p>{shipAddress.first}</p>
+              <p>{shipAddress.rest}</p>
+            </div>
+          )}
         </Row>
 
-        {/* ==================================================
-            PLACE OF SUPPLY
-        ================================================== */}
-
-        <Row
-          label="Place of Supply"
-          required
-        >
+        {/* Place of Supply */}
+        <Row label="Place of Supply" required>
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
             <Input
-              {...register(
-                "placeOfSupply",
-              )}
+              {...register("placeOfSupply")}
               placeholder="State or union territory"
               className="pl-9"
             />
           </div>
-
-          <FormError
-            message={
-              errors.placeOfSupply
-                ?.message
-            }
-          />
+          <FormError message={errors.placeOfSupply?.message} />
         </Row>
       </div>
     </section>
   );
 }
 
-// ==========================================================
-// FORM ERROR
-// ==========================================================
-
-function FormError({
-  message,
-}: {
-  message?: string;
-}) {
+function FormError({ message }: { message?: string }) {
   return message ? (
-    <p className="mt-1 text-xs text-red-600">
-      {message}
-    </p>
+    <p className="mt-1 text-xs text-red-600">{message}</p>
   ) : null;
 }
-
-// ==========================================================
-// ROW
-// ==========================================================
 
 function Row({
   label,
@@ -1499,17 +775,9 @@ function Row({
     <div className="grid min-w-0 grid-cols-1 items-start gap-1.5 py-3 sm:grid-cols-[130px_1fr] sm:gap-4">
       <Label className="text-sm text-gray-700 sm:pt-2.5">
         {label}
-
-        {required && (
-          <span className="ml-1 text-red-500">
-            *
-          </span>
-        )}
+        {required && <span className="ml-1 text-red-500">*</span>}
       </Label>
-
-      <div className="min-w-0">
-        {children}
-      </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

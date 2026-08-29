@@ -35,6 +35,9 @@ export default function InvoiceTable({
         (invoice.invoiceNumber ?? "")
           .toLowerCase()
           .includes(searchText) ||
+        (invoice.customerName ?? "")
+          .toLowerCase()
+          .includes(searchText) ||
         (invoice.buyerName ?? "")
           .toLowerCase()
           .includes(searchText) ||

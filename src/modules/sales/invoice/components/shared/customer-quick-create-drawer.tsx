@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type ComponentType } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -9,12 +10,24 @@ import {
   type Resolver,
   type UseFormReturn,
   useWatch,
+  type Path,
+  type FieldError,
 } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store/store";
 import {
-  Building2, Globe, Hash, Landmark, Mail, MapPin, Phone,
-  Route, Save, User, UserPlus, X,
+  Building2,
+  Globe,
+  Hash,
+  Landmark,
+  Mail,
+  MapPin,
+  Phone,
+  Route,
+  Save,
+  User,
+  UserPlus,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +36,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 
 import { notify } from "@/lib/toast";
@@ -51,13 +68,26 @@ const schema = z.object({
   name: z.string().trim().min(1, "Customer name is required."),
   mobile: z.string().regex(/^[6-9]\d{9}$/, "Invalid mobile number."),
   companyName: z.string().trim().optional(),
-  email: z.string().trim().email("Invalid email.").optional().or(z.literal("")),
-  gstin: z.string().trim().toUpperCase()
+  email: z
+    .string()
+    .trim()
+    .email("Invalid email.")
+    .optional()
+    .or(z.literal("")),
+  gstin: z
+    .string()
+    .trim()
+    .toUpperCase()
     .regex(/^[0-9A-Z]{15}$/, "Invalid GSTIN.")
-    .optional().or(z.literal("")),
-  pan: z.string().trim().toUpperCase()
+    .optional()
+    .or(z.literal("")),
+  pan: z
+    .string()
+    .trim()
+    .toUpperCase()
     .regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN.")
-    .optional().or(z.literal("")),
+    .optional()
+    .or(z.literal("")),
   billingAddress: addressSchema,
   shippingAddress: addressSchema.optional(),
 });
@@ -73,7 +103,7 @@ const emptyAddress = {
   state: "",
   country: "India",
   pincode: "",
-  ewayDistance: undefined,
+  ewayDistance: undefined as number | undefined,
 };
 
 const defaults: FormData = {
@@ -88,31 +118,135 @@ const defaults: FormData = {
   shippingAddress: { ...emptyAddress },
 };
 
-const customerFields = [
-  ["name", "Customer Name", "Enter customer name", User, true],
-  ["mobile", "Mobile Number", "10-digit mobile", Phone, true, "tel", "numeric", "number", 10],
-  ["companyName", "Company Name", "Enter company name", Building2],
-  ["email", "Email", "name@example.com", Mail, false, "email", "email", "email"],
-  ["gstin", "GSTIN", "15-character GSTIN", Building2, false, "text", "text", "upper", 15],
-  ["pan", "PAN", "10-character PAN", Hash, false, "text", "text", "upper", 10],
-].map(([name, label, placeholder, icon, required, type, inputMode, sanitize, maxLength]) => ({
-  name, label, placeholder, icon, required, type, inputMode, sanitize, maxLength,
-}));
+type SanitizeMode = "number" | "decimal" | "upper" | "email";
 
-const addressFields = (prefix: string) =>
-  [
-    ["addressLine1", "Address 1", "House / Flat / Street", MapPin, true],
-    ["addressLine2", "Address 2", "Area / Locality / Building", MapPin],
-    ["landmark", "Landmark", "Nearby landmark", Landmark],
-    ["city", "City", "Enter city", Building2, true],
-    ["state", "State", "Enter state", MapPin, true],
-    ["country", "Country", "Enter country", Globe, true],
-    ["pincode", "Pincode", "6-digit pincode", Hash, true, "text", "numeric", "number", 6],
-    ["ewayDistance", "E-way Distance", "Distance in km", Route, false, "number", "decimal", "decimal"],
-  ].map(([name, label, placeholder, icon, required, type, inputMode, sanitize, maxLength]) => ({
-    name: `${prefix}.${name}`,
-    label, placeholder, icon, required, type, inputMode, sanitize, maxLength,
-  }));
+type FieldConfig = {
+  name: Path<FormData>;
+  label: string;
+  placeholder: string;
+  icon: ComponentType<{ className?: string }>;
+  required?: boolean;
+  type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  sanitize?: SanitizeMode;
+  maxLength?: number;
+};
+
+const customerFields: FieldConfig[] = [
+  {
+    name: "name",
+    label: "Customer Name",
+    placeholder: "Enter customer name",
+    icon: User,
+    required: true,
+  },
+  {
+    name: "mobile",
+    label: "Mobile Number",
+    placeholder: "10-digit mobile",
+    icon: Phone,
+    required: true,
+    type: "tel",
+    inputMode: "numeric",
+    sanitize: "number",
+    maxLength: 10,
+  },
+  {
+    name: "companyName",
+    label: "Company Name",
+    placeholder: "Enter company name",
+    icon: Building2,
+  },
+  {
+    name: "email",
+    label: "Email",
+    placeholder: "name@example.com",
+    icon: Mail,
+    type: "email",
+    inputMode: "email",
+    sanitize: "email",
+  },
+  {
+    name: "gstin",
+    label: "GSTIN",
+    placeholder: "15-character GSTIN",
+    icon: Building2,
+    sanitize: "upper",
+    maxLength: 15,
+  },
+  {
+    name: "pan",
+    label: "PAN",
+    placeholder: "10-character PAN",
+    icon: Hash,
+    sanitize: "upper",
+    maxLength: 10,
+  },
+];
+
+const addressFields = (
+  prefix: "billingAddress" | "shippingAddress",
+): FieldConfig[] => [
+  {
+    name: `${prefix}.addressLine1` as Path<FormData>,
+    label: "Address 1",
+    placeholder: "House / Flat / Street",
+    icon: MapPin,
+    required: true,
+  },
+  {
+    name: `${prefix}.addressLine2` as Path<FormData>,
+    label: "Address 2",
+    placeholder: "Area / Locality / Building",
+    icon: MapPin,
+  },
+  {
+    name: `${prefix}.landmark` as Path<FormData>,
+    label: "Landmark",
+    placeholder: "Nearby landmark",
+    icon: Landmark,
+  },
+  {
+    name: `${prefix}.city` as Path<FormData>,
+    label: "City",
+    placeholder: "Enter city",
+    icon: Building2,
+    required: true,
+  },
+  {
+    name: `${prefix}.state` as Path<FormData>,
+    label: "State",
+    placeholder: "Enter state",
+    icon: MapPin,
+    required: true,
+  },
+  {
+    name: `${prefix}.country` as Path<FormData>,
+    label: "Country",
+    placeholder: "Enter country",
+    icon: Globe,
+    required: true,
+  },
+  {
+    name: `${prefix}.pincode` as Path<FormData>,
+    label: "Pincode",
+    placeholder: "6-digit pincode",
+    icon: Hash,
+    required: true,
+    inputMode: "numeric",
+    sanitize: "number",
+    maxLength: 6,
+  },
+  {
+    name: `${prefix}.ewayDistance` as Path<FormData>,
+    label: "E-way Distance",
+    placeholder: "Distance in km",
+    icon: Route,
+    type: "number",
+    inputMode: "decimal",
+    sanitize: "decimal",
+  },
+];
 
 export default function CustomerQuickCreateDrawer({
   children,
@@ -127,8 +261,6 @@ export default function CustomerQuickCreateDrawer({
 
   const form = useForm<FormData>({
     defaultValues: defaults,
-    // z.coerce fields (ewayDistance) make zod's inferred resolver input
-    // type wider than FormData, so we assert the resolver shape here.
     resolver: zodResolver(schema) as Resolver<FormData>,
     mode: "onBlur",
   });
@@ -159,15 +291,27 @@ export default function CustomerQuickCreateDrawer({
         ? values.billingAddress
         : values.shippingAddress;
 
-      if (!shipping) throw new Error("Shipping address is required.");
+      if (!shipping) {
+        throw new Error("Shipping address is required.");
+      }
 
+      // Matches customersService.createCustomer required fields
       const payload = {
         businessId: BUSINESS_ID,
-        createdBy: CREATED_BY,
         branchId: BRANCH_ID,
+        createdBy: CREATED_BY,
         customerType: values.customerType,
         name: values.name.trim(),
         mobile: values.mobile.trim(),
+
+        // required account defaults (backend can override later)
+        creditLimit: 0,
+        creditDays: 0,
+        openingBalance: 0,
+        outstandingBalance: 0,
+        rewardPoints: 0,
+        isActive: true,
+
         ...(values.companyName?.trim() && {
           companyName: values.companyName.trim(),
         }),
@@ -180,17 +324,23 @@ export default function CustomerQuickCreateDrawer({
         ...(values.pan?.trim() && {
           pan: values.pan.trim().toUpperCase(),
         }),
+
         addresses: [
-          { type: "BILLING", ...values.billingAddress },
-          { type: "SHIPPING", ...shipping },
+          {
+            type: "BILLING",
+            isDefault: true,
+            isActive: true,
+            ...values.billingAddress,
+          },
+          {
+            type: "SHIPPING",
+            isDefault: true,
+            isActive: true,
+            ...shipping,
+          },
         ],
       };
 
-      // The customer service's payload type carries account/credit
-      // fields (creditLimit, creditDays, openingBalance, etc.) that this
-      // quick-create drawer intentionally leaves for the backend to
-      // default — casting via the service's own parameter type keeps
-      // this in sync if that type ever changes.
       const customer = await customersService.createCustomer(
         payload as Parameters<typeof customersService.createCustomer>[0],
       );
@@ -252,15 +402,17 @@ export default function CustomerQuickCreateDrawer({
                   }
                   className="flex flex-wrap gap-5"
                 >
-                  {["WALK_IN", "REGULAR", "WHOLESALE"].map((type) => (
-                    <label
-                      key={type}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <RadioGroupItem value={type} />
-                      {type.replace("_", " ")}
-                    </label>
-                  ))}
+                  {(["WALK_IN", "REGULAR", "WHOLESALE"] as const).map(
+                    (type) => (
+                      <label
+                        key={type}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <RadioGroupItem value={type} />
+                        {type.replace("_", " ")}
+                      </label>
+                    ),
+                  )}
                 </RadioGroup>
               </Row>
 
@@ -332,17 +484,30 @@ function Field({
   inputMode,
   sanitize,
   maxLength,
-}: any & { form: Form }) {
+}: FieldConfig & { form: Form }) {
   const error = name
     .split(".")
-    .reduce((o: any, k: string) => o?.[k], form.formState.errors)?.message;
+    .reduce<FieldError | undefined | Record<string, unknown>>(
+      (obj, key) =>
+        obj && typeof obj === "object"
+          ? ((obj as Record<string, unknown>)[key] as
+              | FieldError
+              | undefined)
+          : undefined,
+      form.formState.errors as Record<string, unknown>,
+    );
+
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as FieldError).message ?? "")
+      : undefined;
 
   return (
-    <Row label={label} required={required} error={error}>
+    <Row label={label} required={required} error={message}>
       <div className="relative">
         <Icon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          {...form.register(name as never)}
+          {...form.register(name)}
           type={type}
           inputMode={inputMode}
           placeholder={placeholder}
@@ -361,8 +526,8 @@ function Field({
               v = v.toLowerCase().replace(/\s/g, "");
 
             form.setValue(
-              name as never,
-              v.slice(0, maxLength) as never,
+              name,
+              (maxLength ? v.slice(0, maxLength) : v) as never,
               { shouldDirty: true, shouldValidate: true },
             );
           }}
@@ -412,9 +577,7 @@ function Row({
 
       <div>
         {children}
-        {error && (
-          <p className="mt-1 text-xs text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>
     </div>
   );
