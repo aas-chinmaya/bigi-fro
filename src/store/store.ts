@@ -10,6 +10,7 @@ import businessReducer from "@/modules/business/store/businessSlice";
 import invoiceReducer from "@/modules/sales/invoice/store/invoice.slice";
 import customersReducer from "@/modules/customers/store/customers.slice";
 import moneyReceiptReducer  from "@/modules/sales/money-receipt/store/money-receipt.slice";
+import quotationReducer  from "@/modules/sales/quotation/store/quotation.slice";
 
 const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ const store = configureStore({
     business: businessReducer,
     customers: customersReducer,
     moneyReceipt: moneyReceiptReducer ,
+    quotation: quotationReducer ,
   },
 });
 

@@ -251,7 +251,7 @@ export const sidebarItems: SidebarItem[] = [
       },
       {
         title: "Quotations",
-        href: "/sales/quotations",
+        href: "/sales/quotation",
         icon: FileCheck,
       },
       {
