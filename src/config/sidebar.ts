@@ -245,18 +245,18 @@ export const sidebarItems: SidebarItem[] = [
     icon: ShoppingCart,
     children: [
       {
-        title: "Invoices",
-        href: "/sales/invoice",
-        icon: FileText,
-      },
-      {
         title: "Quotations",
         href: "/sales/quotation",
         icon: FileCheck,
       },
       {
-        title: "Money Receipts",
-        href: "/sales/money-receipt",
+        title: "Invoices",
+        href: "/sales/invoice",
+        icon: FileText,
+      },
+      {
+        title: "Payment Receipts",
+        href: "/sales/payment-receipt",
         icon: CreditCard,
       },
       {
