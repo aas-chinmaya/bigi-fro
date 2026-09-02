@@ -8,7 +8,6 @@ import {
   Hash,
   IndianRupee,
   MessageSquare,
-  Pencil,
   Printer,
   Receipt,
   User,
@@ -107,7 +106,7 @@ export default function ReceiptDetails({
   );
 
   const status = (
-    paymentReceipt.status ?? ""
+    paymentReceipt.receiptStatus ?? ""
   ).toUpperCase();
 
   const statusVariant =
@@ -167,7 +166,7 @@ export default function ReceiptDetails({
             </h1>
 
             <p className="text-sm text-muted-foreground">
-              {paymentReceipt.receiptNo ?? "-"}
+              {paymentReceipt.receiptNumber ?? "-"}
             </p>
           </div>
         </div>
@@ -175,21 +174,6 @@ export default function ReceiptDetails({
         {/* Actions */}
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              router.push(
-                `/sales/money-receipt/${id}/edit`,
-              )
-            }
-          >
-            <Pencil className="mr-2 size-3.5" />
-
-            Edit
-          </Button>
-
           <Button
             type="button"
             variant="outline"
@@ -235,7 +219,7 @@ export default function ReceiptDetails({
                 </CardTitle>
 
                 <p className="text-xs text-muted-foreground">
-                  {paymentReceipt.receiptNo ?? "-"}
+                  {paymentReceipt.receiptNumber ?? "-"}
                 </p>
               </div>
             </div>
@@ -285,6 +269,17 @@ export default function ReceiptDetails({
                 ID: {paymentReceipt.customerId}
               </p>
             )}
+              {paymentReceipt.customerPhone && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Phone: {paymentReceipt.customerPhone}
+                </p>
+              )}
+
+              {paymentReceipt.customerGSTIN && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  GSTIN: {paymentReceipt.customerGSTIN}
+                </p>
+              )}
           </div>
 
           {/* =================================================
@@ -292,57 +287,31 @@ export default function ReceiptDetails({
           ================================================= */}
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Receipt Type */}
-
             <DetailItem
-              icon={
-                <FileText className="size-3" />
-              }
-              label="Receipt Type"
-              value={formatLabel(
-                paymentReceipt.receiptType,
-              )}
+              icon={<FileText className="size-3" />}
+              label="Receipt Status"
+              value={formatLabel(paymentReceipt.receiptStatus ?? "RECEIVED")}
             />
 
-            {/* Payment Method */}
-
             <DetailItem
-              icon={
-                <Wallet className="size-3" />
-              }
-              label="Payment Method"
-              value={formatLabel(
-                paymentReceipt.paymentMethod,
-              )}
+              icon={<Wallet className="size-3" />}
+              label="Receipt Source"
+              value={formatLabel(paymentReceipt.receiptSource ?? "POS")}
             />
 
-            {/* Reference Number */}
-
             <DetailItem
-              icon={
-                <Hash className="size-3" />
-              }
-              label="Reference No"
-              value={
-                paymentReceipt.referenceNo ??
-                "-"
-              }
+              icon={<Hash className="size-3" />}
+              label="Financial Year"
+              value={paymentReceipt.financialYear ?? "-"}
             />
 
-            {/* Amount */}
-
             <DetailItem
-              icon={
-                <IndianRupee className="size-3" />
-              }
+              icon={<IndianRupee className="size-3" />}
               label="Amount"
-              value={`₹ ${amount.toLocaleString(
-                "en-IN",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                },
-              )}`}
+              value={`₹ ${amount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`}
               valueClassName="text-base font-semibold text-primary"
             />
           </div>

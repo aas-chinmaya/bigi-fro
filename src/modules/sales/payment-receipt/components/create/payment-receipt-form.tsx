@@ -10,10 +10,22 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  BadgeDollarSign,
+  CalendarDays,
   Check,
   ChevronDown,
+  FileText,
+  IndianRupee,
   Loader2,
+  Mail,
+  MessageSquareText,
+  NotebookText,
+  Phone,
+  Receipt,
   Search,
+  ShieldCheck,
+  UserRound,
+  UserRoundPlus,
   X,
 } from "lucide-react";
 
@@ -27,6 +39,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -36,13 +49,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import { usePaymentReceiptActions } from "../../hooks/use-payment-receipt-actions";
 import { useCustomers } from "@/modules/customers/hooks/use-customers";
 
@@ -50,10 +56,10 @@ import {
   paymentReceiptFormSchema,
   todayDateInputValue,
   sanitizeInput,
- 
-  PaymentReceiptFormValues,
+  type PaymentReceiptFormValues,
 } from "../../validation/payment-receipt.validation";
 
+import type { CreatePaymentReceiptPayload } from "../../types/payment-receipt.types";
 import type { Customer } from "@/modules/customers/types";
 
 function clean(value?: string | null): string {
@@ -69,55 +75,65 @@ function getCustomerLabel(customer: Customer): string {
   );
 }
 
+function getFinancialYearOptions(): string[] {
+  const currentYear = new Date().getFullYear();
+
+  return Array.from({ length: 21 }, (_, index) => {
+    const year = currentYear - 10 + index;
+    return `${year}-${String(year + 1).slice(-2)}`;
+  });
+}
+
 const DEFAULT_VALUES: PaymentReceiptFormValues = {
+  businessId: "",
+  branchId: "",
+  receiptNumber: "",
   receiptDate: todayDateInputValue(),
+  financialYear: getFinancialYearOptions()[10],
+  receiptStatus: "RECEIVED",
+  receiptSource: "POS",
   customerId: "",
   customerName: "",
-  receiptType: "INVOICE_PAYMENT",
-  amount: 0,
+  customerPhone: "",
+  customerGSTIN: "",
+  paymentId: "",
   paymentMethod: "CASH",
-  referenceNo: "",
+  documentNumber: "",
+  amount: 0,
   remarks: "",
+  notes: "",
+  createdBy: "system",
+  updatedBy: "",
 };
 
-export default function PaymentReceiptForm() {
+export default function PaymentReceiptCreateForm() {
   const router = useRouter();
 
-  const { createPaymentReceipt } =
-    usePaymentReceiptActions();
+  const { createPaymentReceipt } = usePaymentReceiptActions();
 
-  const {
-    customers,
-    loading: customersLoading,
-  } = useCustomers();
+  const { customers, loading: customersLoading } = useCustomers();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [customerQuery, setCustomerQuery] =
-    useState("");
+  const [customerQuery, setCustomerQuery] = useState("");
+  const [customerSearchFocused, setCustomerSearchFocused] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: {
       errors,
       isSubmitting,
+      isValid,
     },
   } = useForm<PaymentReceiptFormValues>({
-    resolver: zodResolver(
-      paymentReceiptFormSchema,
-    ),
-
-    mode: "onSubmit",
-
+    resolver: zodResolver(paymentReceiptFormSchema),
+    mode: "onChange",
     reValidateMode: "onChange",
-
     defaultValues: DEFAULT_VALUES,
   });
 
-  const receiptType = watch("receiptType");
-  const paymentMethod = watch("paymentMethod");
   const customerId = watch("customerId");
 
   /**
@@ -169,6 +185,18 @@ export default function PaymentReceiptForm() {
     ? getCustomerLabel(selectedCustomer)
     : "";
 
+  const customerMeta = selectedCustomer
+    ? [
+        (selectedCustomer as any).companyName,
+        (selectedCustomer as any).mobile,
+        (selectedCustomer as any).email,
+      ]
+        .filter(Boolean)
+        .join(" • ")
+    : "";
+
+  const financialYearOptions = useMemo(() => getFinancialYearOptions(), []);
+
   /**
    * Select customer.
    */
@@ -196,8 +224,26 @@ export default function PaymentReceiptForm() {
       },
     );
 
-    setIsOpen(false);
+    setValue(
+      "customerPhone",
+      (customer as any).mobile ?? "",
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+
+    setValue(
+      "customerGSTIN",
+      (customer as any).gstin ?? "",
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+
     setCustomerQuery("");
+    setCustomerSearchFocused(false);
   };
 
   /**
@@ -222,6 +268,15 @@ export default function PaymentReceiptForm() {
       },
     );
 
+    setValue("customerPhone", "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    setValue("customerGSTIN", "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     setCustomerQuery("");
   };
 
@@ -232,9 +287,7 @@ export default function PaymentReceiptForm() {
     event: ClipboardEvent<
       HTMLInputElement | HTMLTextAreaElement
     >,
-    field:
-      | "referenceNo"
-      | "remarks",
+    field: "remarks" | "notes",
   ) => {
     event.preventDefault();
 
@@ -259,27 +312,43 @@ export default function PaymentReceiptForm() {
   /**
    * Submit money receipt.
    */
-  const onSubmit = async (
-    values: PaymentReceiptFormValues,
-  ) => {
-    const payload = {
-      ...values,
+  const onSubmit = async (values: PaymentReceiptFormValues) => {
+    const computeFinancialYear = (dateStr: string) => {
+      try {
+        const d = new Date(dateStr);
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
 
-      customerId:
-        values.customerId?.trim() ||
-        undefined,
+        if (month >= 4) {
+          return `${year}-${String(year + 1).slice(-2)}`;
+        }
 
-      customerName:
-        values.customerName?.trim() ||
-        undefined,
+        return `${year - 1}-${String(year).slice(-2)}`;
+      } catch {
+        return String(new Date().getFullYear());
+      }
+    };
 
-      referenceNo:
-        values.referenceNo?.trim() ||
-        undefined,
-
-      remarks:
-        values.remarks?.trim() ||
-        undefined,
+    const payload: CreatePaymentReceiptPayload = {
+      businessId: values.businessId?.trim() || undefined,
+      branchId: values.branchId?.trim() || undefined,
+      receiptNumber: values.receiptNumber?.trim() || undefined,
+      receiptDate: values.receiptDate,
+      financialYear: values.financialYear?.trim() || computeFinancialYear(values.receiptDate),
+      receiptStatus: "RECEIVED",
+      receiptSource: values.receiptSource || "POS",
+      customerId: values.customerId?.trim() || "",
+      customerName: values.customerName?.trim() || "",
+      customerPhone: values.customerPhone?.trim() || (selectedCustomer as any)?.mobile || undefined,
+      customerGSTIN: values.customerGSTIN?.trim() || (selectedCustomer as any)?.gstin || undefined,
+      paymentId: values.paymentId?.trim() || undefined,
+      paymentMethod: values.paymentMethod || "CASH",
+      documentNumber: values.documentNumber?.trim() || "",
+      amount: Number(values.amount || 0),
+      remarks: values.remarks?.trim() || undefined,
+      notes: values.notes?.trim() || undefined,
+      createdBy: values.createdBy?.trim() || "system",
+      updatedBy: values.updatedBy?.trim() || undefined,
     };
 
     try {
@@ -297,7 +366,7 @@ export default function PaymentReceiptForm() {
         );
 
         router.push(
-          "/sales/cash-receipt",
+          "/sales/payment-receipt",
         );
 
         return;
@@ -315,475 +384,271 @@ export default function PaymentReceiptForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6"
-    >
-      {/* =====================================================
-          MONEY RECEIPT
-      ====================================================== */}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Create Money Receipt
-          </CardTitle>
+    <form className="mx-auto w-full max-w-6xl space-y-4">
+      <Card className="border-slate-200 bg-white shadow-sm">
+        <CardHeader className="px-4 pb-3 pt-4 sm:px-5">
+          <div className="flex items-center gap-2">
+            <Receipt className="size-5 text-primary" />
+            <CardTitle className="text-base font-semibold">Create Money Receipt</CardTitle>
+          </div>
         </CardHeader>
 
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* =================================================
-              RECEIPT DATE
-          ================================================== */}
+        <CardContent className="space-y-5 px-4 pb-4 sm:px-5">
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_1.85fr]">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <UserRound className="size-4 text-slate-400" />
+                  Customer
+                  <span className="text-red-500">*</span>
+                </Label>
 
-          <div className="space-y-2">
-            <Label htmlFor="receiptDate">
-              Receipt Date{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </Label>
-
-            <Input
-              id="receiptDate"
-              type="date"
-              {...register("receiptDate")}
-            />
-
-            {errors.receiptDate && (
-              <p className="text-xs text-red-500">
-                {
-                  errors.receiptDate
-                    .message
-                }
-              </p>
-            )}
-          </div>
-
-          {/* =================================================
-              RECEIPT TYPE
-          ================================================== */}
-
-          <div className="space-y-2">
-            <Label>
-              Receipt Type{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </Label>
-
-            <Select
-              value={
-                receiptType || undefined
-              }
-              onValueChange={(value) =>
-                setValue(
-                  "receiptType",
-                  value as PaymentReceiptFormValues["receiptType"],
-                  {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  },
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="INVOICE_PAYMENT">
-                  Invoice Payment
-                </SelectItem>
-
-                <SelectItem value="CUSTOMER_ADVANCE">
-                  Customer Advance
-                </SelectItem>
-
-                <SelectItem value="OTHER_RECEIPT">
-                  Other Receipt
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {errors.receiptType && (
-              <p className="text-xs text-red-500">
-                {
-                  errors.receiptType
-                    .message
-                }
-              </p>
-            )}
-          </div>
-
-          {/* =================================================
-              CUSTOMER
-          ================================================== */}
-
-          <div className="space-y-2">
-            <Label>
-              Customer{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </Label>
-
-            <div className="flex min-w-0 items-center gap-2">
-              <DropdownMenu
-                open={isOpen}
-                onOpenChange={setIsOpen}
-              >
-                <DropdownMenuTrigger
-                  asChild
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={isOpen}
-                    className="h-10 min-w-0 flex-1 justify-between font-normal"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-left">
-                      {customerLabel ||
-                        (customersLoading
-                          ? "Loading customers..."
-                          : "Search or select customer")}
-                    </span>
-
-                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  align="start"
-                  className="w-[var(--radix-dropdown-menu-trigger-width)] p-2"
-                >
-                  {/* CUSTOMER SEARCH */}
-
-                  <div className="relative mb-2">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-                    <Input
-                      autoFocus
-                      value={
-                        customerQuery
-                      }
-                      onChange={(event) =>
-                        setCustomerQuery(
-                          event.target
-                            .value,
-                        )
-                      }
-                      onKeyDown={(event) =>
-                        event.stopPropagation()
-                      }
-                      placeholder="Search customers..."
-                      className="pl-9"
-                    />
-                  </div>
-
-                  {/* CUSTOMER LIST */}
-
-                  <div className="max-h-[200px] overflow-y-auto pr-1">
-                    {customersLoading ? (
-                      <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
-                        <Loader2 className="size-4 animate-spin" />
-
-                        Loading customers...
+                {selectedCustomer && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary">
+                          {customerLabel.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-800">{customerLabel}</div>
+                          <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected</div>
+                        </div>
                       </div>
-                    ) : matchingCustomers.length ? (
-                      matchingCustomers.map(
-                        (customer) => (
-                          <DropdownMenuItem
-                            key={
-                              customer.id
-                            }
-                            onSelect={(
-                              event,
-                            ) => {
-                              event.preventDefault();
 
-                              selectCustomer(
-                                customer,
-                              );
-                            }}
-                            className="flex-col items-start gap-0.5 px-3 py-2.5"
-                          >
-                            <span className="flex w-full items-center gap-2 font-medium text-gray-900">
-                              {getCustomerLabel(
-                                customer,
-                              )}
+                      <button
+                        type="button"
+                        onClick={clearCustomer}
+                        className="rounded-full p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        aria-label="Clear selected customer"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
 
-                              {String(
-                                customerId,
-                              ) ===
-                                String(
-                                  customer.id,
-                                ) && (
-                                <Check className="ml-auto size-4 text-primary" />
-                              )}
-                            </span>
-
-                            <span className="text-xs text-muted-foreground">
-                              {[
-                                (
-                                  customer as any
-                                )
-                                  .companyName,
-
-                                (
-                                  customer as any
-                                ).mobile,
-
-                                (
-                                  customer as any
-                                ).email,
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </span>
-                          </DropdownMenuItem>
-                        ),
-                      )
-                    ) : (
-                      <div className="px-3 py-3 text-sm text-muted-foreground">
-                        No customers found.
+                    <div className="mt-2 space-y-1.5 text-[11px] text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <Mail className="size-3.5 text-slate-400" />
+                        <span className="truncate">{(selectedCustomer as any).email || "No email"}</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <Phone className="size-3.5 text-slate-400" />
+                        <span className="truncate">{(selectedCustomer as any).mobile || "No phone"}</span>
+                      </div>
+                    </div>
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
 
-              {selectedCustomer && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={
-                    clearCustomer
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    value={customerQuery}
+                    onFocus={() => setCustomerSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setCustomerSearchFocused(false), 140)}
+                    onChange={(event) => {
+                      setCustomerQuery(event.target.value);
+                      setCustomerSearchFocused(true);
+                    }}
+                    placeholder="Search customer"
+                    className="h-10 border-slate-200 bg-slate-50 pl-9 pr-9"
+                  />
+                  {customerQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomerQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-slate-500 hover:bg-slate-200"
+                      aria-label="Clear customer search"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  )}
+
+                  {customerSearchFocused && (
+                    <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-[220px] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                      {customersLoading ? (
+                        <div className="flex items-center gap-2 px-2 py-2 text-sm text-slate-500">
+                          <Loader2 className="size-4 animate-spin" />
+                          Loading customers...
+                        </div>
+                      ) : matchingCustomers.length ? (
+                        matchingCustomers.map((customer) => {
+                          const isActive = String(customerId) === String(customer.id);
+                          const name = getCustomerLabel(customer);
+
+                          return (
+                            <button
+                              key={customer.id}
+                              type="button"
+                              onClick={() => selectCustomer(customer)}
+                              className={`flex w-full items-start gap-3 rounded-lg border p-2 text-left transition-colors ${
+                                isActive
+                                  ? "border-primary/30 bg-primary/5"
+                                  : "border-slate-200 bg-white hover:bg-slate-100"
+                              }`}
+                            >
+                              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[9px] font-semibold text-slate-700">
+                                {name.slice(0, 2).toUpperCase()}
+                              </span>
+
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center justify-between gap-2">
+                                  <span className="truncate text-sm font-semibold text-slate-800">{name}</span>
+                                  {isActive && <Check className="size-4 shrink-0 text-primary" />}
+                                </span>
+                                <span className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
+                                  <Mail className="size-3.5" />
+                                  <span className="truncate">{(customer as any).email || "No email"}</span>
+                                </span>
+                                <span className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
+                                  <Phone className="size-3.5" />
+                                  <span className="truncate">{(customer as any).mobile || "No phone"}</span>
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="px-2 py-3 text-sm text-slate-500">No customer found.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="receiptDate" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <CalendarDays className="size-4 text-slate-400" />
+                  Date
+                  <span className="text-red-500">*</span>
+                </Label>
+                <DateInput
+                  id="receiptDate"
+                  {...register("receiptDate")}
+                  aria-invalid={Boolean(errors.receiptDate)}
+                  className="h-10 border-slate-200 bg-slate-50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <ShieldCheck className="size-4 text-slate-400" />
+                  Financial Year
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={watch("financialYear") || undefined}
+                  onValueChange={(value) =>
+                    setValue("financialYear", value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
                   }
-                  className="h-10 w-10 shrink-0 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                  aria-label="Clear customer"
                 >
-                  <X className="size-4" />
-                </Button>
-              )}
+                  <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {financialYearOptions.map((year) => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {errors.customerId && (
-              <p className="text-xs text-red-500">
-                {
-                  errors.customerId
-                    .message
-                }
-              </p>
-            )}
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                    <FileText className="size-4 text-slate-400" />
+                    Source
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={watch("receiptSource")}
+                    onValueChange={(value) =>
+                      setValue("receiptSource", value as PaymentReceiptFormValues["receiptSource"], {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="POS">POS</SelectItem>
+                      <SelectItem value="MANUAL">Manual</SelectItem>
+                      <SelectItem value="ONLINE">Online</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                    <IndianRupee className="size-4 text-slate-400" />
+                    Amount
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <IndianRupee className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...register("amount", { valueAsNumber: true })}
+                      aria-invalid={Boolean(errors.amount)}
+                      className="h-10 border-slate-200 bg-slate-50 pl-9"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="remarks" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <MessageSquareText className="size-4 text-slate-400" />
+                  Remarks
+                </Label>
+                <Textarea
+                  id="remarks"
+                  placeholder="Optional remarks..."
+                  rows={3}
+                  className="min-h-[90px] resize-y border-slate-200 bg-slate-50"
+                  {...register("remarks")}
+                  onPaste={(event) => handleSanitizePaste(event, "remarks")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <NotebookText className="size-4 text-slate-400" />
+                  Notes
+                </Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Optional internal notes..."
+                  rows={3}
+                  className="min-h-[90px] resize-y border-slate-200 bg-slate-50"
+                  {...register("notes")}
+                  onPaste={(event) => handleSanitizePaste(event, "notes")}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* =================================================
-              AMOUNT
-          ================================================== */}
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">
-              Amount{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </Label>
-
-            <Input
-              id="amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="0.00"
-              {...register("amount", {
-                valueAsNumber: true,
-              })}
-            />
-
-            {errors.amount && (
-              <p className="text-xs text-red-500">
-                {errors.amount.message}
-              </p>
-            )}
-          </div>
-
-          {/* =================================================
-              PAYMENT METHOD
-          ================================================== */}
-
-          <div className="space-y-2">
-            <Label>
-              Payment Method{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </Label>
-
-            <Select
-              value={
-                paymentMethod || undefined
-              }
-              onValueChange={(value) => {
-                setValue(
-                  "paymentMethod",
-                  value as PaymentReceiptFormValues["paymentMethod"],
-                  {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  },
-                );
-
-                setValue(
-                  "referenceNo",
-                  watch(
-                    "referenceNo",
-                  ) ?? "",
-                  {
-                    shouldValidate: true,
-                  },
-                );
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select method" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="CASH">
-                  Cash
-                </SelectItem>
-
-                <SelectItem value="BANK_TRANSFER">
-                  Bank Transfer
-                </SelectItem>
-
-                <SelectItem value="UPI">
-                  UPI
-                </SelectItem>
-
-                <SelectItem value="CHEQUE">
-                  Cheque
-                </SelectItem>
-
-                <SelectItem value="CARD">
-                  Card
-                </SelectItem>
-
-                <SelectItem value="OTHER">
-                  Other
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {errors.paymentMethod && (
-              <p className="text-xs text-red-500">
-                {
-                  errors.paymentMethod
-                    .message
-                }
-              </p>
-            )}
-          </div>
-
-          {/* =================================================
-              REFERENCE NUMBER
-          ================================================== */}
-
-          <div className="space-y-2">
-            <Label htmlFor="referenceNo">
-              Reference No
-              {paymentMethod !==
-                "CASH" && (
-                <span className="text-red-500">
-                  {" "}
-                  *
-                </span>
-              )}
-            </Label>
-
-            <Input
-              id="referenceNo"
-              placeholder="Txn / cheque / UPI ref"
-              {...register(
-                "referenceNo",
-              )}
-              onPaste={(event) =>
-                handleSanitizePaste(
-                  event,
-                  "referenceNo",
-                )
-              }
-            />
-
-            {errors.referenceNo && (
-              <p className="text-xs text-red-500">
-                {
-                  errors.referenceNo
-                    .message
-                }
-              </p>
-            )}
-          </div>
-
-          {/* =================================================
-              REMARKS
-          ================================================== */}
-
-          <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-            <Label htmlFor="remarks">
-              Remarks
-            </Label>
-
-            <Textarea
-              id="remarks"
-              placeholder="Optional notes..."
-              rows={2}
-              className="resize-none"
-              {...register("remarks")}
-              onPaste={(event) =>
-                handleSanitizePaste(
-                  event,
-                  "remarks",
-                )
-              }
-            />
-
-            {errors.remarks && (
-              <p className="text-xs text-red-500">
-                {errors.remarks.message}
-              </p>
-            )}
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
+            <Button type="button" variant="secondary" onClick={() => reset(DEFAULT_VALUES)} disabled={isSubmitting}>
+              Reset
+            </Button>
+            <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isValid}>
+              {isSubmitting ? "Saving..." : "Save"}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* =====================================================
-          FORM ACTIONS
-      ====================================================== */}
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() =>
-            router.back()
-          }
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting
-            ? "Saving..."
-            : "Create Payment Receipt"}
-        </Button>
-      </div>
     </form>
   );
 }

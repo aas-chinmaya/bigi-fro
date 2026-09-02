@@ -135,11 +135,10 @@ export const savePurchase = createAsyncThunk(
 
 export const uploadVendorDocument = createAsyncThunk(
   "vendors/uploadVendorDocument",
-  async ({ vendorId, data }: { vendorId: string; data: Record<string, any> }, { rejectWithValue }) => {
+  async ({ vendorId, data }: { vendorId: string; data: FormData }, { rejectWithValue }) => {
     try {
       if (!vendorId) return rejectWithValue("Missing vendorId");
-      // data expected to be FormData
-      const res = await vendorApi.uploadDocuments(vendorId, data as FormData);
+      const res = await vendorApi.uploadDocuments(vendorId, data);
       return res?.data?.data ?? res?.data ?? null;
     } catch (err: any) {
       return rejectWithValue(err?.response?.data?.message || err.message);

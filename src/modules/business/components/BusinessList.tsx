@@ -6,6 +6,7 @@ import { Building2, Plus, Search, Store, UserCheck, CheckCircle2 } from "lucide-
 import BusinessCard from "./BusinessCard";
 import { Button, Input } from "@/components/ui";
 import { cn } from "@/components/ui/utils";
+import Container from "@/components/common/Container";
 import { Business, Branch } from "../types";
 
 interface BusinessListProps {

@@ -39,7 +39,7 @@ export const usePaymentReceiptActions = () => {
     [dispatch],
   );
 
-  const clearSelectedPaymentReceipt = useCallback(() => {
+  const clearSelectedPaymentReceiptAction = useCallback(() => {
     dispatch(clearSelectedPaymentReceipt());
   }, [dispatch]);
 
@@ -50,7 +50,7 @@ export const usePaymentReceiptActions = () => {
   return {
     createPaymentReceipt,
     updatePaymentReceipt,
-    clearSelectedPaymentReceipt,
+    clearSelectedPaymentReceipt: clearSelectedPaymentReceiptAction,
     clearError,
   };
 };

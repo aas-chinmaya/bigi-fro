@@ -4,11 +4,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui";
 
-import type { InvoiceListItem } from "../../types/invoice-list.types";
+import type { Invoice } from "../../types/invoice";
 
 import InvoiceActions from "./invoice-actions";
 
-export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
+export const DraftInvoiceColumns: ColumnDef<Invoice>[] = [
   {
     accessorKey: "invoiceNumber",
     header: "Draft",
@@ -19,13 +19,12 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
       return (
         <div className="min-w-[160px]">
           <p className="font-medium">
-            {draft.invoiceNumber || "Draft Invoice"}
+            {draft.invoiceNumber ?? "Draft Invoice"}
           </p>
 
           <p className="text-xs text-muted-foreground">
-            {draft.customerName ||
-              draft.buyerName ||
-              draft.buyerCompanyName ||
+            {draft.buyerName ??
+              draft.buyerCompanyName ??
               "No customer"}
           </p>
         </div>
@@ -40,8 +39,7 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
     cell: ({ row }) => {
       const date =
         row.original.updatedAt ??
-        row.original.createdAt ??
-        row.original.invoiceDate;
+        row.original.createdAt;
 
       if (!date) {
         return (
@@ -68,7 +66,9 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
     header: "Total",
 
     cell: ({ row }) => {
-      const amount = Number(row.original.grandTotal ?? 0);
+      const amount = Number(
+        row.original.grandTotal ?? 0
+      );
 
       return (
         <div>
@@ -79,6 +79,13 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
               maximumFractionDigits: 2,
             })}
           </p>
+
+          <p className="text-xs text-muted-foreground">
+            {row.original.totalItems ?? 0}{" "}
+            {row.original.totalItems === 1
+              ? "Item"
+              : "Items"}
+          </p>
         </div>
       );
     },
@@ -88,7 +95,7 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
     accessorKey: "invoiceStatus",
     header: "Status",
 
-    cell: () => {
+    cell: ({ row }) => {
       return (
         <Badge variant="outline">
           DRAFT
@@ -114,7 +121,7 @@ export const DraftInvoiceColumns: ColumnDef<InvoiceListItem>[] = [
           <InvoiceActions
             id={draft.id}
             invoiceNumber={
-              draft.invoiceNumber || undefined
+              draft.invoiceNumber ?? undefined
             }
             status="DRAFT"
             isDraft

@@ -1,4 +1,15 @@
 
+
+
+
+
+
+
+
+
+
+
+
 import type {
   DiscountType,
   InvoiceStatus,
@@ -25,9 +36,6 @@ export interface InvoiceItemFormValues {
 
   quantity: number;
   rate: number;
-
-
-  gstRate?: number;
 
   discountType: DiscountType;
   discountValue: number;

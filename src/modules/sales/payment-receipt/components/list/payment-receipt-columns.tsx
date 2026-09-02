@@ -15,7 +15,7 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
   // ========================================================
 
   {
-    accessorKey: "receiptNo",
+    accessorKey: "receiptNumber",
     header: "Receipt",
 
     cell: ({ row }) => {
@@ -24,7 +24,7 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
       return (
         <div className="min-w-[160px]">
           <p className="font-medium">
-            {paymentReceipt.receiptNo ?? "-"}
+            {paymentReceipt.receiptNumber ?? "-"}
           </p>
 
           <p className="text-xs text-muted-foreground">
@@ -114,44 +114,17 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
   },
 
   // ========================================================
-  // PAYMENT METHOD
+  // RECEIPT SOURCE
   // ========================================================
 
   {
-    accessorKey: "paymentMethod",
-    header: "Payment Method",
+    accessorKey: "receiptSource",
+    header: "Source",
 
     cell: ({ row }) => {
-      const method = (
-        row.original.paymentMethod ?? ""
-      ).replaceAll("_", " ");
+      const source = row.original.receiptSource ?? "POS";
 
-      return (
-        <span className="capitalize">
-          {method.toLowerCase() || "-"}
-        </span>
-      );
-    },
-  },
-
-  // ========================================================
-  // RECEIPT TYPE
-  // ========================================================
-
-  {
-    accessorKey: "receiptType",
-    header: "Receipt Type",
-
-    cell: ({ row }) => {
-      const type = (
-        row.original.receiptType ?? ""
-      ).replaceAll("_", " ");
-
-      return (
-        <span className="capitalize">
-          {type.toLowerCase() || "-"}
-        </span>
-      );
+      return <span className="capitalize">{source.toLowerCase()}</span>;
     },
   },
 
@@ -160,12 +133,12 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
   // ========================================================
 
   {
-    accessorKey: "status",
+    accessorKey: "receiptStatus",
     header: "Status",
 
     cell: ({ row }) => {
       const status = (
-        row.original.status ?? ""
+        row.original.receiptStatus ?? ""
       ).toUpperCase();
 
       const variant =
@@ -204,13 +177,8 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
         <div className="text-right">
           <PaymentReceiptActions
             id={paymentReceipt.id}
-            receiptNo={
-              paymentReceipt.receiptNo ??
-              undefined
-            }
-            status={
-              paymentReceipt.status
-            }
+            receiptNumber={paymentReceipt.receiptNumber ?? undefined}
+            status={paymentReceipt.receiptStatus}
           />
         </div>
       );

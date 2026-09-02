@@ -48,9 +48,10 @@ export default function BusinessInfoStep() {
   const {
     businessTypes,
     businessCategories,
+    businessSubCategories,
     industries,
     registrationTypes,
-    otherRegistrationTypes,
+    licenseTypes,
     currencies,
     timezones,
     financialYears,
@@ -60,8 +61,13 @@ export default function BusinessInfoStep() {
   const e = errors.info;
   const businessType = watch("info.businessType");
   const category = watch("info.businessCategoryId");
+  const subCategory = watch("info.businessSubCategoryId");
   const industry = watch("info.industryId");
+  const licenseType = watch("info.licenseTypeId");
   const logo = watch("info.logo");
+  const availableSubCategories = businessSubCategories.filter(
+    (option) => !option.parentId || option.parentId === category
+  );
 
   return (
     <div className="space-y-6">
@@ -139,8 +145,34 @@ export default function BusinessInfoStep() {
                 })
               }
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select industry" />
+              <SelectTrigger className="h-10 w-full">
+                {(() => {
+                  const selectedIndustry = industries.find(
+                    (option) => option.id === industry
+                  );
+                  const FallbackIcon = selectedIndustry
+                    ? getOptionIcon(industryIcons, selectedIndustry.id)
+                    : null;
+
+                  return selectedIndustry ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                        {selectedIndustry.icon ? (
+                          <LucideIconRenderer
+                            name={selectedIndustry.icon}
+                            className="h-4 w-4"
+                            strokeWidth={1.8}
+                          />
+                        ) : FallbackIcon ? (
+                          <FallbackIcon className="h-4 w-4" strokeWidth={1.8} />
+                        ) : null}
+                      </span>
+                      <span>{selectedIndustry.name}</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select industry" />
+                  );
+                })()}
               </SelectTrigger>
 
               <SelectContent>
@@ -151,7 +183,15 @@ export default function BusinessInfoStep() {
                     <SelectItem key={option.id} value={option.id}>
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
-                          <Icon className="h-4 w-4" strokeWidth={1.8} />
+                          {option.icon ? (
+                            <LucideIconRenderer
+                              name={option.icon}
+                              className="h-4 w-4"
+                              strokeWidth={1.8}
+                            />
+                          ) : (
+                            <Icon className="h-4 w-4" strokeWidth={1.8} />
+                          )}
                         </span>
 
                         <span>{option.name}</span>
@@ -171,11 +211,17 @@ export default function BusinessInfoStep() {
             >
               <Select
                 value={category}
-                onValueChange={(v) =>
-                  setValue("info.businessCategoryId", v, {
-                    shouldValidate: true,
-                  })
-                }
+                onValueChange={(v) => {
+                  setValue("info.businessCategoryId", v, { shouldValidate: true });
+                  if (
+                    subCategory &&
+                    !businessSubCategories.some(
+                      (item) => item.id === subCategory && item.parentId === v
+                    )
+                  ) {
+                    setValue("info.businessSubCategoryId", "", { shouldValidate: true });
+                  }
+                }}
               >
                 <SelectTrigger className="h-10 w-full">
                   {category ? (
@@ -194,7 +240,7 @@ export default function BusinessInfoStep() {
                         <div className="flex items-center gap-2">
                           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
                             <LucideIconRenderer
-                              name={selectedCategory.meta}
+                              name={selectedCategory.icon || selectedCategory.meta}
                               className="h-4 w-4"
                               strokeWidth={1.8}
                             />
@@ -215,7 +261,7 @@ export default function BusinessInfoStep() {
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
                           <LucideIconRenderer
-                            name={option.meta}
+                            name={option.icon || option.meta}
                             className="h-4 w-4"
                             strokeWidth={1.8}
                           />
@@ -232,26 +278,26 @@ export default function BusinessInfoStep() {
             <FormField
               label="Business Sub Category"
               required
-              error={e?.businessCategoryId?.message}
+              error={e?.businessSubCategoryId?.message}
             >
               <Select
-                value={category}
+                value={subCategory}
                 onValueChange={(v) =>
-                  setValue("info.businessCategoryId", v, {
+                  setValue("info.businessSubCategoryId", v, {
                     shouldValidate: true,
                   })
                 }
               >
                 <SelectTrigger className="h-10 w-full">
-                  {category ? (
+                  {subCategory ? (
                     (() => {
-                      const selectedCategory = businessCategories.find(
-                        (item) => item.id === category
+                      const selectedSubCategory = businessSubCategories.find(
+                        (item) => item.id === subCategory
                       );
 
-                      if (!selectedCategory) {
+                      if (!selectedSubCategory) {
                         return (
-                          <SelectValue placeholder="Select business sub category" />
+                          <SelectValue placeholder="Select business sub-category" />
                         );
                       }
 
@@ -259,33 +305,31 @@ export default function BusinessInfoStep() {
                         <div className="flex items-center gap-2">
                           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
                             <LucideIconRenderer
-                              name={selectedCategory.meta}
+                              name={selectedSubCategory.icon || "Layers"}
                               className="h-4 w-4"
                               strokeWidth={1.8}
                             />
                           </span>
-
-                          <span>{selectedCategory.name}</span>
+                          <span>{selectedSubCategory.name}</span>
                         </div>
                       );
                     })()
                   ) : (
-                    <SelectValue placeholder="Select business sub category" />
+                    <SelectValue placeholder="Select business sub-category" />
                   )}
                 </SelectTrigger>
 
                 <SelectContent>
-                  {businessCategories.map((option) => (
+                  {availableSubCategories.map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
                           <LucideIconRenderer
-                            name={option.meta}
+                            name={option.icon || "Layers"}
                             className="h-4 w-4"
                             strokeWidth={1.8}
                           />
                         </span>
-
                         <span>{option.name}</span>
                       </div>
                     </SelectItem>
@@ -361,12 +405,40 @@ export default function BusinessInfoStep() {
               }
             >
               <SelectTrigger >
-                <SelectValue placeholder="Select registration type" />
+                {(() => {
+                  const selectedRegistrationType = registrationTypes.find(
+                    (registrationType) => registrationType.id === watch("info.registrationType")
+                  );
+
+                  return selectedRegistrationType ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                        <LucideIconRenderer
+                          name={selectedRegistrationType.icon || "FileText"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{selectedRegistrationType.name}</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select registration type" />
+                  );
+                })()}
               </SelectTrigger>
               <SelectContent>
                 {registrationTypes.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
-                    {r.name}
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                        <LucideIconRenderer
+                          name={r.icon || "FileText"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{r.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -392,24 +464,53 @@ export default function BusinessInfoStep() {
           </FormField>
 
           <FormField
-            label="Other Registration / Licence"
-            error={e?.otherRegistrationType?.message}
+            label="License Type"
+            required
+            error={e?.licenseTypeId?.message}
           >
             <Select
-              value={watch("info.otherRegistrationType")}
+              value={licenseType}
               onValueChange={(v) =>
-                setValue("info.otherRegistrationType", v, {
+                setValue("info.licenseTypeId", v, {
                   shouldValidate: true,
                 })
               }
             >
-              <SelectTrigger >
-                <SelectValue placeholder="Select other registration type" />
+              <SelectTrigger className="h-10 w-full">
+                {(() => {
+                  const selectedLicenseType = licenseTypes.find(
+                    (option) => option.id === licenseType
+                  );
+
+                  return selectedLicenseType ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                        <LucideIconRenderer
+                          name={selectedLicenseType.icon || "BadgeCheck"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{selectedLicenseType.name}</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select license type" />
+                  );
+                })()}
               </SelectTrigger>
               <SelectContent>
-                {otherRegistrationTypes.map((o) => (
+                {licenseTypes.map((o) => (
                   <SelectItem key={o.id} value={o.id}>
-                    {o.name}
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                        <LucideIconRenderer
+                          name={o.icon || "BadgeCheck"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{o.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -464,13 +565,41 @@ export default function BusinessInfoStep() {
                 setValue("info.currencyId", v, { shouldValidate: true })
               }
             >
-              <SelectTrigger >
-                <SelectValue placeholder="Select currency" />
+              <SelectTrigger className="h-10 w-full">
+                {(() => {
+                  const selectedCurrency = currencies.find(
+                    (currency) => currency.id === watch("info.currencyId")
+                  );
+
+                  return selectedCurrency ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold text-slate-600">
+                        <LucideIconRenderer
+                          name={selectedCurrency.icon || "Coins"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{selectedCurrency.name}</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Select currency" />
+                  );
+                })()}
               </SelectTrigger>
               <SelectContent>
                 {currencies.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name} {c.meta ? `(${c.meta})` : ""}
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold text-slate-600">
+                        <LucideIconRenderer
+                          name={c.icon || "Coins"}
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                      <span>{c.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

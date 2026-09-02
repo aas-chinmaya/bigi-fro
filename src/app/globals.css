@@ -83,3 +83,7 @@ h6 {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
 }
+
+.pi-cust-gap{
+  gap: 18px !important;
+}

@@ -42,6 +42,8 @@ export default function VendorDetails() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [processingDocument, setProcessingDocument] = useState<string | null>(null);
+  const [logoViewUrl, setLogoViewUrl] = useState<string | null>(null);
 
   const loadVendor = async () => {
     if (!vendorId) return;
@@ -66,6 +68,28 @@ export default function VendorDetails() {
     loadVendor();
   }, [vendorId]);
 
+  useEffect(() => {
+    if (!vendorId) return;
+
+    let objectUrl: string | null = null;
+
+    const loadLogo = async () => {
+      try {
+        const response = await vendorApi.viewLogo(vendorId);
+        objectUrl = URL.createObjectURL(response.data);
+        setLogoViewUrl(objectUrl);
+      } catch {
+        setLogoViewUrl(null);
+      }
+    };
+
+    void loadLogo();
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [vendorId]);
+
   const handleDeleteDocument = async (documentId: string) => {
     if (!documentId) return;
 
@@ -81,6 +105,43 @@ export default function VendorDetails() {
       );
     } finally {
       setDeletingDocumentId(null);
+    }
+  };
+
+  const handleViewDocument = async (documentId: string) => {
+    if (!vendorId || !documentId) return;
+
+    try {
+      setProcessingDocument(`${documentId}:view`);
+      const response = await vendorApi.viewDocument(vendorId, documentId);
+      const url = URL.createObjectURL(response.data);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err: any) {
+      notify.error(err?.response?.data?.message || "Failed to view document");
+    } finally {
+      setProcessingDocument(null);
+    }
+  };
+
+  const handleDownloadDocument = async (documentId: string, fileName?: string) => {
+    if (!vendorId || !documentId) return;
+
+    try {
+      setProcessingDocument(`${documentId}:download`);
+      const response = await vendorApi.downloadDocument(vendorId, documentId);
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || "vendor-document";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      notify.error(err?.response?.data?.message || "Failed to download document");
+    } finally {
+      setProcessingDocument(null);
     }
   };
 
@@ -178,6 +239,7 @@ export default function VendorDetails() {
   // --------------------------------------------------------------------------
 
   const logoUrl =
+    logoViewUrl ||
     vendor.logoUrl?.view ||
     vendor.logoUrl?.download ||
     (typeof vendor.logo === "string"
@@ -1191,14 +1253,13 @@ export default function VendorDetails() {
             >
               {vendor.documents?.length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {vendor.documents.map(
-                    (doc: any) => (
+                  {vendor.documents.map((doc: any) => {
+                    const documentId = doc.id || doc.documentId || doc._id;
+                    const documentName = doc.originalName || doc.fileName || "vendor-document";
+
+                    return (
                       <div
-                        key={
-                          doc.id ||
-                          doc.fileName ||
-                          doc.originalName
-                        }
+                        key={doc.id || doc.fileName || doc.originalName}
                         className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-indigo-200 hover:shadow-sm"
                       >
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
@@ -1208,50 +1269,39 @@ export default function VendorDetails() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-800">
                             {doc.originalName ||
-                              doc.documentType?.replace(
-                                /_/g,
-                                " "
-                              ) ||
+                              doc.documentType?.replace(/_/g, " ") ||
                               "Document"}
                           </p>
 
                           <p className="mt-0.5 truncate text-xs text-slate-400">
-                            {doc.documentType?.replace(
-                              /_/g,
-                              " "
-                            ) || "Document"}
-
-                            {doc.mimeType
-                              ? ` · ${doc.mimeType}`
-                              : ""}
+                            {doc.documentType?.replace(/_/g, " ") || "Document"}
+                            {doc.mimeType ? ` · ${doc.mimeType}` : ""}
                           </p>
                         </div>
 
                         <div className="flex shrink-0 gap-1">
-                          {doc.fileUrl?.view && (
-                            <a
-                              href={doc.fileUrl.view}
-                              target="_blank"
-                              rel="noreferrer"
+                          {documentId && (
+                            <button
+                              type="button"
+                              onClick={() => handleViewDocument(documentId)}
+                              disabled={processingDocument === `${documentId}:view`}
                               className="rounded-lg p-2 text-sky-600 transition hover:bg-sky-50"
                               title="View"
                             >
                               <Eye size={15} />
-                            </a>
+                            </button>
                           )}
 
-                          {doc.fileUrl?.download && (
-                            <a
-                              href={
-                                doc.fileUrl.download
-                              }
-                              target="_blank"
-                              rel="noreferrer"
+                          {documentId && (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadDocument(documentId, documentName)}
+                              disabled={processingDocument === `${documentId}:download`}
                               className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
                               title="Download"
                             >
                               <Download size={15} />
-                            </a>
+                            </button>
                           )}
 
                           <button
@@ -1265,8 +1315,8 @@ export default function VendorDetails() {
                           </button>
                         </div>
                       </div>
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">

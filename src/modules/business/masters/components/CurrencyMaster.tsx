@@ -26,6 +26,7 @@ import {
   ModalFooter,
 } from "@/components/ui";
 import { FormField } from "@/components/form";
+import LucideIconRenderer from "@/components/common/LucideIconRenderer";
 import {
   DataTable,
   TableToolbar,
@@ -35,13 +36,14 @@ import {
   NoData,
 } from "@/components/data-table";
 import type { FilterItem } from "@/components/data-table/Filters";
-import { currencyMasterApi } from "@/modules/business/masters/api/masterApi";
+import { currencyMasterService } from "@/modules/business/masters/services/master.service";
 
 export interface Currency {
   id: string | number;
   currencyName: string;
   currencyCode: string;
   currencySymbol: string;
+  icon: string | null;
   countryName: string | null;
   status: boolean;
   updatedAt: string;
@@ -100,7 +102,7 @@ export default function CurrencyMaster() {
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await currencyMasterApi.list();
+      const data = await currencyMasterService.list();
       const rowsFromApi = Array.isArray(data) ? data : [];
       let filtered = rowsFromApi;
 
@@ -120,7 +122,7 @@ export default function CurrencyMaster() {
       setRows(filtered);
     } catch (err) {
       setRows([]);
-      showBanner("error", currencyMasterApi.getErrorMessage(err, "Unable to load currencies."));
+      showBanner("error", currencyMasterService.getErrorMessage(err, "Unable to load currencies."));
     } finally {
       setLoading(false);
     }
@@ -145,7 +147,7 @@ export default function CurrencyMaster() {
   const handleCreate = async (payload: CurrencyPayload) => {
     setSaving(true);
     try {
-      await currencyMasterApi.create({
+      await currencyMasterService.create({
         currencyName: payload.currencyName,
         currencyCode: payload.currencyCode,
         currencySymbol: payload.currencySymbol,
@@ -155,7 +157,7 @@ export default function CurrencyMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", currencyMasterApi.getErrorMessage(err, "Failed to create currency."));
+      showBanner("error", currencyMasterService.getErrorMessage(err, "Failed to create currency."));
     } finally {
       setSaving(false);
     }
@@ -164,7 +166,7 @@ export default function CurrencyMaster() {
   const handleUpdate = async (id: string | number, payload: CurrencyPayload) => {
     setSaving(true);
     try {
-      await currencyMasterApi.update(id, {
+      await currencyMasterService.update(id, {
         currencyName: payload.currencyName,
         currencyCode: payload.currencyCode,
         currencySymbol: payload.currencySymbol,
@@ -175,7 +177,7 @@ export default function CurrencyMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", currencyMasterApi.getErrorMessage(err, "Failed to update currency."));
+      showBanner("error", currencyMasterService.getErrorMessage(err, "Failed to update currency."));
     } finally {
       setSaving(false);
     }
@@ -183,22 +185,22 @@ export default function CurrencyMaster() {
 
   const handleToggleStatus = async (row: Currency) => {
     try {
-      await currencyMasterApi.update(row.id, { status: !row.status });
+      await currencyMasterService.update(row.id, { status: !row.status });
       showBanner("success", `Marked ${!row.status ? "active" : "inactive"}.`);
       fetchRows();
     } catch (err) {
-      showBanner("error", currencyMasterApi.getErrorMessage(err, "Failed to update status."));
+      showBanner("error", currencyMasterService.getErrorMessage(err, "Failed to update status."));
     }
   };
 
   const handleDelete = async (row: Currency) => {
     try {
-      await currencyMasterApi.remove(row.id);
+      await currencyMasterService.remove(row.id);
       showBanner("success", `"${row.currencyName}" deleted.`);
       setConfirmDelete(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", currencyMasterApi.getErrorMessage(err, "Failed to delete currency."));
+      showBanner("error", currencyMasterService.getErrorMessage(err, "Failed to delete currency."));
     }
   };
 
@@ -211,7 +213,7 @@ export default function CurrencyMaster() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-semibold text-gray-600">
-              {row.original.currencySymbol}
+              <LucideIconRenderer name={row.original.icon || row.original.currencySymbol} className="h-4 w-4" />
             </span>
             <span className="font-medium text-gray-900">{row.original.currencyName}</span>
           </div>
@@ -468,12 +470,11 @@ function CurrencyFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: 
                 />
               </FormField>
 
-              <FormField label="Symbol" required error={errors.symbol}>
+              <FormField label="Icon" required error={errors.symbol}>
                 <Input
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
-                  placeholder="e.g. ₹"
-                  maxLength={5}
+                  placeholder="e.g. Utensils"
                 />
               </FormField>
             </div>

@@ -1,79 +1,146 @@
 
 // ==========================================================
-// PAYMENT RECEIPT TYPES
+// PAYMENT RECEIPT CORE ENUMS
 // ==========================================================
 
-export type PaymentReceiptType =
-  | "INVOICE_PAYMENT"
-  | "CUSTOMER_ADVANCE"
-  | "OTHER_RECEIPT";
-
-// ==========================================================
-// PAYMENT METHOD
-// ==========================================================
-
-export type PaymentReceiptPaymentMethod =
-  | "CASH"
-  | "BANK_TRANSFER"
-  | "UPI"
-  | "CHEQUE"
-  | "CARD"
-  | "OTHER";
-
-// ==========================================================
-// STATUS
-// ==========================================================
-
-export type PaymentReceiptStatus =
+export type ReceiptVoucherStatus =
   | "DRAFT"
-  | "POSTED";
+  | "RECEIVED";
+
+export type ReceiptSource =
+  | "MANUAL"
+  | "ONLINE"
+  | "OTHER"
+  | "POS";
+
+export type PaymentReceiptStatus = ReceiptVoucherStatus;
+
+export type PaymentMethod =
+  | "CASH"
+  | "UPI"
+  | "CARD"
+  | "NET_BANKING";
 
 // ==========================================================
-// PAYMENT RECEIPT
+// PAYMENT RECEIPT MODEL
 // ==========================================================
 
 export interface PaymentReceipt {
   id: string;
+  businessId?: string | null;
+  branchId?: string | null;
 
-  receiptNo: string;
+  receiptNumber?: string | null;
   receiptDate: string;
+  financialYear: string;
 
-  customerId?: string;
-  customerName?: string;
+  receiptStatus: ReceiptVoucherStatus;
+  receiptSource: ReceiptSource;
 
-  receiptType: PaymentReceiptType;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string | null;
+  customerGSTIN?: string | null;
 
+  paymentId?: string | null;
+  paymentMethod: PaymentMethod;
+  documentNumber: string;
   amount: number;
 
-  paymentMethod: PaymentReceiptPaymentMethod;
+  remarks?: string | null;
+  notes?: string | null;
 
-  referenceNo?: string;
-  remarks?: string;
-
-  status: PaymentReceiptStatus;
-
+  createdBy: string;
+  updatedBy?: string | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
+
+// ==========================================================
+// PAYMENT RECEIPT FORM VALUES
+// ==========================================================
+
+export interface PaymentReceiptFormValues {
+  businessId?: string;
+  branchId?: string;
+
+  receiptNumber?: string;
+  receiptDate: string;
+  financialYear?: string;
+
+  receiptStatus: ReceiptVoucherStatus;
+  receiptSource: ReceiptSource;
+
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  customerGSTIN?: string;
+
+  paymentId?: string;
+  paymentMethod: PaymentMethod;
+  documentNumber: string;
+  amount: number;
+
+  remarks?: string;
+  notes?: string;
+
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export const PAYMENT_RECEIPT_FORM_DEFAULTS: PaymentReceiptFormValues = {
+  businessId: "",
+  branchId: "",
+  receiptNumber: "",
+  receiptDate: new Date().toISOString().slice(0, 10),
+  financialYear: "",
+  receiptStatus: "RECEIVED",
+  receiptSource: "POS",
+  customerId: "",
+  customerName: "",
+  customerPhone: "",
+  customerGSTIN: "",
+  paymentId: "",
+  paymentMethod: "CASH",
+  documentNumber: "",
+  amount: 0,
+  remarks: "",
+  notes: "",
+  createdBy: "system",
+  updatedBy: "",
+};
 
 // ==========================================================
 // CREATE PAYMENT RECEIPT
 // ==========================================================
 
 export interface CreatePaymentReceiptPayload {
+  businessId?: string;
+  branchId?: string;
+
+  receiptNumber?: string;
   receiptDate: string;
+  financialYear?: string;
 
-  customerId?: string;
-  customerName?: string;
+  receiptStatus?: ReceiptVoucherStatus;
+  receiptSource?: ReceiptSource;
 
-  receiptType: PaymentReceiptType;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  customerGSTIN?: string;
 
+  paymentId?: string;
+  paymentMethod: PaymentMethod;
+  documentNumber: string;
   amount: number;
 
-  paymentMethod: PaymentReceiptPaymentMethod;
-
-  referenceNo?: string;
   remarks?: string;
+  notes?: string;
+
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 // ==========================================================
@@ -93,11 +160,6 @@ export interface PaymentReceiptQueryParams {
   search?: string;
 
   customerId?: string;
-
-  receiptType?: PaymentReceiptType;
-
-  paymentMethod?: PaymentReceiptPaymentMethod;
-
   status?: PaymentReceiptStatus;
 
   fromDate?: string;

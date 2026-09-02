@@ -258,7 +258,12 @@ export default function ViewBusinessPage() {
       .getBusinessById(id)
       .then((res) => {
         const response = res.data as BusinessDetail | { data?: BusinessDetail };
-        const payload = "data" in response ? response.data ?? null : response;
+        let payload: BusinessDetail | null;
+        if (response && typeof response === "object" && "data" in response) {
+          payload = response.data ?? null;
+        } else {
+          payload = response as BusinessDetail;
+        }
         if (mounted) setData(payload);
       })
       .catch(() => {})
@@ -314,7 +319,7 @@ export default function ViewBusinessPage() {
             <Button
               size="sm"
               className="gap-2"
-              onClick={() => router.push(`/manage-business/edit?id=${data.id}`)}
+              onClick={() => router.push(`/business-setup/manage-business/edit?id=${data.id}`)}
             >
               <Pencil className="h-4 w-4" />
               Edit Business

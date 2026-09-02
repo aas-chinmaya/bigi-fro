@@ -23,9 +23,11 @@ export interface BusinessInfo {
   websiteLink?: string;
 
   businessCategoryId: string;
+  businessSubCategoryId: string;
   industryId: string;
 
   registrationType?: string;
+  licenseTypeId: string;
   registrationNumber?: string;
 
   otherRegistrationType?: string;
@@ -119,4 +121,5 @@ export interface MasterOption {
   name: string;
   parentId?: string; // used for state->country, city->state chaining
   meta?: string; // e.g. currency symbol, country dial code
+  icon?: string; // Lucide icon name for icon-enabled master records
 }

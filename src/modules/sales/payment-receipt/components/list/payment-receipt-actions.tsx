@@ -2,13 +2,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, Pencil } from "lucide-react";
+import { Eye } from "lucide-react";
 
 import { Button } from "@/components/ui";
 
 type PaymentReceiptActionsProps = {
   id: string;
-  receiptNo?: string;
+  receiptNumber?: string;
   status?: string | null;
 };
 
@@ -19,8 +19,6 @@ export default function PaymentReceiptActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {/* View */}
-
       <Button
         type="button"
         variant="ghost"
@@ -35,24 +33,6 @@ export default function PaymentReceiptActions({
         className="hover:bg-violet-50 hover:text-violet-600"
       >
         <Eye className="size-4" />
-      </Button>
-
-      {/* Edit */}
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Edit money receipt"
-        title="Edit money receipt"
-        onClick={() =>
-          router.push(
-            `/sales/payment-receipt/${id}/edit`,
-          )
-        }
-        className="hover:bg-blue-50 hover:text-blue-600"
-      >
-        <Pencil className="size-4" />
       </Button>
     </div>
   );

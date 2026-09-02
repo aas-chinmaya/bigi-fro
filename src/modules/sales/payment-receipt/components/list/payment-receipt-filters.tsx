@@ -50,12 +50,16 @@ export default function PaymentReceiptFilters({
             All statuses
           </SelectItem>
 
-          <SelectItem value="POSTED">
-            Posted
+          <SelectItem value="RECEIVED">
+            Received
           </SelectItem>
 
-          <SelectItem value="DRAFT">
-            Draft
+          <SelectItem value="PENDING">
+            Pending
+          </SelectItem>
+
+          <SelectItem value="CANCELLED">
+            Cancelled
           </SelectItem>
         </SelectContent>
       </Select>

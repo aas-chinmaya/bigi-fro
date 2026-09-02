@@ -1,12 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { Edit, Package } from "lucide-react";
+import {
+  Edit,
+  Package,
+  Tag,
+  Barcode,
+  Layers3,
+  Ruler,
+  ReceiptText,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Card, Badge, Button, Switch } from "@/components/ui";
-import Container from "../../../../components/common/Container";
 import { notify } from "@/lib/toast";
 import { productservice } from "@/modules/items/services/product.service";
 import { ProductRow } from "../../types";
@@ -61,47 +68,62 @@ export default function ItemCard({ product, productId }: ItemCardProps) {
 
   return (
     <div className="space-y-6">
-      <Container>
-        <Card className="p-6">
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="relative h-56 w-full overflow-hidden rounded-xl border lg:w-64">
-              {currentProduct?.image ? (
-                <Image src={currentProduct.image} alt={currentProduct.itemName} fill className="object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-gray-100">
-                  <Package className="h-16 w-16 text-gray-400" />
-                </div>
-              )}
-            </div>
+      <Card className="p-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="relative h-56 w-full overflow-hidden rounded-xl border lg:w-64">
+            {currentProduct?.image ? (
+              <Image src={currentProduct.image} alt={currentProduct.itemName} fill className="object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-gray-100">
+                <Package className="h-16 w-16 text-gray-400" />
+              </div>
+            )}
+          </div>
 
-            <div className="flex flex-1 flex-col justify-between">
-              <div>
+          <div className="flex flex-1 flex-col">
+
+            {/* Header + Actions */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+              {/* Product Name */}
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-bold">{currentProduct?.itemName ?? "-"}</h1>
-                  <Badge variant={currentProduct?.status ? "success" : "secondary"}>
+                  <h1 className="text-3xl font-bold">
+                    {currentProduct?.itemName ?? "-"}
+                  </h1>
+
+                  <Badge
+                    variant={
+                      currentProduct?.status
+                        ? "success"
+                        : "secondary"
+                    }
+                  >
                     {currentProduct?.status ? "Active" : "Inactive"}
                   </Badge>
                 </div>
-
-                <p className="mt-3 text-gray-500">Item Code : {currentProduct?.itemCode ?? "-"}</p>
-                <p className="text-gray-500">Barcode : {currentProduct?.barcode ?? "-"}</p>
-                <p className="text-gray-500">Category : {currentProduct?.category?.categoryName ?? "-"}</p>
-                <p className="text-gray-500">Sub Category : {currentProduct?.subCategory?.subCategoryName ?? "-"}</p>
-                <p className="text-gray-500">Brand : {currentProduct?.brand?.brandName ?? "-"}</p>
-             <p className="text-gray-500">
-  Unit : {currentProduct?.inventoryUnit?.unitName ?? "-"}
-</p>
-                <p className="text-gray-500">Tax : {currentProduct?.tax?.hsnCode ?? "-"}</p>
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Button type="button" onClick={() => router.push(`/items/products/${currentProduct?.id}/edit`)}>
+              {/* Actions - Top Right */}
+              <div className="flex shrink-0 items-center gap-3">
+
+                <Button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/items/products/${currentProduct?.id}/edit`
+                    )
+                  }
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
 
                 <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-                  <span className="text-sm font-medium text-slate-700">{currentProduct?.status ? "Active" : "Inactive"}</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {currentProduct?.status ? "Active" : "Inactive"}
+                  </span>
+
                   <Switch
                     checked={currentProduct?.status ?? false}
                     onCheckedChange={handleStatusChange}
@@ -111,38 +133,153 @@ export default function ItemCard({ product, productId }: ItemCardProps) {
                 </div>
               </div>
             </div>
+
+            {/* Product Information */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 pi-cust-gap">
+
+              {/* Item Code */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Tag className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Item Code
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.itemCode ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Barcode */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Barcode className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Barcode
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.barcode ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Category */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Layers3 className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Category
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.category?.categoryName ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Sub Category */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Layers3 className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Sub Category
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.subCategory?.subCategoryName ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Brand */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Tag className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Brand
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.brand?.brandName ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Unit */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Ruler className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Unit
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.inventoryUnit?.unitName ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tax */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <ReceiptText className="h-4 w-4 text-slate-600" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">
+                    Tax
+                  </p>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {currentProduct?.tax?.hsnCode ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="mb-5 text-lg font-semibold">Classification</h2>
+          <div className="space-y-4">
+            <Info label="Variant Type" value={currentProduct?.variantType?.variantTypeName ?? "-"} />
+            <Info label="Variant Value" value={currentProduct?.variantValue?.value ?? "-"} />
+            <Info label="HSN Code" value={currentProduct?.hsnCode ?? "-"} />
           </div>
         </Card>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="p-6">
-            <h2 className="mb-5 text-lg font-semibold">Classification</h2>
-            <div className="space-y-4">
-              <Info label="Variant Type" value={currentProduct?.variantType?.variantTypeName ?? "-"} />
-              <Info label="Variant Value" value={currentProduct?.variantValue?.value ?? "-"} />
-              <Info label="HSN Code" value={currentProduct?.hsnCode ?? "-"} />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="mb-5 text-lg font-semibold">Inventory</h2>
-            <div className="space-y-4">
-              <Info label="Minimum Stock" value={currentProduct?.minimumStock ?? 0} />
-              <Info label="Maximum Stock" value={currentProduct?.maximumStock ?? 0} />
-              <Info label="Status" value={currentProduct?.status ? "Active" : "Inactive"} />
-            </div>
-          </Card>
-        </div>
 
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold">Description</h2>
-          <div className="text-gray-600">
-            {currentProduct?.description ? <div dangerouslySetInnerHTML={{ __html: currentProduct.description }} /> : "No description available."}
+          <h2 className="mb-5 text-lg font-semibold">Inventory</h2>
+          <div className="space-y-4">
+            <Info label="Minimum Stock" value={currentProduct?.minimumStock ?? 0} />
+            <Info label="Maximum Stock" value={currentProduct?.maximumStock ?? 0} />
+            <Info label="Status" value={currentProduct?.status ? "Active" : "Inactive"} />
           </div>
         </Card>
+      </div>
 
-      
-      </Container>
+      <Card className="p-6">
+        <h2 className="mb-4 text-lg font-semibold">Description</h2>
+        <div className="text-gray-600">
+          {currentProduct?.description ? <div dangerouslySetInnerHTML={{ __html: currentProduct.description }} /> : "No description available."}
+        </div>
+      </Card>
     </div>
   );
 }

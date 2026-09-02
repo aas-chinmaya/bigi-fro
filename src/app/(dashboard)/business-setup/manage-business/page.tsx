@@ -105,7 +105,7 @@ export default function BusinessPage() {
             rawRecords={rawBusinesses}
             onAddBusiness={() => router.push("/business-setup")}
             onAddBranch={(businessId) => { setSelectedBusinessId(businessId); setBranchModalOpen(true); }}
-            onEditBusiness={(id) => router.push(`/manage-business/edit?id=${id}`)}
+            onEditBusiness={(id) => router.push(`/business-setup/manage-business/edit?id=${id}`)}
             onDeleteBusiness={handleDeleteBusiness}
             onEditBranch={(branch) => { setSelectedBranch(branch); setBranchModalOpen(true); }}
             onDeleteBranch={handleDeleteBranch}

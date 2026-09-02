@@ -37,7 +37,7 @@ export const businessApi = {
     }
 
     return api.post<BackendBusinessResponse>(
-      "/business",
+      "/business/createBusiness",
       formData,
       {
         headers: {
@@ -49,7 +49,9 @@ export const businessApi = {
   },
 
   getBusinesses() {
-    return api.get<BackendBusinessResponse>('/business/getAllBusinesses');
+    return api.get<BackendBusinessResponse>('/business/getBusinessesByUser', {
+      withCredentials: true,
+    });
   },
 
   getBusinessById(id: string) {

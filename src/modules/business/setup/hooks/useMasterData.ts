@@ -1,154 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-import { masterService } from "../services/master.service";
-import { MasterOption } from "../types";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchMasterData,
+  fetchStatesForCountry,
+  fetchCitiesForState,
+  selectMasterData,
+  selectMasterStatus,
+  selectStatesForCountry,
+  selectCitiesForState,
+} from "../store/masterSlice";
 
 /**
  * Loads all the "static" master lists once (business type, category,
  * industry, registration type, currency, timezone, financial year,
  * document type, country) needed across the wizard.
+ *
+ * Backed by the businessSetupMasters redux slice, so calling this from
+ * multiple step components no longer triggers duplicate network requests
+ * — the first mount fetches, everyone else just reads the cached store.
  */
 export function useMasterData() {
-  const [businessTypes, setBusinessTypes] = useState<MasterOption[]>([]);
-  const [businessCategories, setBusinessCategories] = useState<
-    MasterOption[]
-  >([]);
-  const [industries, setIndustries] = useState<MasterOption[]>([]);
-  const [registrationTypes, setRegistrationTypes] = useState<
-    MasterOption[]
-  >([]);
-   const [otherRegistrationTypes, setOtherRegistrationTypes] = useState<
-    MasterOption[]
-  >([]);
-  const [currencies, setCurrencies] = useState<MasterOption[]>([]);
-  const [timezones, setTimezones] = useState<MasterOption[]>([]);
-  const [financialYears, setFinancialYears] = useState<MasterOption[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<MasterOption[]>([]);
-  const [countries, setCountries] = useState<MasterOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const data = useAppSelector(selectMasterData);
+  const status = useAppSelector(selectMasterStatus);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      try {
-        setLoading(true);
-
-        const [
-          typesRes,
-          categoriesRes,
-          industriesRes,
-          registrationRes,
-          currenciesRes,
-          timezonesRes,
-          financialYearsRes,
-          documentTypesRes,
-          countriesRes,
-        ] = await Promise.all([
-          masterService.getBusinessTypes(),
-          masterService.getBusinessCategories(),
-          masterService.getIndustries(),
-          masterService.getRegistrationTypes(),
-          masterService.getCurrencies(),
-          masterService.getTimezones(),
-          masterService.getFinancialYears(),
-          masterService.getDocumentTypes(),
-          masterService.getCountries(),
-        ]);
-
-        if (!mounted) return;
-
-        setBusinessTypes(typesRes.data);
-        setBusinessCategories(categoriesRes.data);
-        setIndustries(industriesRes.data);
-        setRegistrationTypes(registrationRes.data);
-        setCurrencies(currenciesRes.data);
-        setTimezones(timezonesRes.data);
-        setFinancialYears(financialYearsRes.data);
-        setDocumentTypes(documentTypesRes.data);
-        setCountries(countriesRes.data);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    void dispatch(fetchMasterData());
+  }, [dispatch]);
 
   return {
-    businessTypes,
-    businessCategories,
-    industries,
-    registrationTypes,
-    otherRegistrationTypes,
-    currencies,
-    timezones,
-    financialYears,
-    documentTypes,
-    countries,
-    loading,
+    businessTypes: data.businessTypes,
+    businessCategories: data.businessCategories,
+    businessSubCategories: data.businessSubCategories,
+    industries: data.industries,
+    registrationTypes: data.registrationTypes,
+    licenseTypes: data.licenseTypes,
+    currencies: data.currencies,
+    timezones: data.timezones,
+    financialYears: data.financialYears,
+    documentTypes: data.documentTypes,
+    countries: data.countries,
+    loading: status === "idle" || status === "loading",
   };
 }
 
 /**
  * Cascading country -> state -> city selects. Give it the current
  * countryId / stateId (from the form) and it fetches the right
- * child list whenever the parent changes.
+ * child list whenever the parent changes (cached in the slice, so the
+ * same country/state pair is never re-fetched by a second component).
  */
 export function useLocationOptions(countryId?: string, stateId?: string) {
-  const [statesList, setStatesList] = useState<MasterOption[]>([]);
-  const [citiesList, setCitiesList] = useState<MasterOption[]>([]);
-  const [loadingStates, setLoadingStates] = useState(false);
-  const [loadingCities, setLoadingCities] = useState(false);
+  const dispatch = useAppDispatch();
+  const statesList = useAppSelector(selectStatesForCountry(countryId));
+  const citiesList = useAppSelector(selectCitiesForState(stateId));
 
   useEffect(() => {
-    if (!countryId) {
-      setStatesList([]);
-      return;
-    }
-
-    let mounted = true;
-    setLoadingStates(true);
-
-    masterService
-      .getStates(countryId)
-      .then((res) => mounted && setStatesList(res.data))
-      .finally(() => mounted && setLoadingStates(false));
-
-    return () => {
-      mounted = false;
-    };
-  }, [countryId]);
+    if (countryId) void dispatch(fetchStatesForCountry(countryId));
+  }, [dispatch, countryId]);
 
   useEffect(() => {
-    if (!stateId) {
-      setCitiesList([]);
-      return;
-    }
-
-    let mounted = true;
-    setLoadingCities(true);
-
-    masterService
-      .getCities(stateId)
-      .then((res) => mounted && setCitiesList(res.data))
-      .finally(() => mounted && setLoadingCities(false));
-
-    return () => {
-      mounted = false;
-    };
-  }, [stateId]);
+    if (stateId) void dispatch(fetchCitiesForState(stateId));
+  }, [dispatch, stateId]);
 
   return {
     states: statesList,
     cities: citiesList,
-    loadingStates,
-    loadingCities,
+    loadingStates: Boolean(countryId) && statesList.length === 0,
+    loadingCities: Boolean(stateId) && citiesList.length === 0,
   };
 }

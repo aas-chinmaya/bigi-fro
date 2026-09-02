@@ -1,7 +1,6 @@
 
 
-import { BusinessSetupWizard } from "@/modules/business/setup";
-
+import BusinessSetupWizard from "@/modules/business/setup/components/BusinessSetupWizard";
 export default function BusinessSetupPage() {
   return (
     <main className="flex h-full w-full min-w-full flex-col overflow-hidden">

@@ -75,7 +75,7 @@ export default function PaymentReceiptTable({
 
           const matchesSearch =
             (
-              paymentReceipt.receiptNo ??
+              paymentReceipt.receiptNumber ??
               ""
             )
               .toLowerCase()
@@ -87,7 +87,7 @@ export default function PaymentReceiptTable({
               .toLowerCase()
               .includes(searchText) ||
             (
-              paymentReceipt.referenceNo ??
+              paymentReceipt.customerId ??
               ""
             )
               .toLowerCase()
@@ -100,7 +100,7 @@ export default function PaymentReceiptTable({
           const matchesStatus =
             status
               ? (
-                  paymentReceipt.status ??
+                  paymentReceipt.receiptStatus ??
                   ""
                 ).toUpperCase() ===
                 status.toUpperCase()

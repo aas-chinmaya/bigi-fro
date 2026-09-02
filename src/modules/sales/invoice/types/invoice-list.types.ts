@@ -14,21 +14,12 @@ export interface InvoiceListItem {
   customerId: string;
   customerName: string;
 
-  // Buyer display fields (list/table cells fall back to these when
-  // customerName isn't populated, e.g. for manually entered buyers).
-  buyerName?: string;
-  buyerCompanyName?: string;
-
   invoiceType: InvoiceType;
 
-  
-  grandTotal: number;
+  totalAmount: number;
 
   paymentStatus: PaymentStatus;
   invoiceStatus: InvoiceStatus;
-
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface InvoiceListState {

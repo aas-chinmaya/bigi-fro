@@ -270,7 +270,7 @@ export const buildVendorPayload = (data: Record<string, any>) => {
       ifsc: normalizeStringValue(bankSource.ifsc ?? bankSource.ifscCode, ""),
       accountType: normalizeEnumValue(bankSource.accountType, "CURRENT"),
       upiId: normalizeStringValue(bankSource.upiId, ""),
-      cancelledCheque: null,
+      cancelledCheque: normalizeStringValue(bankSource.cancelledCheque ?? bankSource.cancelledChequeRef, ""),
     },
     purchase: {
       openingBalance: normalizeNumberValue(data.openingBalance ?? purchaseSource.openingBalance ?? 0, 0),

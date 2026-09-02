@@ -5,12 +5,15 @@ import userReducer from "@/modules/users/store/userSlice";
 import authReducer from "@/modules/auth/store/authSlice";
 import vendorReducer from "@/modules/vendor/store/vendorSlice";
 import businessReducer from "@/modules/business/store/businessSlice";
+import { masterReducer as businessSetupMasterReducer } from "@/modules/business/setup";
+import globalDocumentTypeReducer from "@/modules/vendor/masters/store/globalDocumentTypeSlice";
+import vendorCategoryReducer from "@/modules/vendor/masters/store/vendorCategorySlice";
 
 //sales modules
-import invoiceReducer from "@/modules/sales/invoice/store/invoice.slice";
+import invoiceReducer from "@/modules/sales/invoice/slice/invoice.slice";
+import invoiceItemReducer from "@/modules/sales/invoice/slice/invoiceItem-slice";
 import customersReducer from "@/modules/customers/store/customers.slice";
 import paymentReceiptReducer  from "@/modules/sales/payment-receipt/store/payment-receipt.slice";
-import quotationReducer  from "@/modules/sales/quotation/store/quotation.slice";
 
 const store = configureStore({
   reducer: {
@@ -20,10 +23,15 @@ const store = configureStore({
     auth: authReducer,
     vendors: vendorReducer,
     invoice: invoiceReducer,
+    invoiceItem: invoiceItemReducer,
+
+        paymentReceipt: paymentReceiptReducer ,
+
     business: businessReducer,
     customers: customersReducer,
-    paymentReceipt: paymentReceiptReducer ,
-    quotation: quotationReducer ,
+    businessSetupMasters: businessSetupMasterReducer,
+    vendorDocumentTypes: globalDocumentTypeReducer,
+    vendorCategories: vendorCategoryReducer,
   },
 });
 

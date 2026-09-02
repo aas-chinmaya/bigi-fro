@@ -12,10 +12,10 @@ import {
 import InvoiceFilters from "./invoice-filters";
 import { DraftInvoiceColumns } from "./draft-invoice-columns";
 
-import type { InvoiceListItem } from "../../types/invoice-list.types";
+import type { Invoice } from "../../types/invoice";
 
 interface DraftInvoiceTableProps {
-  drafts: InvoiceListItem[];
+  drafts: Invoice[];
   loading?: boolean;
 }
 
@@ -32,9 +32,6 @@ export default function DraftInvoiceTable({
     return drafts.filter((draft) => {
       const matchesSearch =
         (draft.invoiceNumber ?? "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (draft.customerName ?? "")
           .toLowerCase()
           .includes(searchText) ||
         (draft.buyerName ?? "")

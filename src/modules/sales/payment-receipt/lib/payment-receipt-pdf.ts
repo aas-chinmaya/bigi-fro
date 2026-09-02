@@ -151,7 +151,7 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
   );
 
   pdf.text(
-    receipt.receiptNo ?? "-",
+    receipt.receiptNumber ?? "-",
     m + 16,
     y + 3
   );
@@ -197,7 +197,7 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
   );
 
   pdf.text(
-    formatLabel(receipt.status),
+    formatLabel(receipt.receiptStatus),
     pageW - m - 28,
     y + 3
   );
@@ -296,27 +296,27 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
     );
   }
 
-  // Receipt Type
+  // Receipt Status
   y += 6;
 
   row(
-    "Receipt Type",
-    formatLabel(receipt.receiptType),
+    "Receipt Status",
+    formatLabel(receipt.receiptStatus ?? "RECEIVED"),
     left,
     y
   );
 
-  // Payment Method
+  // Receipt Source
   y += 6;
 
   row(
-    "Payment Method",
-    formatLabel(receipt.paymentMethod),
+    "Receipt Source",
+    formatLabel(receipt.receiptSource ?? "POS"),
     left,
     y
   );
 
-  // Reference Number
+  // Financial Year
   const ry =
     y -
     (receipt.customerId
@@ -324,8 +324,8 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
       : 12);
 
   row(
-    "Reference No",
-    receipt.referenceNo ?? "-",
+    "Financial Year",
+    receipt.financialYear ?? "-",
     mid,
     ry
   );
@@ -528,7 +528,7 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
   // ==========================================================
 
   pdf.save(
-    `${receipt.receiptNo ?? "money-receipt"}.pdf`
+    `${receipt.receiptNumber ?? "money-receipt"}.pdf`
   );
 }
 

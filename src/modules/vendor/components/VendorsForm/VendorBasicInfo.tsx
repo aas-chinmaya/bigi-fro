@@ -1,7 +1,8 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { Building2 } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 
 import {
@@ -15,12 +16,14 @@ import {
 } from "@/components/ui";
 
 import { FormField, ImageUpload } from "@/components/form";
+import { useVendorCategories } from "@/modules/vendor/masters/hooks/useVendorCategories";
 
 interface Props {
   form: UseFormReturn<any>;
 }
 
 export default function VendorBasicInfo({ form }: Props) {
+  const router = useRouter();
   const {
     register,
     watch,
@@ -31,6 +34,7 @@ export default function VendorBasicInfo({ form }: Props) {
   const fieldErrors = errors as any;
   const logoValue = watch("logo");
   const selectedLogo = logoValue ? logoValue : null;
+  const { items: vendorCategories, loading: categoriesLoading } = useVendorCategories();
 
   return (
     <section className="rounded-3xl p-1">
@@ -56,18 +60,31 @@ export default function VendorBasicInfo({ form }: Props) {
             error={fieldErrors.vendorType?.message}
           >
             <Select
-              value={watch("vendorType")}
-              onValueChange={(value) => setValue("vendorType", value)}
+              value={watch("vendorType") ?? ""}
+              onValueChange={(value) => {
+                if (value === "__add_vendor_type__") {
+                  router.push("/vendors/masters/vendor-categories");
+                  return;
+                }
+                setValue("vendorType", value);
+              }}
             >
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select type" />
+                <SelectValue
+                  placeholder={categoriesLoading ? "Loading types..." : "Select type"}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SUPPLIER">Supplier</SelectItem>
-                <SelectItem value="MANUFACTURER">Manufacturer</SelectItem>
-                <SelectItem value="WHOLESALER">Wholesaler</SelectItem>
-                <SelectItem value="SERVICE_PROVIDER">Service Provider</SelectItem>
-                <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                {vendorCategories
+                  .filter((category) => category.status === "ACTIVE")
+                  .map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                <SelectItem value="__add_vendor_type__" className="border-t border-gray-100 mt-1 font-medium text-primary">
+                  <span className="flex items-center gap-2"><Plus className="h-4 w-4" />Add vendor type</span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </FormField>
