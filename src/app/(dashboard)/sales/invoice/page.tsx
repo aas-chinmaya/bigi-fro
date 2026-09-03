@@ -85,7 +85,9 @@ export default function InvoiceListPage() {
           Drafts
         </button>
       </div>
-
+{
+  console.table(invoices)
+}
       {/* All invoices */}
       {activeTab === "all" && (
         <InvoiceTable

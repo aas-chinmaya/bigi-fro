@@ -395,7 +395,7 @@ export default function PaymentReceiptCreateForm() {
     </CardTitle>
 
     <p className=" text-sm text-muted-foreground">
-      Record a customer payment or advance receipt
+      Record a customer payment 
     </p>
   </div>
 </div>
