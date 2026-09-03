@@ -9,6 +9,11 @@ export const serviceApi = {
       },
     });
   },
+  getAllServices() {
+    return api.get("/services/getall"
+    
+    );
+  },
 
   getById(id: string) {
     return api.get(`/services/getby/${id}`);

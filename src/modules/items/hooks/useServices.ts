@@ -48,6 +48,7 @@ export function useServices() {
   useEffect(() => {
     fetchServices(1);
   }, []);
+  console.log("services:", services); // Debugging line to check the combined items
 
   return {
     services,
@@ -60,3 +61,5 @@ export function useServices() {
     changeServiceStatus,
   };
 }
+
+

@@ -4,6 +4,9 @@ export const serviceservice = {
   getServices(page = 1, limit = 10) {
     return serviceApi.getAll(page, limit);
   },
+  getAllServices() {
+    return serviceApi.getAllServices();
+  },
 
   getServiceById(id: string) {
     return serviceApi.getById(id);

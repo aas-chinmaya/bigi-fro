@@ -65,7 +65,7 @@ const mapVendorToFormValues = (vendor: any) => {
     businessCategory: vendor.businessCategory ?? "",
     status: normalizeStatus(vendor.status),
     remarks: vendor.remarks ?? "",
-    logo: normalizeDocumentUrl(vendor.logoUrl ?? vendor.logo) || null,
+    logo: vendor.logoUrl?.view ?? vendor.logo ?? null,
     createdBy: vendor.createdBy ?? "user001",
     gstin: taxSource.gstin ?? "",
     pan: taxSource.pan ?? "",
@@ -89,10 +89,6 @@ const mapVendorToFormValues = (vendor: any) => {
           addressSource.billingAddressLine1 ?? addressSource.addressLine1 ?? "",
         addressLine2:
           addressSource.billingAddressLine2 ?? addressSource.addressLine2 ?? "",
-        landmark:
-          addressSource.billingLandmark ?? addressSource.landmark ?? "",
-        district:
-          addressSource.billingDistrict ?? addressSource.district ?? "",
         countryId:
           addressSource.billingCountry ?? addressSource.countryId ?? "",
         stateId:
@@ -101,7 +97,6 @@ const mapVendorToFormValues = (vendor: any) => {
           addressSource.billingCity ?? addressSource.cityId ?? "",
         pincode:
           addressSource.billingPincode ?? addressSource.pincode ?? "",
-        status: addressSource.status ?? "Active",
         isBilling: true,
         isShipping:
           typeof addressSource.isShippingSameAsBilling === "boolean"
@@ -119,10 +114,6 @@ const mapVendorToFormValues = (vendor: any) => {
         shippingSource.addressLine1 ?? addressSource.shippingAddressLine1 ?? "",
       addressLine2:
         shippingSource.addressLine2 ?? addressSource.shippingAddressLine2 ?? "",
-      landmark:
-        shippingSource.landmark ?? addressSource.shippingLandmark ?? "",
-      district:
-        shippingSource.district ?? addressSource.shippingDistrict ?? "",
       countryId:
         shippingSource.countryId ?? addressSource.shippingCountry ?? "",
       stateId:
@@ -131,7 +122,6 @@ const mapVendorToFormValues = (vendor: any) => {
         shippingSource.cityId ?? addressSource.shippingCity ?? "",
       pincode:
         shippingSource.pincode ?? addressSource.shippingPincode ?? "",
-      status: shippingSource.status ?? "Active",
       isBilling: false,
       isShipping: true,
       status: "Active",
@@ -159,20 +149,12 @@ const mapVendorToFormValues = (vendor: any) => {
         branch: bankSource.branch ?? "",
         upiId: bankSource.upiId ?? "",
         accountType: bankSource.accountType ?? "",
-        cancelledCheque:
-          bankSource.cancelledCheque ?? bankSource.cancelledChequeRef ?? "",
-        isPrimary: bankSource.isPrimary ?? true,
+        isPrimary: true,
       },
     ],
     documents:
       vendor.documents?.map((doc: any) => ({
-        globalDocumentTypeID:
-          doc.globalDocumentTypeID ??
-          doc.globalDocumentTypeId ??
-          doc.documentType?.id ??
-          doc.documentType ??
-          doc.type ??
-          "",
+        documentType: doc.documentType ?? doc.type ?? "OTHER",
         fileUrl: normalizeDocumentUrl(doc.fileUrl ?? doc.url),
         id: doc.id,
         originalName: doc.originalName ?? doc.fileName ?? "",

@@ -1,36 +1,185 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+{
+  "name": "biznex",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "@hookform/resolvers": "^5.4.0",
+    "@radix-ui/react-avatar": "^1.2.2",
+    "@radix-ui/react-checkbox": "^1.3.7",
+    "@radix-ui/react-dialog": "^1.1.19",
+    "@radix-ui/react-dropdown-menu": "^2.1.20",
+    "@radix-ui/react-label": "^2.1.11",
+    "@radix-ui/react-radio-group": "^1.4.3",
+    "@radix-ui/react-select": "^2.3.3",
+    "@radix-ui/react-switch": "^1.3.3",
+    "@reduxjs/toolkit": "^2.12.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@tiptap/extension-character-count": "^3.29.2",
+    "@tiptap/extension-color": "^3.29.2",
+    "@tiptap/extension-font-family": "^3.29.2",
+    "@tiptap/extension-highlight": "^3.29.2",
+    "@tiptap/extension-image": "^3.29.2",
+    "@tiptap/extension-link": "^3.29.2",
+    "@tiptap/extension-mention": "^3.29.2",
+    "@tiptap/extension-placeholder": "^3.29.2",
+    "@tiptap/extension-subscript": "^3.29.2",
+    "@tiptap/extension-superscript": "^3.29.2",
+    "@tiptap/extension-table": "^3.29.2",
+    "@tiptap/extension-table-cell": "^3.29.2",
+    "@tiptap/extension-table-header": "^3.29.2",
+    "@tiptap/extension-table-row": "^3.29.2",
+    "@tiptap/extension-task-item": "^3.29.2",
+    "@tiptap/extension-task-list": "^3.29.2",
+    "@tiptap/extension-text-align": "^3.29.2",
+    "@tiptap/extension-text-style": "^3.29.2",
+    "@tiptap/extension-typography": "^3.29.2",
+    "@tiptap/extension-underline": "^3.29.2",
+    "@tiptap/extension-youtube": "^3.29.2",
+    "@tiptap/react": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
+    "axios": "^1.18.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "dexie": "^4.4.4",
+    "dexie-react-hooks": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.23.0",
+    "next": "16.2.10",
+    "next-themes": "^0.4.6",
+    "pdfjs-dist": "^6.2.108",
+    "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
+    "react-dom": "19.2.4",
+    "react-dropzone": "^15.0.0",
+    "react-hook-form": "^7.81.0",
+    "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.3.0",
+    "recharts": "^3.10.1",
+    "shadcn": "^4.16.2",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "prettier": "^3.9.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
 
-## Getting Started
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+{
+  "name": "biznex",
+  "version": "0.1.0",
+  "private": true,
+
+  "scripts": {
+    "build": "next build",
+    "typecheck": "tsc --noEmit --pretty false",
+    "build:report": "powershell -Command \"'=== NEXT BUILD ===' | Out-File build-errors.txt; npm run build *>> build-errors.txt; ''; '=== TYPESCRIPT CHECK ===' | Add-Content build-errors.txt; npm run typecheck *>> build-errors.txt\""
+  }
+,
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "@hookform/resolvers": "^5.4.0",
+    "@radix-ui/react-avatar": "^1.2.2",
+    "@radix-ui/react-checkbox": "^1.3.7",
+    "@radix-ui/react-dialog": "^1.1.19",
+    "@radix-ui/react-dropdown-menu": "^2.1.20",
+    "@radix-ui/react-label": "^2.1.11",
+    "@radix-ui/react-radio-group": "^1.4.3",
+    "@radix-ui/react-select": "^2.3.3",
+    "@radix-ui/react-switch": "^1.3.3",
+    "@reduxjs/toolkit": "^2.12.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@tiptap/extension-character-count": "^3.29.2",
+    "@tiptap/extension-color": "^3.29.2",
+    "@tiptap/extension-font-family": "^3.29.2",
+    "@tiptap/extension-highlight": "^3.29.2",
+    "@tiptap/extension-image": "^3.29.2",
+    "@tiptap/extension-link": "^3.29.2",
+    "@tiptap/extension-mention": "^3.29.2",
+    "@tiptap/extension-placeholder": "^3.29.2",
+    "@tiptap/extension-subscript": "^3.29.2",
+    "@tiptap/extension-superscript": "^3.29.2",
+    "@tiptap/extension-table": "^3.29.2",
+    "@tiptap/extension-table-cell": "^3.29.2",
+    "@tiptap/extension-table-header": "^3.29.2",
+    "@tiptap/extension-table-row": "^3.29.2",
+    "@tiptap/extension-task-item": "^3.29.2",
+    "@tiptap/extension-task-list": "^3.29.2",
+    "@tiptap/extension-text-align": "^3.29.2",
+    "@tiptap/extension-text-style": "^3.29.2",
+    "@tiptap/extension-typography": "^3.29.2",
+    "@tiptap/extension-underline": "^3.29.2",
+    "@tiptap/extension-youtube": "^3.29.2",
+    "@tiptap/react": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
+    "axios": "^1.18.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "dexie": "^4.4.4",
+    "dexie-react-hooks": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.23.0",
+    "next": "16.2.10",
+    "next-themes": "^0.4.6",
+    "pdfjs-dist": "^6.2.108",
+    "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
+    "react-dom": "19.2.4",
+    "react-dropzone": "^15.0.0",
+    "react-hook-form": "^7.81.0",
+    "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.3.0",
+    "recharts": "^3.10.1",
+    "shadcn": "^4.16.2",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "prettier": "^3.9.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

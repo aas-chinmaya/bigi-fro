@@ -2,6 +2,7 @@ export * from "./button";
 export * from "./input";
 export * from "./textarea";
 export * from "./label";
+export * from "./date-input";
 export * from "./card";
 export * from "./badge";
 export * from "./spinner";

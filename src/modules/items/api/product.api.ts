@@ -9,6 +9,9 @@ export const productApi = {
       },
     });
   },
+  getAllProducts() {
+    return api.get("/products/getall");
+  },
 
   getById(id: string) {
     return api.get(`/products/getbyid/${id}`);

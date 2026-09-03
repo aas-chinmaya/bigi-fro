@@ -19,48 +19,6 @@ interface Props {
   form: UseFormReturn<any>;
 }
 
-const countries = [
-  { id: "country-india", name: "India" },
-  { id: "country-uae", name: "United Arab Emirates" },
-  { id: "country-usa", name: "United States" },
-  { id: "country-uk", name: "United Kingdom" },
-  { id: "country-australia", name: "Australia" },
-] as const;
-
-const statesByCountry: Record<string, { id: string; name: string }[]> = {
-  "country-india": [
-    { id: "state-india-odisha", name: "Odisha" },
-    { id: "state-india-maharashtra", name: "Maharashtra" },
-    { id: "state-india-karnataka", name: "Karnataka" },
-  ],
-  "country-uae": [
-    { id: "state-uae-dubai", name: "Dubai" },
-    { id: "state-uae-abudhabi", name: "Abu Dhabi" },
-    { id: "state-uae-sharjah", name: "Sharjah" },
-  ],
-  "country-usa": [
-    { id: "state-usa-california", name: "California" },
-    { id: "state-usa-texas", name: "Texas" },
-    { id: "state-usa-newyork", name: "New York" },
-  ],
-  "country-uk": [
-    { id: "state-uk-england", name: "England" },
-    { id: "state-uk-scotland", name: "Scotland" },
-    { id: "state-uk-wales", name: "Wales" },
-  ],
-  "country-australia": [
-    { id: "state-australia-nsw", name: "New South Wales" },
-    { id: "state-australia-victoria", name: "Victoria" },
-    { id: "state-australia-queensland", name: "Queensland" },
-  ],
-};
-
-const resolveCountryId = (value: string) =>
-  countries.find((country) => country.id === value || country.name === value)?.id ?? value;
-
-const resolveStateId = (countryId: string, value: string) =>
-  statesByCountry[countryId]?.find((state) => state.id === value || state.name === value)?.id ?? value;
-
 export default function VendorAddress({ form }: Props) {
   const {
     register,
@@ -70,14 +28,6 @@ export default function VendorAddress({ form }: Props) {
   } = form;
 
   const sameAsBilling = watch("sameAsBilling") ?? true;
-  const billingCountryValue = watch("addresses.0.countryId") ?? "";
-  const shippingCountryValue = watch("shippingAddress.countryId") ?? "";
-  const billingCountryId = resolveCountryId(billingCountryValue);
-  const shippingCountryId = resolveCountryId(shippingCountryValue);
-  const billingStates = statesByCountry[billingCountryId] ?? [];
-  const shippingStates = statesByCountry[shippingCountryId] ?? [];
-  const billingStateId = resolveStateId(billingCountryId, watch("addresses.0.stateId") ?? "");
-  const shippingStateId = resolveStateId(shippingCountryId, watch("shippingAddress.stateId") ?? "");
   const billingAddressLine1Error = ((errors as any).addresses?.[0]?.addressLine1?.message as string | undefined);
   const billingAddressLine2Error = ((errors as any).addresses?.[0]?.addressLine2?.message as string | undefined);
   const billingCountryError = ((errors as any).addresses?.[0]?.countryId?.message as string | undefined);
@@ -161,42 +111,26 @@ export default function VendorAddress({ form }: Props) {
 
             <FormField label="Country" required error={billingCountryError}>
               <Select
-                value={billingCountryId}
-                onValueChange={(value) => {
-                  setValue("addresses.0.countryId", value);
-                  setValue("addresses.0.stateId", "");
-                }}
+                value={watch("addresses.0.countryId")}
+                onValueChange={(value) => setValue("addresses.0.countryId", value)}
               >
                 <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="India">India</SelectItem>
+                  <SelectItem value="UAE">UAE</SelectItem>
+                  <SelectItem value="USA">USA</SelectItem>
                 </SelectContent>
               </Select>
             </FormField>
 
             <FormField label="State" required error={billingStateError}>
-              <Select
-                value={billingStateId}
-                onValueChange={(value) => setValue("addresses.0.stateId", value)}
-                disabled={!billingCountryId}
-              >
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder={billingCountryId ? "Select state" : "Select country first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {billingStates.map((state) => (
-                    <SelectItem key={state.id} value={state.id}>
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="Odisha"
+                className="rounded-xl"
+                {...register("addresses.0.stateId")}
+              />
             </FormField>
 
             <FormField label="City" required error={billingCityError}>
@@ -287,42 +221,26 @@ export default function VendorAddress({ form }: Props) {
 
               <FormField label="Country" required error={shippingCountryError}>
                 <Select
-                    value={shippingCountryId}
-                    onValueChange={(value) => {
-                      setValue("shippingAddress.countryId", value);
-                      setValue("shippingAddress.stateId", "");
-                    }}
+                  value={watch("shippingAddress.countryId")}
+                  onValueChange={(value) => setValue("shippingAddress.countryId", value)}
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
+                    <SelectItem value="India">India</SelectItem>
+                    <SelectItem value="UAE">UAE</SelectItem>
+                    <SelectItem value="USA">USA</SelectItem>
                   </SelectContent>
                 </Select>
               </FormField>
 
               <FormField label="State" required error={shippingStateError}>
-                <Select
-                  value={shippingStateId}
-                  onValueChange={(value) => setValue("shippingAddress.stateId", value)}
-                  disabled={!shippingCountryId}
-                >
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder={shippingCountryId ? "Select state" : "Select country first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {shippingStates.map((state) => (
-                      <SelectItem key={state.id} value={state.id}>
-                        {state.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  placeholder="Odisha"
+                  className="rounded-xl"
+                  {...register("shippingAddress.stateId")}
+                />
               </FormField>
 
               <FormField label="City" required error={shippingCityError}>

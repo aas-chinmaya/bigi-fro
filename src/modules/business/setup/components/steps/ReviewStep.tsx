@@ -98,9 +98,7 @@ export default function ReviewStep({ onEdit }: Props) {
   const {
     businessTypes,
     businessCategories,
-    businessSubCategories,
     industries,
-    licenseTypes,
     currencies,
     countries,
   } = useMasterData();
@@ -186,15 +184,7 @@ export default function ReviewStep({ onEdit }: Props) {
           label="Category"
           value={nameOf(businessCategories, data.info.businessCategoryId)}
         />
-        <Row
-          label="Sub-category"
-          value={nameOf(businessSubCategories, data.info.businessSubCategoryId)}
-        />
         <Row label="Industry" value={nameOf(industries, data.info.industryId)} />
-        <Row
-          label="License Type"
-          value={nameOf(licenseTypes, data.info.licenseTypeId)}
-        />
         <Row label="Email" value={data.info.email} />
         <Row label="Phone" value={data.info.phone} />
         <Row label="GSTIN" value={data.info.gstin} />
@@ -222,7 +212,7 @@ export default function ReviewStep({ onEdit }: Props) {
         <Row label="Pincode" value={data.address.pincode} />
       </SummaryCard>
 
-      {/* <SummaryCard
+      <SummaryCard
         title="Branches"
         icon={Building2}
         tint="amber"
@@ -250,7 +240,7 @@ export default function ReviewStep({ onEdit }: Props) {
             ))}
           </div>
         )}
-      </SummaryCard> */}
+      </SummaryCard>
 
       <SummaryCard
         title="Bank Details"

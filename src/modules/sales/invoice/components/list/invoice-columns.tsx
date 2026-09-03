@@ -4,11 +4,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui";
 
-import type { Invoice } from "../../types/invoice";
+import type { InvoiceListItem } from "../../types/invoice-list.types";
 
 import InvoiceActions from "./invoice-actions";
 
-export const InvoiceColumns: ColumnDef<Invoice>[] = [
+export const InvoiceColumns: ColumnDef<InvoiceListItem>[] = [
   {
     accessorKey: "invoiceNumber",
     header: "Invoice",
@@ -23,8 +23,9 @@ export const InvoiceColumns: ColumnDef<Invoice>[] = [
           </p>
 
           <p className="text-xs text-muted-foreground">
-            {invoice.buyerName ??
-              invoice.buyerCompanyName ??
+            {invoice.customerName ||
+              invoice.buyerName ||
+              invoice.buyerCompanyName ||
               "No customer"}
           </p>
         </div>
@@ -64,9 +65,7 @@ export const InvoiceColumns: ColumnDef<Invoice>[] = [
     header: "Total",
 
     cell: ({ row }) => {
-      const amount = Number(
-        row.original.grandTotal ?? 0
-      );
+      const amount = Number(row.original.grandTotal ?? 0);
 
       return (
         <div>
@@ -76,13 +75,6 @@ export const InvoiceColumns: ColumnDef<Invoice>[] = [
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            {row.original.totalItems ?? 0}{" "}
-            {row.original.totalItems === 1
-              ? "Item"
-              : "Items"}
           </p>
         </div>
       );
@@ -99,7 +91,7 @@ export const InvoiceColumns: ColumnDef<Invoice>[] = [
       ).toUpperCase();
 
       const variant =
-        status === "PAID"
+        status === "PAID" || status === "ISSUED"
           ? "success"
           : status === "PENDING"
             ? "secondary"

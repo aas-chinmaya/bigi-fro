@@ -1,13 +1,9 @@
-
-
-
-
 "use client";
 
-import { useEffect } from "react";
-import { useForm, type DefaultValues } from "react-hook-form";
+import type { DefaultValues } from "react-hook-form";
 
 import type { InvoiceFormValues } from "../types/invoice-form.types";
+
 
 export const DEFAULT_VALUES: DefaultValues<InvoiceFormValues> = {
   // ========================================================
@@ -27,7 +23,6 @@ export const DEFAULT_VALUES: DefaultValues<InvoiceFormValues> = {
 
   branchId: "",
   branch: "",
-
 
   // ========================================================
   // Customer
@@ -183,25 +178,3 @@ export const DEFAULT_VALUES: DefaultValues<InvoiceFormValues> = {
   businessId: "",
   createdBy: "",
 };
-
-export function useInvoiceForm(
-  initialValues?: InvoiceFormValues | null,
-) {
-  const form = useForm<InvoiceFormValues>({
-    defaultValues: DEFAULT_VALUES,
-    mode: "onSubmit",
-    reValidateMode: "onChange",
-  });
-
-  useEffect(() => {
-    if (!initialValues) return;
-
-    form.reset({
-      ...DEFAULT_VALUES,
-      ...initialValues,
-      items: initialValues.items ?? [],
-    });
-  }, [initialValues, form]);
-
-  return form;
-}

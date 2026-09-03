@@ -57,7 +57,10 @@ export function todayDateInputValue(): string {
     d.getDate(),
   ).padStart(2, "0");
 
-  return `${y}-${m}-${day}`;
+  // return datetime-local format so inputs of type=datetime-local accept it
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${day}T${hh}:${mm}`;
 }
 
 // ==========================================================
@@ -140,23 +143,16 @@ export const paymentReceiptFormSchema = z
     businessId: sanitizedOptionalString,
     branchId: sanitizedOptionalString,
 
-    receiptNumber: sanitizedOptionalString,
     receiptDate: z
       .string({ message: "Receipt date is required" })
       .min(1, "Receipt date is required")
-      .refine((value) => /^\d{4}-\d{2}-\d{2}$/.test(value), {
+      .refine((value) => /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/.test(value), {
         message: "Invalid date format",
       }),
 
     financialYear: z.string().trim().min(1, "Financial year is required"),
 
-    receiptStatus: z.enum(["DRAFT", "RECEIVED"], {
-      message: "Receipt status is required",
-    }),
-
-    receiptSource: z.enum(["MANUAL", "ONLINE", "OTHER", "POS"], {
-      message: "Receipt source is required",
-    }),
+    
 
     customerId: z
       .string({ message: "Customer is required" })
@@ -166,11 +162,10 @@ export const paymentReceiptFormSchema = z
     customerPhone: sanitizedOptionalString,
     customerGSTIN: sanitizedOptionalString,
 
-    paymentId: sanitizedOptionalString,
+    invoiceId: sanitizedOptionalString,
     paymentMethod: z.enum(["CASH", "UPI", "CARD", "NET_BANKING"], {
       message: "Payment method is required",
     }).default("CASH"),
-    documentNumber: z.string().trim().default(""),
     amount: z
       .number({
         message: "Amount is required",
@@ -181,7 +176,6 @@ export const paymentReceiptFormSchema = z
     notes: sanitizedOptionalString,
 
     createdBy: z.string().trim().min(1, "Created by is required").optional().or(z.literal("")),
-    updatedBy: sanitizedOptionalString,
   });
 
 // ==========================================================

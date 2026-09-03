@@ -71,7 +71,7 @@ export default function BusinessCard({
                     <div className="flex items-start justify-between gap-3">
 
                         <Link
-                            href={`/business-setup/manage-business/view?id=${business.id}`}
+                            href={`/manage-business/view?id=${business.id}`}
                             className="flex flex-1 gap-4 rounded-xl transition hover:bg-primary/5"
                         >
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10">
@@ -300,7 +300,7 @@ export default function BusinessCard({
                             size="sm"
                             variant="outline"
                             className="ml-auto gap-2"
-                                onClick={() => router.push(`/business-setup/manage-business/view?id=${business.id}`)}
+                            onClick={() => router.push(`/manage-business/view?id=${business.id}`)}
                         >
                             <Eye size={16} />
                             View Details

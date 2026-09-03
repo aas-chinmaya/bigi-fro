@@ -3,6 +3,10 @@ import api from "@/services/api";
 import { MasterOption } from "../types";
 import {
   businessTypes,
+  businessCategories,
+  industries,
+  registrationTypes,
+  currencies,
   timezones,
   financialYears,
   documentTypes,
@@ -60,8 +64,6 @@ function toMasterOption(item: unknown): MasterOption {
     record.currencyName ??
     record.industryName ??
     record.registrationName ??
-    record.subCategoryName ??
-    record.licenseTypeName ??
     record.label ??
     "";
 
@@ -70,22 +72,15 @@ function toMasterOption(item: unknown): MasterOption {
     record.currencySymbol ??
     record.symbol ??
     record.code ??
+    record.icon ??
     undefined;
 
-  const icon = record.icon ? String(record.icon) : undefined;
-
-  const parentId =
-    record.parentId ??
-    record.categoryId ??
-    record.countryId ??
-    record.stateId ??
-    undefined;
+  const parentId = record.parentId ?? record.countryId ?? record.stateId ?? undefined;
 
   return {
     id: String(id),
     name: String(name),
     meta: meta ? String(meta) : undefined,
-    icon,
     parentId: parentId ? String(parentId) : undefined,
   };
 }
@@ -129,27 +124,22 @@ export const masterApi = {
   },
 
   getBusinessCategories() {
-    return requestOptions("/categories/getAllCategories", []);
-  },
-
-  getBusinessSubCategories() {
-    return requestOptions("/subcategories/getAllSubCategories", []);
+    return requestOptions("/categories/getAllCategories", businessCategories);
   },
 
   getIndustries() {
-    return requestOptions("/industries/getAllIndustries", []);
+    return requestOptions("/industries/getAllIndustries", industries);
   },
 
   getRegistrationTypes() {
-    return requestOptions("/registration-types/getAllRegistrationTypes", []);
-  },
-
-  getLicenseTypes() {
-    return requestOptions("/license-types/listLicenseTypes", []);
+    return requestOptions(
+      "/registration-types/getAllRegistrationTypes",
+      registrationTypes
+    );
   },
 
   getCurrencies() {
-    return requestOptions("/currencies/getAllCurrencies", []);
+    return requestOptions("/currencies/getAllCurrencies", currencies);
   },
 
   getTimezones() {

@@ -16,7 +16,7 @@ import StepIndicator from "./StepIndicator";
 
 import BusinessInfoStep from "./steps/BusinessInfoStep";
 import AddressStep from "./steps/AddressStep";
-// import BranchStep from "./steps/BranchStep";
+import BranchStep from "./steps/BranchStep";
 import BankStep from "./steps/BankStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
@@ -56,6 +56,8 @@ export default function BusinessSetupWizard({
         return <BusinessInfoStep />;
       case "address":
         return <AddressStep />;
+      case "branch":
+        return <BranchStep />;
       case "bank":
         return <BankStep />;
       case "documents":

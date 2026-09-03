@@ -43,8 +43,8 @@ export interface PaymentReceipt {
   customerGSTIN?: string | null;
 
   paymentId?: string | null;
+  invoiceId?: string | null;
   paymentMethod: PaymentMethod;
-  documentNumber: string;
   amount: number;
 
   remarks?: string | null;
@@ -69,46 +69,38 @@ export interface PaymentReceiptFormValues {
   receiptDate: string;
   financialYear?: string;
 
-  receiptStatus: ReceiptVoucherStatus;
-  receiptSource: ReceiptSource;
 
   customerId: string;
   customerName: string;
   customerPhone?: string;
   customerGSTIN?: string;
-
-  paymentId?: string;
+  invoiceId?: string;
   paymentMethod: PaymentMethod;
-  documentNumber: string;
   amount: number;
 
   remarks?: string;
   notes?: string;
-
   createdBy?: string;
-  updatedBy?: string;
 }
 
 export const PAYMENT_RECEIPT_FORM_DEFAULTS: PaymentReceiptFormValues = {
-  businessId: "",
-  branchId: "",
+  businessId: "busid101",
+  branchId: "brnch111",
   receiptNumber: "",
   receiptDate: new Date().toISOString().slice(0, 10),
   financialYear: "",
-  receiptStatus: "RECEIVED",
-  receiptSource: "POS",
+  
   customerId: "",
   customerName: "",
   customerPhone: "",
   customerGSTIN: "",
-  paymentId: "",
+  invoiceId: "",
   paymentMethod: "CASH",
-  documentNumber: "",
   amount: 0,
   remarks: "",
   notes: "",
   createdBy: "system",
-  updatedBy: "",
+  
 };
 
 // ==========================================================
@@ -123,24 +115,21 @@ export interface CreatePaymentReceiptPayload {
   receiptDate: string;
   financialYear?: string;
 
-  receiptStatus?: ReceiptVoucherStatus;
-  receiptSource?: ReceiptSource;
+  
 
   customerId: string;
   customerName: string;
   customerPhone?: string;
   customerGSTIN?: string;
-
-  paymentId?: string;
+  invoiceId?: string;
   paymentMethod: PaymentMethod;
-  documentNumber: string;
   amount: number;
 
   remarks?: string;
   notes?: string;
 
   createdBy?: string;
-  updatedBy?: string;
+  
 }
 
 // ==========================================================

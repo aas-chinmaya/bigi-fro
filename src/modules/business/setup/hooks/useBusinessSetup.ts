@@ -13,7 +13,7 @@ import { businessService } from "../services/business.service";
 import { notify } from "@/lib/toast";
 
 export interface WizardStep {
-  key: "info" | "address" | "bank" | "documents" | "review";
+  key: "info" | "address" | "branch" | "bank" | "documents" | "review";
   title: string;
   description: string;
   fields: FieldPath<BusinessSetupData>[];
@@ -32,12 +32,12 @@ export const wizardSteps: WizardStep[] = [
     description: "Registered address of the business",
     fields: ["address"],
   },
-  // {
-  //   key: "branch",
-  //   title: "Branches",
-  //   description: "Add branches now, or skip for later",
-  //   fields: ["branches"],
-  // },
+  {
+    key: "branch",
+    title: "Branches",
+    description: "Add branches now, or skip for later",
+    fields: ["branches"],
+  },
   {
     key: "bank",
     title: "Bank Details",
@@ -70,10 +70,8 @@ const defaultValues: BusinessSetupData = {
     phone: "",
     websiteLink: "",
     businessCategoryId: "",
-    businessSubCategoryId: "",
     industryId: "",
     registrationType: "",
-    licenseTypeId: "",
     registrationNumber: "",
     tan: "",
     msme: "",

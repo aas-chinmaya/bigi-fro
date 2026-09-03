@@ -29,11 +29,9 @@ export const businessInfoSchema = z.object({
     .or(z.literal("")),
 
   businessCategoryId: z.string().min(1, "Business category is required"),
-  businessSubCategoryId: z.string().min(1, "Business sub-category is required"),
   industryId: z.string().min(1, "Industry is required"),
 
   registrationType: z.string().optional(),
-  licenseTypeId: z.string().min(1, "License type is required"),
   registrationNumber: z.string().optional(),
 
   otherRegistrationType: z.string().optional(),

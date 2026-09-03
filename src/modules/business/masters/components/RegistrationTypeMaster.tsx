@@ -27,7 +27,6 @@ import {
   ModalFooter,
 } from "@/components/ui";
 import { FormField } from "@/components/form";
-import LucideIconRenderer from "@/components/common/LucideIconRenderer";
 import {
   DataTable,
   TableToolbar,
@@ -37,12 +36,11 @@ import {
   NoData,
 } from "@/components/data-table";
 import type { FilterItem } from "@/components/data-table/Filters";
-import { registrationTypeMasterService } from "@/modules/business/masters/services/master.service";
+import { registrationTypeMasterApi } from "@/modules/business/masters/api/masterApi";
 
 export interface RegistrationType {
   id: string | number;
   registrationName: string;
-  icon: string;
   description: string | null;
   status: boolean;
   updatedAt: string;
@@ -50,7 +48,6 @@ export interface RegistrationType {
 
 interface RegistrationTypePayload {
   registrationName: string;
-  icon: string;
   description: string | null;
   status: boolean;
 }
@@ -100,12 +97,11 @@ export default function RegistrationTypeMaster() {
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await registrationTypeMasterService.list();
+      const data = await registrationTypeMasterApi.list();
       const rowsFromApi = Array.isArray(data)
         ? data.map((row: any) => ({
             ...row,
             registrationName: row.registrationName ?? row.name ?? "",
-            icon: row.icon ?? "FileText",
             description: row.description ?? null,
             status: typeof row.status === "boolean" ? row.status : Boolean(row.status),
             updatedAt: row.updatedAt ?? new Date().toISOString(),
@@ -125,7 +121,7 @@ export default function RegistrationTypeMaster() {
       setRows(filtered);
     } catch (err) {
       setRows([]);
-      showBanner("error", registrationTypeMasterService.getErrorMessage(err, "Unable to load registration types."));
+      showBanner("error", registrationTypeMasterApi.getErrorMessage(err, "Unable to load registration types."));
     } finally {
       setLoading(false);
     }
@@ -150,16 +146,15 @@ export default function RegistrationTypeMaster() {
   const handleCreate = async (payload: RegistrationTypePayload) => {
     setSaving(true);
     try {
-      await registrationTypeMasterService.create({
+      await registrationTypeMasterApi.create({
         registrationName: payload.registrationName,
-        icon: payload.icon,
         description: payload.description,
       });
       showBanner("success", `"${payload.registrationName}" added.`);
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", registrationTypeMasterService.getErrorMessage(err, "Failed to create registration type."));
+      showBanner("error", registrationTypeMasterApi.getErrorMessage(err, "Failed to create registration type."));
     } finally {
       setSaving(false);
     }
@@ -168,9 +163,8 @@ export default function RegistrationTypeMaster() {
   const handleUpdate = async (id: string | number, payload: RegistrationTypePayload) => {
     setSaving(true);
     try {
-      await registrationTypeMasterService.update(id, {
+      await registrationTypeMasterApi.update(id, {
         registrationName: payload.registrationName,
-        icon: payload.icon,
         description: payload.description,
         status: payload.status,
       });
@@ -178,7 +172,7 @@ export default function RegistrationTypeMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", registrationTypeMasterService.getErrorMessage(err, "Failed to update registration type."));
+      showBanner("error", registrationTypeMasterApi.getErrorMessage(err, "Failed to update registration type."));
     } finally {
       setSaving(false);
     }
@@ -186,22 +180,22 @@ export default function RegistrationTypeMaster() {
 
   const handleToggleStatus = async (row: RegistrationType) => {
     try {
-      await registrationTypeMasterService.update(row.id, { status: !row.status });
+      await registrationTypeMasterApi.update(row.id, { status: !row.status });
       showBanner("success", `Marked ${!row.status ? "active" : "inactive"}.`);
       fetchRows();
     } catch (err) {
-      showBanner("error", registrationTypeMasterService.getErrorMessage(err, "Failed to update status."));
+      showBanner("error", registrationTypeMasterApi.getErrorMessage(err, "Failed to update status."));
     }
   };
 
   const handleDelete = async (row: RegistrationType) => {
     try {
-      await registrationTypeMasterService.remove(row.id);
+      await registrationTypeMasterApi.remove(row.id);
       showBanner("success", `"${row.registrationName}" deleted.`);
       setConfirmDelete(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", registrationTypeMasterService.getErrorMessage(err, "Failed to delete registration type."));
+      showBanner("error", registrationTypeMasterApi.getErrorMessage(err, "Failed to delete registration type."));
     }
   };
 
@@ -213,16 +207,6 @@ export default function RegistrationTypeMaster() {
         header: "Registration type",
         cell: ({ row }) => (
           <span className="font-medium text-gray-900">{row.original.registrationName}</span>
-        ),
-      },
-      {
-        accessorKey: "icon",
-        header: "Icon",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2 text-gray-500">
-            <LucideIconRenderer name={row.original.icon} className="h-4 w-4 text-primary" />
-            <span>{row.original.icon || "—"}</span>
-          </div>
         ),
       },
       {
@@ -399,7 +383,6 @@ interface RegistrationTypeFormModalProps {
 
 function RegistrationTypeFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: RegistrationTypeFormModalProps) {
   const [name, setName] = useState(row?.registrationName || "");
-  const [icon, setIcon] = useState(row?.icon || "");
   const [description, setDescription] = useState(row?.description || "");
   const [status, setStatus] = useState(row?.status ?? true);
   const [error, setError] = useState("");
@@ -408,7 +391,6 @@ function RegistrationTypeFormModal({ open, mode, row, saving, onOpenChange, onSu
   useEffect(() => {
     if (open) {
       setName(row?.registrationName || "");
-      setIcon(row?.icon || "");
       setDescription(row?.description || "");
       setStatus(row?.status ?? true);
       setError("");
@@ -421,17 +403,8 @@ function RegistrationTypeFormModal({ open, mode, row, saving, onOpenChange, onSu
       setError("Registration type name is required.");
       return;
     }
-    if (!icon.trim()) {
-      setError("Registration type icon is required.");
-      return;
-    }
     setError("");
-    onSubmit({
-      registrationName: name.trim(),
-      icon: icon.trim(),
-      description: description.trim() || null,
-      status,
-    });
+    onSubmit({ registrationName: name.trim(), description: description.trim() || null, status });
   };
 
   return (
@@ -455,17 +428,6 @@ function RegistrationTypeFormModal({ open, mode, row, saving, onOpenChange, onSu
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Private Limited Company"
               />
-            </FormField>
-
-            <FormField label="Icon" required error={error || undefined}>
-              <Input
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="e.g. FileText, BadgeCheck, Landmark"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Use a Lucide icon name.
-              </p>
             </FormField>
 
             <FormField label="Description">

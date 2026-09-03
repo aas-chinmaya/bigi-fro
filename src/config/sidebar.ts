@@ -162,24 +162,8 @@ export const sidebarItems: SidebarItem[] = [
 
   {
     title: "Vendors / Suppliers",
+    href: "/vendors",
     icon: Truck,
-    children: [
-      {
-        title: "Manage Vendors",
-        href: "/vendors",
-        icon: PersonStandingIcon,
-      },
-      {
-        title: "Vendor Type",
-        href: "/vendors/masters/document-types",
-        icon: PersonStandingIcon
-      },
-      {
-        title: "Vendor Category",
-        href: "/vendors/masters/vendor-categories",
-        icon: PersonStandingIcon
-      }
-    ]
   },
 
   {

@@ -104,7 +104,7 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
   };
 
   const baseDocument = {
-    globalDocumentTypeID: "",
+    documentType: "",
     fileUrl: "",
   };
 
@@ -262,32 +262,17 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
       ? defaults.documents
       : Array.isArray(defaults?.documentTypes) && defaults.documentTypes.length
         ? defaults.documentTypes.map((documentType: string) => ({
-          globalDocumentTypeID: documentType,
+          documentType,
           fileUrl: "",
         }))
         : [];
-
-  const normalizedDocumentItems = normalizedDocuments.map((document: any) => ({
-    ...baseDocument,
-    ...document,
-    globalDocumentTypeID:
-      document.globalDocumentTypeID ??
-      document.globalDocumentTypeId ??
-      document.documentType?.id ??
-      document.documentType ??
-      "",
-  }));
 
   return {
     vendorCode: defaults?.vendorCode ?? "",
     businessId: defaults?.businessId ?? "",
     tenantId: defaults?.tenantId ?? "tenant001",
     createdBy: defaults?.createdBy ?? "user001",
-    vendorType:
-      defaults?.vendorType?.id ??
-      defaults?.vendorTypeId ??
-      defaults?.vendorType ??
-      "",
+    vendorType: defaults?.vendorType ?? "",
     vendorName: defaults?.vendorName ?? "",
     legalName: defaults?.legalName ?? "",
     displayName: defaults?.displayName ?? "",
@@ -340,7 +325,7 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
       Array.isArray(defaults?.banks) && defaults.banks.length
         ? defaults.banks.map((item: any) => ({ ...baseBank, ...item }))
         : [normalizedBank],
-    documents: normalizedDocumentItems,
+    documents: normalizedDocuments,
   };
 };
 
@@ -670,17 +655,16 @@ export default function VendorForm({
             const formData = new FormData();
             const docs = values.documents ?? [];
             const files = docs.filter((d: any) => d?.file);
-            const globalDocumentTypeIDs = files
-              .map((d: any) => d?.globalDocumentTypeID)
+            const documentTypes = files
+              .map((d: any) => d?.documentType)
               .filter(Boolean);
 
             files.forEach((d: any, idx: number) => {
               formData.append("documents", d.file, d.file.name ?? `doc_${idx + 1}`);
             });
 
-            if (files.length > 0 && globalDocumentTypeIDs.length > 0) {
-              formData.append("documentTypes", JSON.stringify(globalDocumentTypeIDs));
-              formData.append("globalDocumentTypeIDs", JSON.stringify(globalDocumentTypeIDs));
+            if (files.length > 0 && documentTypes.length > 0) {
+              formData.append("documentTypes", JSON.stringify(documentTypes));
             }
 
             if (files.length > 0) {

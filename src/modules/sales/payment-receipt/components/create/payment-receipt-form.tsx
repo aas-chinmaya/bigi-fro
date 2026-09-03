@@ -4,6 +4,7 @@
 import {
   useMemo,
   useState,
+  useEffect,
   type ClipboardEvent,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -39,7 +40,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -51,6 +51,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { usePaymentReceiptActions } from "../../hooks/use-payment-receipt-actions";
 import { useCustomers } from "@/modules/customers/hooks/use-customers";
+import { useInvoiceQuery } from "@/modules/sales/invoice/hooks/use-invoice-query";
 
 import {
   paymentReceiptFormSchema,
@@ -84,26 +85,35 @@ function getFinancialYearOptions(): string[] {
   });
 }
 
+const currentUser = {
+  createdBy: "systemadmin",
+  businessId: "cmf3a8gh9000008l3f2x8abcd",
+  branchId: "BRANCH_ID_1003",
+};
+
+function Badge({ text }: { text: string }) {
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center bg-slate-100 text-[9px] font-semibold text-slate-700">
+      {String((text || "").slice(0, 2)).toUpperCase()}
+    </span>
+  );
+}
+
 const DEFAULT_VALUES: PaymentReceiptFormValues = {
-  businessId: "",
-  branchId: "",
-  receiptNumber: "",
+  businessId: currentUser.businessId,
+  branchId: currentUser.branchId,
   receiptDate: todayDateInputValue(),
   financialYear: getFinancialYearOptions()[10],
-  receiptStatus: "RECEIVED",
-  receiptSource: "POS",
   customerId: "",
   customerName: "",
   customerPhone: "",
   customerGSTIN: "",
-  paymentId: "",
   paymentMethod: "CASH",
-  documentNumber: "",
   amount: 0,
   remarks: "",
   notes: "",
-  createdBy: "system",
-  updatedBy: "",
+  createdBy: currentUser.createdBy,
+  
 };
 
 export default function PaymentReceiptCreateForm() {
@@ -113,7 +123,6 @@ export default function PaymentReceiptCreateForm() {
 
   const { customers, loading: customersLoading } = useCustomers();
 
-  const [customerQuery, setCustomerQuery] = useState("");
   const [customerSearchFocused, setCustomerSearchFocused] = useState(false);
 
   const {
@@ -134,21 +143,24 @@ export default function PaymentReceiptCreateForm() {
     defaultValues: DEFAULT_VALUES,
   });
 
+  const { invoices, getInvoices } = useInvoiceQuery();
+
+  useEffect(() => {
+    getInvoices();
+  }, []);
+
   const customerId = watch("customerId");
 
-  /**
-   * Search customers.
-   */
+  const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [invoiceFocused, setInvoiceFocused] = useState(false);
+  const [customerSelectQuery, setCustomerSelectQuery] = useState("");
+
   const matchingCustomers = useMemo(() => {
-    const query = customerQuery
-      .trim()
-      .toLowerCase();
+    const query = (customerSelectQuery || "").trim().toLowerCase();
 
     const list = customers ?? [];
 
-    if (!query) {
-      return list;
-    }
+    if (!query) return list;
 
     return list.filter((customer) =>
       [
@@ -159,17 +171,11 @@ export default function PaymentReceiptCreateForm() {
         (customer as any).email,
       ]
         .filter(Boolean)
-        .some((value) =>
-          String(value)
-            .toLowerCase()
-            .includes(query),
-        ),
+        .some((value) => String(value).toLowerCase().includes(query)),
     );
-  }, [customerQuery, customers]);
+  }, [customerSelectQuery, customers]);
 
-  /**
-   * Selected customer.
-   */
+
   const selectedCustomer = (
     customers ?? []
   ).find(
@@ -178,24 +184,17 @@ export default function PaymentReceiptCreateForm() {
       String(customerId),
   );
 
-  /**
-   * Customer display name.
-   */
-  const customerLabel = selectedCustomer
-    ? getCustomerLabel(selectedCustomer)
-    : "";
 
-  const customerMeta = selectedCustomer
-    ? [
-        (selectedCustomer as any).companyName,
-        (selectedCustomer as any).mobile,
-        (selectedCustomer as any).email,
-      ]
-        .filter(Boolean)
-        .join(" • ")
-    : "";
+
 
   const financialYearOptions = useMemo(() => getFinancialYearOptions(), []);
+
+  const matchingInvoices = useMemo(() => {
+    const q = (invoiceQuery || "").trim().toLowerCase();
+    const list = invoices ?? [];
+    if (!q) return list;
+    return list.filter((inv: any) => String(inv.id).toLowerCase().includes(q) || String(inv.invoiceNumber || "").toLowerCase().includes(q));
+  }, [invoiceQuery, invoices]);
 
   /**
    * Select customer.
@@ -242,7 +241,8 @@ export default function PaymentReceiptCreateForm() {
       },
     );
 
-    setCustomerQuery("");
+    // show selected customer name in the input (same as invoice behaviour)
+    setCustomerSelectQuery(customerName);
     setCustomerSearchFocused(false);
   };
 
@@ -277,7 +277,7 @@ export default function PaymentReceiptCreateForm() {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setCustomerQuery("");
+    setCustomerSelectQuery("");
   };
 
   /**
@@ -329,26 +329,21 @@ export default function PaymentReceiptCreateForm() {
       }
     };
 
-    const payload: CreatePaymentReceiptPayload = {
+      const payload: CreatePaymentReceiptPayload = {
       businessId: values.businessId?.trim() || undefined,
       branchId: values.branchId?.trim() || undefined,
-      receiptNumber: values.receiptNumber?.trim() || undefined,
       receiptDate: values.receiptDate,
       financialYear: values.financialYear?.trim() || computeFinancialYear(values.receiptDate),
-      receiptStatus: "RECEIVED",
-      receiptSource: values.receiptSource || "POS",
       customerId: values.customerId?.trim() || "",
       customerName: values.customerName?.trim() || "",
       customerPhone: values.customerPhone?.trim() || (selectedCustomer as any)?.mobile || undefined,
       customerGSTIN: values.customerGSTIN?.trim() || (selectedCustomer as any)?.gstin || undefined,
-      paymentId: values.paymentId?.trim() || undefined,
+      invoiceId: values.invoiceId?.trim() || undefined,
       paymentMethod: values.paymentMethod || "CASH",
-      documentNumber: values.documentNumber?.trim() || "",
       amount: Number(values.amount || 0),
       remarks: values.remarks?.trim() || undefined,
       notes: values.notes?.trim() || undefined,
       createdBy: values.createdBy?.trim() || "system",
-      updatedBy: values.updatedBy?.trim() || undefined,
     };
 
     try {
@@ -362,7 +357,7 @@ export default function PaymentReceiptCreateForm() {
         "fulfilled"
       ) {
         notify.success(
-          "Money receipt created successfully",
+          "Payment receipt created successfully",
         );
 
         router.push(
@@ -374,23 +369,36 @@ export default function PaymentReceiptCreateForm() {
 
       notify.error(
         (result.payload as string) ||
-          "Failed to create money receipt",
+          "Failed to create payment receipt",
       );
     } catch {
       notify.error(
-        "Unable to create money receipt. Please try again.",
+        "Unable to create payment receipt. Please try again.",
       );
     }
   };
 
   return (
-    <form className="mx-auto w-full max-w-6xl space-y-4">
+    <form className="mx-auto f-full w-full  space-y-4">
+      {/* hidden fields to ensure these are sent in payload */}
+      <input {...register("businessId")} type="hidden" />
+      <input {...register("branchId")} type="hidden" />
+      <input {...register("invoiceId")} type="hidden" />
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardHeader className="px-4 pb-3 pt-4 sm:px-5">
-          <div className="flex items-center gap-2">
-            <Receipt className="size-5 text-primary" />
-            <CardTitle className="text-base font-semibold">Create Money Receipt</CardTitle>
-          </div>
+         <div className="flex items-start gap-3">
+  <Receipt className="mt-1 size-6 shrink-0 text-primary" />
+
+  <div>
+    <CardTitle className="text-base font-semibold">
+      Create Payment Receipt
+    </CardTitle>
+
+    <p className=" text-sm text-muted-foreground">
+      Record a customer payment or advance receipt
+    </p>
+  </div>
+</div>
         </CardHeader>
 
         <CardContent className="space-y-5 px-4 pb-4 sm:px-5">
@@ -403,59 +411,25 @@ export default function PaymentReceiptCreateForm() {
                   <span className="text-red-500">*</span>
                 </Label>
 
-                {selectedCustomer && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary">
-                          {customerLabel.slice(0, 2).toUpperCase()}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-slate-800">{customerLabel}</div>
-                          <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Selected</div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={clearCustomer}
-                        className="rounded-full p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                        aria-label="Clear selected customer"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-
-                    <div className="mt-2 space-y-1.5 text-[11px] text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <Mail className="size-3.5 text-slate-400" />
-                        <span className="truncate">{(selectedCustomer as any).email || "No email"}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="size-3.5 text-slate-400" />
-                        <span className="truncate">{(selectedCustomer as any).mobile || "No phone"}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                
 
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <Input
-                    value={customerQuery}
+                    value={customerSelectQuery}
                     onFocus={() => setCustomerSearchFocused(true)}
                     onBlur={() => setTimeout(() => setCustomerSearchFocused(false), 140)}
                     onChange={(event) => {
-                      setCustomerQuery(event.target.value);
+                      setCustomerSelectQuery(event.target.value);
                       setCustomerSearchFocused(true);
                     }}
                     placeholder="Search customer"
                     className="h-10 border-slate-200 bg-slate-50 pl-9 pr-9"
                   />
-                  {customerQuery && (
+                  {customerSelectQuery && (
                     <button
                       type="button"
-                      onClick={() => setCustomerQuery("")}
+                      onClick={() => setCustomerSelectQuery("")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-slate-500 hover:bg-slate-200"
                       aria-label="Clear customer search"
                     >
@@ -486,9 +460,7 @@ export default function PaymentReceiptCreateForm() {
                                   : "border-slate-200 bg-white hover:bg-slate-100"
                               }`}
                             >
-                              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[9px] font-semibold text-slate-700">
-                                {name.slice(0, 2).toUpperCase()}
-                              </span>
+                              <Badge text={name} />
 
                               <span className="min-w-0 flex-1">
                                 <span className="flex items-center justify-between gap-2">
@@ -496,11 +468,9 @@ export default function PaymentReceiptCreateForm() {
                                   {isActive && <Check className="size-4 shrink-0 text-primary" />}
                                 </span>
                                 <span className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
-                                  <Mail className="size-3.5" />
                                   <span className="truncate">{(customer as any).email || "No email"}</span>
                                 </span>
                                 <span className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
-                                  <Phone className="size-3.5" />
                                   <span className="truncate">{(customer as any).mobile || "No phone"}</span>
                                 </span>
                               </span>
@@ -521,8 +491,9 @@ export default function PaymentReceiptCreateForm() {
                   Date
                   <span className="text-red-500">*</span>
                 </Label>
-                <DateInput
+                <Input
                   id="receiptDate"
+                  type="datetime-local"
                   {...register("receiptDate")}
                   aria-invalid={Boolean(errors.receiptDate)}
                   className="h-10 border-slate-200 bg-slate-50"
@@ -547,63 +518,126 @@ export default function PaymentReceiptCreateForm() {
                   <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[220px] overflow-y-auto rounded-xl">
                     {financialYearOptions.map((year) => (
                       <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+              
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <BadgeDollarSign className="size-4 text-slate-400" />
+                  Payment Method
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={watch("paymentMethod")}
+                  onValueChange={(value) =>
+                    setValue("paymentMethod", value as PaymentReceiptFormValues["paymentMethod"], {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[220px] overflow-y-auto rounded-xl">
+                    <SelectItem value="CASH">Cash</SelectItem>
+                    <SelectItem value="UPI">UPI</SelectItem>
+                    <SelectItem value="CARD">Card</SelectItem>
+                    <SelectItem value="NET_BANKING">Net Banking</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
-                    <FileText className="size-4 text-slate-400" />
-                    Source
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={watch("receiptSource")}
-                    onValueChange={(value) =>
-                      setValue("receiptSource", value as PaymentReceiptFormValues["receiptSource"], {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
-                      <SelectValue placeholder="Select source" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="POS">POS</SelectItem>
-                      <SelectItem value="MANUAL">Manual</SelectItem>
-                      <SelectItem value="ONLINE">Online</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <IndianRupee className="size-4 text-slate-400" />
+                  Amount
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <IndianRupee className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="amount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register("amount", { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.amount)}
+                    className="h-10 border-slate-200 bg-slate-50 pl-9"
+                  />
                 </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <FileText className="size-4 text-slate-400" />
+                  Invoice
+                </Label>
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
-                    <IndianRupee className="size-4 text-slate-400" />
-                    Amount
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="relative">
-                    <IndianRupee className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="amount"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...register("amount", { valueAsNumber: true })}
-                      aria-invalid={Boolean(errors.amount)}
-                      className="h-10 border-slate-200 bg-slate-50 pl-9"
-                    />
-                  </div>
+
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    value={invoiceQuery}
+                    onFocus={() => setInvoiceFocused(true)}
+                    onBlur={() => setTimeout(() => setInvoiceFocused(false), 140)}
+                    onChange={(e) => setInvoiceQuery(e.target.value)}
+                    placeholder="Search invoice by id or number"
+                    className="h-10 border-slate-200 bg-slate-50 pl-9 pr-9"
+                  />
+
+                  {invoiceQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setInvoiceQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-slate-500 hover:bg-slate-200"
+                      aria-label="Clear invoice search"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  )}
+
+                  {invoiceFocused && (
+                    <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-[220px] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                      {(matchingInvoices.length ? matchingInvoices : invoices ?? []).map((inv: any) => (
+                        <button
+                          key={inv.id}
+                          type="button"
+                          onClick={() => {
+                            setValue("invoiceId", String(inv.id), { shouldDirty: true, shouldValidate: true });
+                            setInvoiceQuery(String(inv.invoiceNumber || inv.id));
+                            setInvoiceFocused(false);
+                          }}
+                          className={`flex w-full items-start gap-3 rounded-lg border p-2 text-left transition-colors ${String(watch("invoiceId")) === String(inv.id) ? "border-primary/30 bg-primary/5" : "border-slate-200 bg-white hover:bg-slate-100"}`}
+                        >
+                          <Badge text={String(inv.invoiceNumber || inv.id)} />
+                          {/* <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold text-slate-800">{inv.invoiceNumber || inv.id}</div>
+                            <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">{inv.customerName || inv.customerId}</div>
+                          </div> */}
+
+
+                          
+                          <div className="min-w-0 flex-1">
+  <div className="truncate text-sm font-semibold text-slate-800">
+    {inv.invoiceNumber || inv.id}
+  </div>
+
+  <div className="mt-1 truncate text-[11px] text-slate-500">
+    Customer: {inv.customerName || inv.customerId} 
+  </div>
+</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

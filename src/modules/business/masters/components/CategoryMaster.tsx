@@ -36,7 +36,7 @@ import {
   NoData,
 } from "@/components/data-table";
 import type { FilterItem } from "@/components/data-table/Filters";
-import { categoryMasterService } from "@/modules/business/masters/services/master.service";
+import { categoryMasterApi } from "@/modules/business/masters/api/masterApi";
 
 export interface Category {
   id: string | number;
@@ -99,7 +99,7 @@ export default function CategoryMaster() {
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await categoryMasterService.list();
+      const data = await categoryMasterApi.list();
       const rowsFromApi = Array.isArray(data) ? data : [];
       let filtered = rowsFromApi;
 
@@ -115,7 +115,7 @@ export default function CategoryMaster() {
       setRows(filtered);
     } catch (err) {
       setRows([]);
-      showBanner("error", categoryMasterService.getErrorMessage(err, "Unable to load categories."));
+      showBanner("error", categoryMasterApi.getErrorMessage(err, "Unable to load categories."));
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function CategoryMaster() {
   const handleCreate = async (payload: CategoryPayload) => {
     setSaving(true);
     try {
-      await categoryMasterService.create({
+      await categoryMasterApi.create({
         categoryName: payload.categoryName,
         description: payload.description,
         icon: payload.icon,
@@ -149,7 +149,7 @@ export default function CategoryMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", categoryMasterService.getErrorMessage(err, "Failed to create category."));
+      showBanner("error", categoryMasterApi.getErrorMessage(err, "Failed to create category."));
     } finally {
       setSaving(false);
     }
@@ -158,7 +158,7 @@ export default function CategoryMaster() {
   const handleUpdate = async (id: string | number, payload: CategoryPayload) => {
     setSaving(true);
     try {
-      await categoryMasterService.update(id, {
+      await categoryMasterApi.update(id, {
         categoryName: payload.categoryName,
         description: payload.description,
         icon: payload.icon,
@@ -168,7 +168,7 @@ export default function CategoryMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", categoryMasterService.getErrorMessage(err, "Failed to update category."));
+      showBanner("error", categoryMasterApi.getErrorMessage(err, "Failed to update category."));
     } finally {
       setSaving(false);
     }
@@ -176,22 +176,22 @@ export default function CategoryMaster() {
 
   const handleToggleStatus = async (row: Category) => {
     try {
-      await categoryMasterService.update(row.id, { status: !row.status });
+      await categoryMasterApi.update(row.id, { status: !row.status });
       showBanner("success", `Marked ${!row.status ? "active" : "inactive"}.`);
       fetchRows();
     } catch (err) {
-      showBanner("error", categoryMasterService.getErrorMessage(err, "Failed to update status."));
+      showBanner("error", categoryMasterApi.getErrorMessage(err, "Failed to update status."));
     }
   };
 
   const handleDelete = async (row: Category) => {
     try {
-      await categoryMasterService.remove(row.id);
+      await categoryMasterApi.remove(row.id);
       showBanner("success", `"${row.categoryName}" deleted.`);
       setConfirmDelete(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", categoryMasterService.getErrorMessage(err, "Failed to delete category."));
+      showBanner("error", categoryMasterApi.getErrorMessage(err, "Failed to delete category."));
     }
   };
 

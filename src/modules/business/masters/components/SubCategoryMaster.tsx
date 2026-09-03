@@ -32,7 +32,6 @@ import {
   SelectItem,
 } from "@/components/ui";
 import { FormField } from "@/components/form";
-import LucideIconRenderer from "@/components/common/LucideIconRenderer";
 import {
   DataTable,
   TableToolbar,
@@ -42,7 +41,7 @@ import {
   NoData,
 } from "@/components/data-table";
 import type { FilterItem } from "@/components/data-table/Filters";
-import { categoryMasterService, subCategoryMasterService } from "@/modules/business/masters/services/master.service";
+import { categoryMasterApi, subCategoryMasterApi } from "@/modules/business/masters/api/masterApi";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 // NOTE: the Prisma model maps subCategoryName + a categoryId relation onto the
@@ -57,7 +56,6 @@ export interface SubCategory {
   id: string | number;
   categoryId: string | number;
   subCategoryName: string;
-  icon: string;
   description: string | null;
   status: boolean;
   updatedAt: string;
@@ -67,7 +65,6 @@ export interface SubCategory {
 interface SubCategoryPayload {
   categoryId: string | number;
   subCategoryName: string;
-  icon: string;
   description: string | null;
   status: boolean;
 }
@@ -120,7 +117,7 @@ export default function SubCategoryMaster() {
   // Load parent categories for the select dropdown.
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await categoryMasterService.list();
+      const data = await categoryMasterApi.list();
       const categoriesFromApi = Array.isArray(data) ? data : [];
       setCategories(categoriesFromApi);
     } catch {
@@ -133,7 +130,7 @@ export default function SubCategoryMaster() {
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await subCategoryMasterService.list();
+      const data = await subCategoryMasterApi.list();
       const rowsFromApi = Array.isArray(data) ? data : [];
       let filtered = rowsFromApi;
 
@@ -149,7 +146,7 @@ export default function SubCategoryMaster() {
       setRows(filtered);
     } catch (err) {
       setRows([]);
-      showBanner("error", subCategoryMasterService.getErrorMessage(err, "Unable to load sub-categories."));
+      showBanner("error", subCategoryMasterApi.getErrorMessage(err, "Unable to load sub-categories."));
     } finally {
       setLoading(false);
     }
@@ -183,17 +180,16 @@ export default function SubCategoryMaster() {
   const handleCreate = async (payload: SubCategoryPayload) => {
     setSaving(true);
     try {
-      await subCategoryMasterService.create({
+      await subCategoryMasterApi.create({
         categoryId: payload.categoryId,
         subCategoryName: payload.subCategoryName,
-        icon: payload.icon,
         description: payload.description,
       });
       showBanner("success", `"${payload.subCategoryName}" added.`);
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", subCategoryMasterService.getErrorMessage(err, "Failed to create sub-category."));
+      showBanner("error", subCategoryMasterApi.getErrorMessage(err, "Failed to create sub-category."));
     } finally {
       setSaving(false);
     }
@@ -202,10 +198,9 @@ export default function SubCategoryMaster() {
   const handleUpdate = async (id: string | number, payload: SubCategoryPayload) => {
     setSaving(true);
     try {
-      await subCategoryMasterService.update(id, {
+      await subCategoryMasterApi.update(id, {
         categoryId: payload.categoryId,
         subCategoryName: payload.subCategoryName,
-        icon: payload.icon,
         description: payload.description,
         status: payload.status,
       });
@@ -213,7 +208,7 @@ export default function SubCategoryMaster() {
       setModal(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", subCategoryMasterService.getErrorMessage(err, "Failed to update sub-category."));
+      showBanner("error", subCategoryMasterApi.getErrorMessage(err, "Failed to update sub-category."));
     } finally {
       setSaving(false);
     }
@@ -221,22 +216,22 @@ export default function SubCategoryMaster() {
 
   const handleToggleStatus = async (row: SubCategory) => {
     try {
-      await subCategoryMasterService.update(row.id, { status: !row.status });
+      await subCategoryMasterApi.update(row.id, { status: !row.status });
       showBanner("success", `Marked ${!row.status ? "active" : "inactive"}.`);
       fetchRows();
     } catch (err) {
-      showBanner("error", subCategoryMasterService.getErrorMessage(err, "Failed to update status."));
+      showBanner("error", subCategoryMasterApi.getErrorMessage(err, "Failed to update status."));
     }
   };
 
   const handleDelete = async (row: SubCategory) => {
     try {
-      await subCategoryMasterService.remove(row.id);
+      await subCategoryMasterApi.remove(row.id);
       showBanner("success", `"${row.subCategoryName}" deleted.`);
       setConfirmDelete(null);
       fetchRows();
     } catch (err) {
-      showBanner("error", subCategoryMasterService.getErrorMessage(err, "Failed to delete sub-category."));
+      showBanner("error", subCategoryMasterApi.getErrorMessage(err, "Failed to delete sub-category."));
     }
   };
 
@@ -255,16 +250,6 @@ export default function SubCategoryMaster() {
         header: "Category",
         cell: ({ row }) => <Badge variant="secondary">{categoryName(row.original)}</Badge>,
         size: 160,
-      },
-      {
-        accessorKey: "icon",
-        header: "Icon",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2 text-gray-500">
-            <LucideIconRenderer name={row.original.icon} className="h-4 w-4 text-primary" />
-            <span>{row.original.icon || "—"}</span>
-          </div>
-        ),
       },
       {
         accessorKey: "description",
@@ -459,17 +444,15 @@ function SubCategoryFormModal({
 }: SubCategoryFormModalProps) {
   const [categoryId, setCategoryId] = useState<string | number | undefined>(row?.categoryId);
   const [name, setName] = useState(row?.subCategoryName || "");
-  const [icon, setIcon] = useState(row?.icon || "");
   const [description, setDescription] = useState(row?.description || "");
   const [status, setStatus] = useState(row?.status ?? true);
-  const [errors, setErrors] = useState<{ category?: string; name?: string; icon?: string }>({});
+  const [errors, setErrors] = useState<{ category?: string; name?: string }>({});
 
   // Re-sync form fields whenever a different row is opened for editing.
   useEffect(() => {
     if (open) {
       setCategoryId(row?.categoryId ?? (categories.length > 0 ? categories[0].id : undefined));
       setName(row?.subCategoryName || "");
-      setIcon(row?.icon || "");
       setDescription(row?.description || "");
       setStatus(row?.status ?? true);
       setErrors({});
@@ -478,10 +461,9 @@ function SubCategoryFormModal({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const nextErrors: { category?: string; name?: string; icon?: string } = {};
+    const nextErrors: { category?: string; name?: string } = {};
     if (!categoryId) nextErrors.category = "A parent category is required.";
     if (!name.trim()) nextErrors.name = "Sub-category name is required.";
-    if (!icon.trim()) nextErrors.icon = "Sub-category icon is required.";
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
       return;
@@ -490,7 +472,6 @@ function SubCategoryFormModal({
     onSubmit({
       categoryId: categoryId as string | number,
       subCategoryName: name.trim(),
-      icon: icon.trim(),
       description: description.trim() || null,
       status,
     });
@@ -535,17 +516,6 @@ function SubCategoryFormModal({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Mobile Phones"
               />
-            </FormField>
-
-            <FormField label="Icon" required error={errors.icon}>
-              <Input
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="e.g. Layers, Boxes, Package"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Use a Lucide icon name.
-              </p>
             </FormField>
 
             <FormField label="Description">

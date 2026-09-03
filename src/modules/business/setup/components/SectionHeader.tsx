@@ -1,5 +1,5 @@
 import { cn } from "@/components/ui/utils";
-export type SectionTint = "blue" | "violet" | "teal" | "amber" | "rose";
+export type SectionTint = "blue";
 
 interface Props {
   icon: React.ElementType;
@@ -10,10 +10,6 @@ interface Props {
 
 const tintClasses: Record<SectionTint, string> = {
   blue: "border-primary/20 bg-primary/5 text-primary",
-  violet: "border-violet-200 bg-violet-50 text-violet-600",
-  teal: "border-teal-200 bg-teal-50 text-teal-600",
-  amber: "border-amber-200 bg-amber-50 text-amber-600",
-  rose: "border-rose-200 bg-rose-50 text-rose-600",
 };
 
 export default function SectionHeader({
