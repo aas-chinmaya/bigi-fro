@@ -86,8 +86,8 @@ function getFinancialYearOptions(): string[] {
 }
 
 const currentUser = {
-  createdBy: "systemadmin",
-  businessId: "cmf3a8gh9000008l3f2x8abcd",
+  createdBy: "DEVELOPER",
+  businessId: "business_0012",
   branchId: "BRANCH_ID_1003",
 };
 

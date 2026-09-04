@@ -39,7 +39,7 @@ export function useBusiness(): {
 
       branchId: "BRANCH_ID_1003",
 
-      createdBy: "USER_ID_7035",
+      createdBy: "DEVELOPER",
 
       // ====================================================
       // Seller
