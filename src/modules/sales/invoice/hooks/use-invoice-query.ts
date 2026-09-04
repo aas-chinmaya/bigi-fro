@@ -15,12 +15,14 @@ import {
   fetchDraftById,
 } from "../store/invoice.slice";
 
-export function useInvoiceQuery() {
+export function useInvoiceQuery(params?: Record<string, any>) {
   const dispatch = useDispatch<AppDispatch>();
 
   const {
     invoices,
+    invoicesMeta,
     drafts,
+    draftsMeta,
     selectedInvoice,
     selectedDraft,
     loading,
@@ -29,12 +31,12 @@ export function useInvoiceQuery() {
     (state: RootState) => state.invoice,
   );
 
-  const getInvoices = () => {
-    return dispatch(fetchInvoices());
+  const getInvoices = (p?: Record<string, any>) => {
+    return dispatch(fetchInvoices(p ?? params));
   };
 
-  const getDrafts = () => {
-    return dispatch(fetchDrafts());
+  const getDrafts = (p?: Record<string, any>) => {
+    return dispatch(fetchDrafts(p ?? params));
   };
 
   const getInvoiceById = (id: string) => {
@@ -48,6 +50,8 @@ export function useInvoiceQuery() {
   return {
     // Data
     invoices,
+    invoicesMeta,
+    draftsMeta,
     drafts,
     selectedInvoice,
     selectedDraft,

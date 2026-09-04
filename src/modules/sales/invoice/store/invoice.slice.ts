@@ -39,8 +39,23 @@ interface InvoiceState {
   // Invoice list
   invoices: InvoiceListItem[];
 
+  // Pagination/meta for invoices
+  invoicesMeta?: {
+    page?: number;
+    totalPages?: number;
+    totalRecords?: number;
+    pageSize?: number;
+  };
+
   // Draft list
   drafts: InvoiceListItem[];
+  // Pagination/meta for drafts
+  draftsMeta?: {
+    page?: number;
+    totalPages?: number;
+    totalRecords?: number;
+    pageSize?: number;
+  };
 
   // Selected invoice for view/edit
   selectedInvoice: InvoiceFormValues | null;
@@ -57,7 +72,9 @@ interface InvoiceState {
 
 const initialState: InvoiceState = {
   invoices: [],
+  invoicesMeta: undefined,
   drafts: [],
+  draftsMeta: undefined,
 
   selectedInvoice: null,
   selectedDraft: null,
@@ -134,23 +151,42 @@ export const createDraft = createAsyncThunk<
 );
 
 export const fetchDrafts = createAsyncThunk<
-  InvoiceListItem[],
-  void,
+  { items: InvoiceListItem[]; meta?: Record<string, any> } | InvoiceListItem[],
+  Record<string, any> | undefined,
   { rejectValue: string }
 >(
   "invoice/fetchDrafts",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response =
-        await invoiceService.getDrafts();
+      const response = await invoiceService.getDrafts(params);
 
-      return getResponseData<InvoiceListItem[]>(
-        response.data,
-      );
+      const payload = (response as any).data;
+
+      let items: InvoiceListItem[] = [];
+      let meta: Record<string, any> | undefined;
+
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (payload && Array.isArray(payload.data)) {
+        items = payload.data;
+        meta = payload.meta ?? payload.pagination;
+      } else if (payload && Array.isArray(payload.items)) {
+        items = payload.items;
+        meta = payload.meta ?? payload.pagination;
+      } else if (payload && payload.data && Array.isArray((payload.data as any).items)) {
+        items = (payload.data as any).items;
+        meta = (payload.data as any).meta ?? payload.data.meta ?? payload.meta ?? payload.pagination;
+      } else if (payload && payload.data && Array.isArray(payload.data)) {
+        items = payload.data;
+        meta = payload.meta ?? payload.pagination;
+      } else {
+        items = payload.drafts ?? payload.results ?? payload.data ?? [];
+        meta = payload.meta ?? payload.pagination;
+      }
+
+      return { items, meta };
     } catch (error) {
-      return rejectWithValue(
-        getErrorMessage(error),
-      );
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
@@ -283,23 +319,49 @@ export const createInvoice = createAsyncThunk<
 );
 
 export const fetchInvoices = createAsyncThunk<
-  InvoiceListItem[],
-  void,
+  { items: InvoiceListItem[]; meta?: Record<string, any> } | InvoiceListItem[],
+  Record<string, any> | undefined,
   { rejectValue: string }
 >(
   "invoice/fetchInvoices",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response =
-        await invoiceService.getInvoices();
+      const response = await invoiceService.getInvoices(params);
 
-      return getResponseData<InvoiceListItem[]>(
-        response.data,
-      );
+      // axios response -> response.data is the payload from server
+      const payload = (response as any).data;
+
+      // Common patterns:
+      // 1) { data: items, meta: { ... } }
+      // 2) { items: [...], meta: { ... } }
+      // 3) [...] (array)
+
+      let items: InvoiceListItem[] = [];
+      let meta: Record<string, any> | undefined;
+
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (payload && Array.isArray(payload.data)) {
+        items = payload.data;
+        meta = payload.meta ?? payload.pagination;
+      } else if (payload && Array.isArray(payload.items)) {
+        items = payload.items;
+        meta = payload.meta ?? payload.pagination;
+      } else if (payload && payload.data && Array.isArray((payload.data as any).items)) {
+        items = (payload.data as any).items;
+        meta = (payload.data as any).meta ?? payload.data.meta ?? payload.meta ?? payload.pagination;
+      } else if (payload && payload.data && Array.isArray(payload.data)) {
+        items = payload.data;
+        meta = payload.meta ?? payload.pagination;
+      } else {
+        // Fallback: try to read items from payload.invoices or payload.results
+        items = payload.invoices ?? payload.results ?? payload.data ?? [];
+        meta = payload.meta ?? payload.pagination;
+      }
+
+      return { items, meta };
     } catch (error) {
-      return rejectWithValue(
-        getErrorMessage(error),
-      );
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
@@ -403,13 +465,28 @@ const invoiceSlice = createSlice({
         state.error = null;
       })
 
-      .addCase(
-        fetchDrafts.fulfilled,
-        (state, action) => {
-          state.loading = false;
+      .addCase(fetchDrafts.fulfilled, (state, action) => {
+        state.loading = false;
+
+        if (Array.isArray(action.payload)) {
           state.drafts = action.payload;
-        },
-      )
+          state.draftsMeta = undefined;
+        } else {
+          state.drafts = action.payload.items || [];
+
+          const meta = action.payload.meta;
+          if (meta) {
+            state.draftsMeta = {
+              page: meta.page ?? meta.currentPage ?? meta.pageNumber,
+              totalPages: meta.totalPages ?? meta.totalPagesCount ?? meta.pages,
+              totalRecords: meta.totalRecords ?? meta.total ?? meta.count,
+              pageSize: meta.pageSize ?? meta.perPage ?? meta.limit,
+            };
+          } else {
+            state.draftsMeta = undefined;
+          }
+        }
+      })
 
       .addCase(
         fetchDrafts.rejected,
@@ -588,13 +665,29 @@ const invoiceSlice = createSlice({
         },
       )
 
-      .addCase(
-        fetchInvoices.fulfilled,
-        (state, action) => {
-          state.loading = false;
+      .addCase(fetchInvoices.fulfilled, (state, action) => {
+        state.loading = false;
+
+        // action.payload may be either array (legacy) or { items, meta }
+        if (Array.isArray(action.payload)) {
           state.invoices = action.payload;
-        },
-      )
+          state.invoicesMeta = undefined;
+        } else {
+          state.invoices = action.payload.items || [];
+
+          const meta = action.payload.meta;
+          if (meta) {
+            state.invoicesMeta = {
+              page: meta.page ?? meta.currentPage ?? meta.pageNumber,
+              totalPages: meta.totalPages ?? meta.totalPagesCount ?? meta.pages,
+              totalRecords: meta.totalRecords ?? meta.total ?? meta.count,
+              pageSize: meta.pageSize ?? meta.perPage ?? meta.limit,
+            };
+          } else {
+            state.invoicesMeta = undefined;
+          }
+        }
+      })
 
       .addCase(
         fetchInvoices.rejected,

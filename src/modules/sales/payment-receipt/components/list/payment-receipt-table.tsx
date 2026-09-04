@@ -1,7 +1,6 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
 
 import {
   DataTable,
@@ -34,8 +33,15 @@ interface PaymentReceiptTableProps {
   onPageChange?: (
     page: number,
   ) => void;
-}
 
+  // Controlled filters (moved to parent for server-side queries)
+  search?: string;
+  onSearchChange?: (v: string) => void;
+  status?: string;
+  onStatusChange?: (v: string) => void;
+  period?: string;
+  onPeriodChange?: (v: string) => void;
+}
 // ==========================================================
 // COMPONENT
 // ==========================================================
@@ -46,219 +52,21 @@ export default function PaymentReceiptTable({
   page = 1,
   totalPages = 1,
   onPageChange,
+  search = "",
+  onSearchChange = () => {},
+  status = "",
+  onStatusChange = () => {},
+  period = "all",
+  onPeriodChange = () => {},
 }: PaymentReceiptTableProps) {
-  const [search, setSearch] =
-    useState("");
-
-  const [status, setStatus] =
-    useState("");
-
-  const [period, setPeriod] =
-    useState("all");
+  // filters controlled by parent; no local state to avoid duplicate server/client filtering
 
   // ========================================================
   // FILTER
   // ========================================================
 
-  const filteredPaymentReceipts =
-    useMemo(() => {
-      const searchText =
-        search
-          .toLowerCase()
-          .trim();
-
-      return paymentReceipts.filter(
-        (paymentReceipt) => {
-          // -----------------------------------------------
-          // SEARCH
-          // -----------------------------------------------
-
-          const matchesSearch =
-            (
-              paymentReceipt.receiptNumber ??
-              ""
-            )
-              .toLowerCase()
-              .includes(searchText) ||
-            (
-              paymentReceipt.customerName ??
-              ""
-            )
-              .toLowerCase()
-              .includes(searchText) ||
-            (
-              paymentReceipt.customerId ??
-              ""
-            )
-              .toLowerCase()
-              .includes(searchText);
-
-          // -----------------------------------------------
-          // STATUS
-          // -----------------------------------------------
-
-          const matchesStatus =
-            status
-              ? (
-                  paymentReceipt.receiptStatus ??
-                  ""
-                ).toUpperCase() ===
-                status.toUpperCase()
-              : true;
-
-          // -----------------------------------------------
-          // PERIOD
-          // -----------------------------------------------
-
-          const matchesPeriod =
-            (() => {
-              const receiptDateValue =
-                paymentReceipt.receiptDate ??
-                paymentReceipt.createdAt ??
-                paymentReceipt.updatedAt;
-
-              if (!receiptDateValue) {
-                return (
-                  period === "all"
-                );
-              }
-
-              const receiptDate =
-                new Date(
-                  receiptDateValue,
-                );
-
-              if (
-                Number.isNaN(
-                  receiptDate.getTime(),
-                )
-              ) {
-                return (
-                  period === "all"
-                );
-              }
-
-              const now = new Date();
-
-              const startOfToday =
-                new Date(now);
-
-              startOfToday.setHours(
-                0,
-                0,
-                0,
-                0,
-              );
-
-              switch (period) {
-                // -----------------------------------------
-                // TODAY
-                // -----------------------------------------
-
-                case "today":
-                  return (
-                    receiptDate >=
-                      startOfToday &&
-                    receiptDate <= now
-                  );
-
-                // -----------------------------------------
-                // LAST 7 DAYS
-                // -----------------------------------------
-
-                case "7d": {
-                  const sevenDaysAgo =
-                    new Date(now);
-
-                  sevenDaysAgo.setDate(
-                    now.getDate() - 6,
-                  );
-
-                  sevenDaysAgo.setHours(
-                    0,
-                    0,
-                    0,
-                    0,
-                  );
-
-                  return (
-                    receiptDate >=
-                      sevenDaysAgo &&
-                    receiptDate <= now
-                  );
-                }
-
-                // -----------------------------------------
-                // LAST 30 DAYS
-                // -----------------------------------------
-
-                case "30d": {
-                  const thirtyDaysAgo =
-                    new Date(now);
-
-                  thirtyDaysAgo.setDate(
-                    now.getDate() - 29,
-                  );
-
-                  thirtyDaysAgo.setHours(
-                    0,
-                    0,
-                    0,
-                    0,
-                  );
-
-                  return (
-                    receiptDate >=
-                      thirtyDaysAgo &&
-                    receiptDate <= now
-                  );
-                }
-
-                // -----------------------------------------
-                // THIS MONTH
-                // -----------------------------------------
-
-                case "month":
-                  return (
-                    receiptDate.getFullYear() ===
-                      now.getFullYear() &&
-                    receiptDate.getMonth() ===
-                      now.getMonth()
-                  );
-
-                // -----------------------------------------
-                // THIS YEAR
-                // -----------------------------------------
-
-                case "year":
-                  return (
-                    receiptDate.getFullYear() ===
-                    now.getFullYear()
-                  );
-
-                // -----------------------------------------
-                // ALL
-                // -----------------------------------------
-
-                case "all":
-                default:
-                  return true;
-              }
-            })();
-
-          return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesPeriod
-          );
-        },
-      );
-    }, [
-      paymentReceipts,
-      period,
-      search,
-      status,
-    ]);
+  // Server provides filtered list via params; use data directly
+  const filteredPaymentReceipts = paymentReceipts;
 
   // ========================================================
   // RENDER
@@ -274,16 +82,14 @@ export default function PaymentReceiptTable({
         <Search
           placeholder="Search money receipt..."
           value={search}
-          onChange={setSearch}
+          onChange={onSearchChange}
         />
 
         <PaymentReceiptFilters
           value={status}
-          onChange={setStatus}
+          onChange={onStatusChange}
           period={period}
-          onPeriodChange={
-            setPeriod
-          }
+          onPeriodChange={onPeriodChange}
         />
       </TableToolbar>
 

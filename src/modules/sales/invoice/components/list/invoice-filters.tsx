@@ -24,14 +24,14 @@ export default function InvoiceFilters({
   onPeriodChange,
 }: InvoiceFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1">
       <Select
         value={value || "all"}
         onValueChange={(next) =>
           onChange(next === "all" ? "" : next)
         }
       >
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-36">
           <SelectValue placeholder="All statuses" />
         </SelectTrigger>
 
@@ -70,7 +70,7 @@ export default function InvoiceFilters({
           )
         }
       >
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-36">
           <SelectValue placeholder="All time" />
         </SelectTrigger>
 

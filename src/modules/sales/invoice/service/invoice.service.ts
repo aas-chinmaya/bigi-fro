@@ -5,6 +5,7 @@ export const invoiceService = {
   createDraft: (data: unknown) => invoiceApi.createDraft(data),
 
   getDrafts: () => invoiceApi.getDrafts(),
+  getDrafts: (params?: Record<string, any>) => invoiceApi.getDrafts(params),
 
   getDraftById: (id: string) => invoiceApi.getDraftById(id),
 
@@ -24,7 +25,8 @@ export const invoiceService = {
   // Invoices
   createInvoice: (data: unknown) => invoiceApi.createInvoice(data),
 
-  getInvoices: () => invoiceApi.getInvoices(),
+  getInvoices: (params?: Record<string, any>) =>
+    invoiceApi.getInvoices(params),
 
   getInvoiceById: (id: string) => invoiceApi.getInvoiceById(id),
 

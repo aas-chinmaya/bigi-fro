@@ -17,130 +17,60 @@ import type { InvoiceListItem } from "../../types/invoice-list.types";
 interface DraftInvoiceTableProps {
   drafts: InvoiceListItem[];
   loading?: boolean;
+
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (p: number) => void;
+
+  // Controlled filters
+  search?: string;
+  onSearchChange?: (v: string) => void;
+  period?: string;
+  onPeriodChange?: (v: string) => void;
 }
 
 export default function DraftInvoiceTable({
   drafts,
   loading = false,
+  page = 1,
+  totalPages = 1,
+  onPageChange,
+  search = "",
+  onSearchChange = () => {},
+  period = "all",
+  onPeriodChange = () => {},
 }: DraftInvoiceTableProps) {
-  const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState("all");
-
-  const filteredDrafts = useMemo(() => {
-    const searchText = search.toLowerCase().trim();
-
-    return drafts.filter((draft) => {
-      const matchesSearch =
-        (draft.invoiceNumber ?? "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (draft.customerName ?? "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (draft.buyerName ?? "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (draft.buyerCompanyName ?? "")
-          .toLowerCase()
-          .includes(searchText);
-
-      const matchesPeriod = (() => {
-        const dateValue =
-          draft.invoiceDate ??
-          draft.createdAt ??
-          draft.updatedAt;
-
-        if (!dateValue) {
-          return period === "all";
-        }
-
-        const date = new Date(dateValue);
-
-        if (Number.isNaN(date.getTime())) {
-          return period === "all";
-        }
-
-        const now = new Date();
-
-        const startOfToday = new Date(now);
-        startOfToday.setHours(0, 0, 0, 0);
-
-        switch (period) {
-          case "today":
-            return date >= startOfToday && date <= now;
-
-          case "7d": {
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(now.getDate() - 6);
-            sevenDaysAgo.setHours(0, 0, 0, 0);
-
-            return (
-              date >= sevenDaysAgo &&
-              date <= now
-            );
-          }
-
-          case "30d": {
-            const thirtyDaysAgo = new Date(now);
-            thirtyDaysAgo.setDate(now.getDate() - 29);
-            thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-            return (
-              date >= thirtyDaysAgo &&
-              date <= now
-            );
-          }
-
-          case "month":
-            return (
-              date.getFullYear() === now.getFullYear() &&
-              date.getMonth() === now.getMonth()
-            );
-
-          case "year":
-            return (
-              date.getFullYear() === now.getFullYear()
-            );
-
-          case "all":
-          default:
-            return true;
-        }
-      })();
-
-      return matchesSearch && matchesPeriod;
-    });
-  }, [drafts, period, search]);
+  // Server returns paginated drafts; render as-is and let parent control filtering
 
   return (
-    <div className="space-y-4">
-      <TableToolbar>
+    <div className="space-y-2">
+      <TableToolbar className="p-2 gap-2 rounded-md">
         <Search
           placeholder="Search draft invoice..."
           value={search}
-          onChange={setSearch}
+          onChange={onSearchChange}
         />
 
         <InvoiceFilters
           value="DRAFT"
           onChange={() => {}}
           period={period}
-          onPeriodChange={setPeriod}
+          onPeriodChange={onPeriodChange}
           showDraftsOnly
         />
       </TableToolbar>
 
       <DataTable
         columns={DraftInvoiceColumns}
-        data={filteredDrafts}
+        data={drafts}
         loading={loading}
         emptyMessage="No draft invoices found."
       />
 
       <Pagination
-        page={1}
-        totalPages={1}
-        onPageChange={() => {}}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange ?? (() => {})}
       />
     </div>
   );

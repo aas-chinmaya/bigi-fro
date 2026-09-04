@@ -10,7 +10,7 @@ export const invoiceApi = {
   },
 
   getDrafts() {
-    return api.get("/sales-invoices/fetch-drafts");
+    return api.get("/sales-invoices/fetch-drafts", { params: arguments[0] });
   },
 
   getDraftById(id: string) {
@@ -37,8 +37,8 @@ export const invoiceApi = {
     return api.post("/sales-invoices/", data);
   },
 
-  getInvoices() {
-    return api.get("/sales-invoices/invoices");
+  getInvoices(params?: Record<string, any>) {
+    return api.get("/sales-invoices/invoices", { params });
   },
 
   getInvoiceById(id: string) {
