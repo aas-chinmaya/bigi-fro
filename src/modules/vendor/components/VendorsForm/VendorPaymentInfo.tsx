@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Wallet } from "lucide-react";
 
@@ -13,12 +14,24 @@ import {
 } from "@/components/ui";
 
 import { FormField } from "@/components/form";
+import { currencyMasterService } from "@/modules/business/masters/services/master.service";
+
+interface CurrencyOption {
+  id: string | number;
+  currencyName: string;
+  currencyCode: string;
+  currencySymbol?: string | null;
+  status?: boolean;
+}
 
 interface Props {
   form: UseFormReturn<any>;
 }
 
 export default function VendorPaymentInfo({ form }: Props) {
+  const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
+  const [currenciesLoading, setCurrenciesLoading] = useState(true);
+
   const {
     watch,
     setValue,
@@ -26,6 +39,27 @@ export default function VendorPaymentInfo({ form }: Props) {
   } = form;
 
   const fieldErrors = errors as any;
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCurrencies = async () => {
+      try {
+        const result = await currencyMasterService.list();
+        if (mounted) {
+          setCurrencies(Array.isArray(result) ? result : []);
+        }
+      } finally {
+        if (mounted) setCurrenciesLoading(false);
+      }
+    };
+
+    loadCurrencies();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <section className="rounded-3xl bg-emerald-50/60 p-1">
@@ -51,17 +85,23 @@ export default function VendorPaymentInfo({ form }: Props) {
             error={fieldErrors.currencyId?.message}
           >
             <Select
-              value={watch("currencyId")}
-              onValueChange={(value) => setValue("currencyId", value)}
+              value={String(watch("currencyId") ?? "")}
+              onValueChange={(value) =>
+                setValue("currencyId", value, { shouldValidate: true })
+              }
             >
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select currency" />
+                <SelectValue
+                  placeholder={currenciesLoading ? "Loading currencies..." : "Select currency"}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="INR">INR</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="AED">AED</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
+                {currencies.map((currency) => (
+                  <SelectItem key={currency.id} value={String(currency.id)}>
+                    {currency.currencyName} ({currency.currencyCode})
+                    {currency.currencySymbol ? ` - ${currency.currencySymbol}` : ""}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </FormField>

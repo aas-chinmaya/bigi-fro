@@ -5,6 +5,10 @@ import userReducer from "@/modules/users/store/userSlice";
 import authReducer from "@/modules/auth/store/authSlice";
 import vendorReducer from "@/modules/vendor/store/vendorSlice";
 import businessReducer from "@/modules/business/store/businessSlice";
+import { masterReducer as businessSetupMasterReducer } from "@/modules/business/setup";
+import globalDocumentTypeReducer from "@/modules/vendor/masters/store/globalDocumentTypeSlice";
+import vendorCategoryReducer from "@/modules/vendor/masters/store/vendorCategorySlice";
+
 
 //sales modules
 import invoiceReducer from "@/modules/sales/invoice/store/invoice.slice";
@@ -19,11 +23,21 @@ const store = configureStore({
     users: userReducer,
     auth: authReducer,
     vendors: vendorReducer,
+
+
+    //sales modules
     invoice: invoiceReducer,
-    business: businessReducer,
-    customers: customersReducer,
     paymentReceipt: paymentReceiptReducer ,
     quotation: quotationReducer ,
+
+
+    customers: customersReducer,
+
+
+    business: businessReducer,
+    businessSetupMasters: businessSetupMasterReducer,
+    vendorDocumentTypes: globalDocumentTypeReducer,
+    vendorCategories: vendorCategoryReducer,
   },
 });
 

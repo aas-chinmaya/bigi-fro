@@ -29,6 +29,11 @@ const unwrapData = <T>(response: ApiResult<T> | undefined, fallback: T): T => {
   return response.data ?? fallback;
 };
 
+const normalizeCurrency = (currency: any) => ({
+  ...currency,
+  currencySymbol: currency.currencySymbol ?? currency.icon ?? "",
+});
+
 export const categoryMasterApi = {
   list: async () => {
     const { data } = await api.get<ApiResult<any[]>>("/categories/getAllCategories");
@@ -52,14 +57,31 @@ export const categoryMasterApi = {
 export const currencyMasterApi = {
   list: async () => {
     const { data } = await api.get<ApiResult<any[]>>("/currencies/getAllCurrencies");
-    return unwrapData(data, []);
+    return unwrapData(data, []).map(normalizeCurrency);
   },
   create: async (payload: Record<string, unknown>) => {
-    const { data } = await api.post<ApiResult<any>>("/currencies/createCurrency", payload);
+    const currencySymbol = typeof payload.currencySymbol === "string"
+      ? payload.currencySymbol.trim()
+      : "";
+    const body = {
+      ...payload,
+      currencySymbol,
+      icon: currencySymbol,
+    };
+    const { data } = await api.post<ApiResult<any>>("/currencies/createCurrency", body);
     return unwrapData(data, null);
   },
   update: async (id: string | number, payload: Record<string, unknown>) => {
-    const { data } = await api.put<ApiResult<any>>(`/currencies/updateCurrency/${id}`, payload);
+    const currencySymbol = typeof payload.currencySymbol === "string"
+      ? payload.currencySymbol.trim()
+      : undefined;
+    const body = {
+      ...payload,
+      ...(currencySymbol !== undefined
+        ? { currencySymbol, icon: currencySymbol }
+        : {}),
+    };
+    const { data } = await api.put<ApiResult<any>>(`/currencies/updateCurrency/${id}`, body);
     return unwrapData(data, null);
   },
   remove: async (id: string | number) => {
@@ -103,6 +125,7 @@ export const registrationTypeMasterApi = {
 
     const body = {
       name: nameValue,
+      icon: payload.icon,
       description: payload.description,
     };
     const { data } = await api.post<ApiResult<any>>("/registration-types/createRegistrationType", body);
@@ -117,6 +140,7 @@ export const registrationTypeMasterApi = {
 
     const body: Record<string, unknown> = {};
     if (typeof nameValue === "string") body.name = nameValue;
+    if ("icon" in payload) body.icon = payload.icon;
     if ("description" in payload) body.description = payload.description;
     if ("status" in payload) body.status = payload.status;
     const { data } = await api.put<ApiResult<any>>(`/registration-types/updateRegistrationType/${id}`, body);
@@ -144,6 +168,26 @@ export const industryMasterApi = {
   },
   remove: async (id: string | number) => {
     const { data } = await api.delete<ApiResult<null>>(`/industries/deleteIndustry/${id}`);
+    return unwrapData(data, null);
+  },
+  getErrorMessage,
+};
+
+export const licenseTypeMasterApi = {
+  list: async () => {
+    const { data } = await api.get<ApiResult<any[]>>("/license-types/listLicenseTypes");
+    return unwrapData(data, []);
+  },
+  create: async (payload: Record<string, unknown>) => {
+    const { data } = await api.post<ApiResult<any>>("/license-types/createLicenseType", payload);
+    return unwrapData(data, null);
+  },
+  update: async (id: string | number, payload: Record<string, unknown>) => {
+    const { data } = await api.put<ApiResult<any>>(`/license-types/updateLicenseType/${id}`, payload);
+    return unwrapData(data, null);
+  },
+  remove: async (id: string | number) => {
+    const { data } = await api.delete<ApiResult<null>>(`/license-types/deleteLicenseType/${id}`);
     return unwrapData(data, null);
   },
   getErrorMessage,

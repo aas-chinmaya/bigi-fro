@@ -23,6 +23,9 @@ const toAddressPayload = (data: BusinessAddressData) => ({
   isPrimary: data.isPrimary,
 });
 
+const isSuperAdminRole = (role?: string | null) =>
+  role?.trim().toUpperCase() === "SUPER ADMIN";
+
 export const businessApi = {
   createBusiness(data: Record<string, unknown> & { logo?: File | null }) {
     const formData = new FormData();
@@ -37,7 +40,7 @@ export const businessApi = {
     }
 
     return api.post<BackendBusinessResponse>(
-      "/business",
+      "/business/createBusiness",
       formData,
       {
         headers: {
@@ -48,8 +51,14 @@ export const businessApi = {
     );
   },
 
-  getBusinesses() {
-    return api.get<BackendBusinessResponse>('/business/getAllBusinesses');
+  getBusinesses(role?: string | null) {
+    const endpoint = isSuperAdminRole(role)
+      ? '/business/getAllBusinesses'
+      : '/business/getBusinessesByUser';
+
+    return api.get<BackendBusinessResponse>(endpoint, {
+      withCredentials: true,
+    });
   },
 
   getBusinessById(id: string) {
@@ -95,12 +104,23 @@ export const businessApi = {
     const payload: Record<string, unknown> = {
       tenantId,
       branchName: data.branchName ?? null,
+      addressLine1: (data as any).addressLine1 ?? null,
       phone: data.phone,
       email: data.email,
       pincode: data.pincode,
-      country: data.countryId,
-      state: data.stateId,
-      city: data.cityId,
+      country: (data as any).country ?? data.countryId,
+      state: (data as any).state ?? data.stateId,
+      city: (data as any).city ?? data.cityId,
+      branchManager: (data as any).branchManager,
+      GSTIN: (data as any).GSTIN,
+      PAN: (data as any).PAN,
+      note: (data as any).note,
+      status: (data as any).status ? String((data as any).status).toUpperCase() : undefined,
+      isActive: (data as any).isActive,
+      licenseNumber: (data as any).licenseNumber,
+      openingDate: (data as any).openingDate
+        ? new Date((data as any).openingDate).toISOString()
+        : undefined,
     };
 
     if (data.managerId && data.managerId.trim()) {
@@ -110,15 +130,30 @@ export const businessApi = {
     return api.post('/business/business-branches/createBranch', payload);
   },
 
+  getBranchById(branchId: string) {
+    return api.get<BackendBusinessResponse>(`/business/business-branches/getBranchById/${branchId}`);
+  },
+
   updateBranch(branchId: string, data: BusinessBranchData) {
     const payload: Record<string, unknown> = {
       branchName: data.branchName ?? null,
+      addressLine1: (data as any).addressLine1 ?? null,
       phone: data.phone,
       email: data.email,
       pincode: data.pincode,
-      country: data.countryId,
-      state: data.stateId,
-      city: data.cityId,
+      country: (data as any).country ?? data.countryId,
+      state: (data as any).state ?? data.stateId,
+      city: (data as any).city ?? data.cityId,
+      branchManager: (data as any).branchManager,
+      GSTIN: (data as any).GSTIN,
+      PAN: (data as any).PAN,
+      note: (data as any).note,
+      status: (data as any).status ? String((data as any).status).toUpperCase() : undefined,
+      isActive: (data as any).isActive,
+      licenseNumber: (data as any).licenseNumber,
+      openingDate: (data as any).openingDate
+        ? new Date((data as any).openingDate).toISOString()
+        : undefined,
     };
 
     if (data.branchCode) {
@@ -140,7 +175,7 @@ export const businessApi = {
     const form = new FormData();
 
     form.append('tenantId', String(tenantId));
-    form.append('documentType', doc.documentType);
+    form.append('globalDocumentTypeId', doc.globalDocumentTypeId);
 
     if (doc.file instanceof File) {
       form.append('file', doc.file);

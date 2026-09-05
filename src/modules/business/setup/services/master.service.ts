@@ -9,12 +9,20 @@ export const masterService = {
     return masterApi.getBusinessCategories();
   },
 
+  getBusinessSubCategories() {
+    return masterApi.getBusinessSubCategories();
+  },
+
   getIndustries() {
     return masterApi.getIndustries();
   },
 
   getRegistrationTypes() {
     return masterApi.getRegistrationTypes();
+  },
+
+  getLicenseTypes() {
+    return masterApi.getLicenseTypes();
   },
 
   getCurrencies() {

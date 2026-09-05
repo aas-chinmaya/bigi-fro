@@ -17,6 +17,18 @@ const normalizeStringValue = (value?: unknown, fallback = "") => {
   return String(value).trim();
 };
 
+const normalizeCurrencyId = (value: unknown, fallback = "") => {
+  if (value && typeof value === "object") {
+    const currency = value as Record<string, unknown>;
+    return normalizeStringValue(
+      currency.id ?? currency.currencyId ?? currency.currencyID ?? currency._id,
+      fallback
+    );
+  }
+
+  return normalizeStringValue(value, fallback);
+};
+
 const normalizeBooleanValue = (value?: unknown, fallback = false) => {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") {
@@ -80,8 +92,8 @@ export const useVendorImportExport = () => {
   );
 
   const downloadVendorTemplate = useCallback(
-    async (params?: { page?: number; limit?: number }) => {
-      return vendorService.downloadVendorTemplate(params);
+    async () => {
+      return vendorService.downloadVendorTemplate();
     },
     []
   );
@@ -120,7 +132,7 @@ export const buildVendorPayload = (data: Record<string, any>) => {
   );
 
   return {
-    tenantId: normalizeStringValue(data.tenantId, "tenant001"),
+    tenantId: normalizeStringValue(data.tenantId, ""),
     branchId: normalizeStringValue(data.branchId, ""),
     vendorScope: normalizeStringValue(data.vendorScope, "BUSINESS"),
     createdBy: normalizeStringValue(data.createdBy, "user001"),
@@ -135,7 +147,10 @@ export const buildVendorPayload = (data: Record<string, any>) => {
     remarks: normalizeStringValue(data.remarks, ""),
     websiteLink: normalizeStringValue(data.websiteLink, ""),
     alternatevendorPhone: normalizeStringValue(data.alternatevendorPhone ?? "", ""),
-    currencyId: normalizeStringValue(data.currencyId, "INR"),
+    currencyId: normalizeCurrencyId(
+      data.currencyId ?? data.currency ?? purchaseSource.currencyId ?? purchaseSource.currency,
+      ""
+    ),
     paymentTerm: normalizeStringValue(data.paymentTerm ?? purchaseSource.paymentTerms, ""),
     paymentMode: normalizeEnumValue(data.paymentMode ?? purchaseSource.paymentMode, "BANK"),
     creditLimit: normalizeNumberValue(data.creditLimit ?? purchaseSource.creditLimit, 0),
@@ -175,42 +190,42 @@ export const buildVendorPayload = (data: Record<string, any>) => {
       ),
       shippingAddressLine1: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.addressLine1 ?? addressSource.billingAddressLine1 ?? addressSource.addressLine1,
-            ""
-          )
+          billingAddress.addressLine1 ?? addressSource.billingAddressLine1 ?? addressSource.addressLine1,
+          ""
+        )
         : normalizeStringValue(
-            shippingAddress.addressLine1 ?? addressSource.shippingAddressLine1,
-            ""
-          ),
+          shippingAddress.addressLine1 ?? addressSource.shippingAddressLine1,
+          ""
+        ),
       shippingAddressLine2: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.addressLine2 ?? addressSource.billingAddressLine2 ?? addressSource.addressLine2,
-            ""
-          )
+          billingAddress.addressLine2 ?? addressSource.billingAddressLine2 ?? addressSource.addressLine2,
+          ""
+        )
         : normalizeStringValue(shippingAddress.addressLine2 ?? addressSource.shippingAddressLine2, ""),
       shippingCountry: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.countryId ?? addressSource.billingCountry ?? addressSource.countryId ?? "India",
-            "India"
-          )
+          billingAddress.countryId ?? addressSource.billingCountry ?? addressSource.countryId ?? "India",
+          "India"
+        )
         : normalizeStringValue(shippingAddress.countryId ?? addressSource.shippingCountry, ""),
       shippingState: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.stateId ?? addressSource.billingState ?? addressSource.stateId,
-            ""
-          )
+          billingAddress.stateId ?? addressSource.billingState ?? addressSource.stateId,
+          ""
+        )
         : normalizeStringValue(shippingAddress.stateId ?? addressSource.shippingState, ""),
       shippingCity: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.cityId ?? addressSource.billingCity ?? addressSource.cityId,
-            ""
-          )
+          billingAddress.cityId ?? addressSource.billingCity ?? addressSource.cityId,
+          ""
+        )
         : normalizeStringValue(shippingAddress.cityId ?? addressSource.shippingCity, ""),
       shippingPincode: sameAsBilling
         ? normalizeStringValue(
-            billingAddress.pincode ?? addressSource.billingPincode ?? addressSource.pincode,
-            ""
-          )
+          billingAddress.pincode ?? addressSource.billingPincode ?? addressSource.pincode,
+          ""
+        )
         : normalizeStringValue(shippingAddress.pincode ?? addressSource.shippingPincode, ""),
       isShippingSameAsBilling: sameAsBilling,
     },
@@ -219,10 +234,10 @@ export const buildVendorPayload = (data: Record<string, any>) => {
       designation: normalizeStringValue(contactSource.designation, ""),
       mobile: normalizeStringValue(
         contactSource.mobile ??
-          contactSource.alternateMobile ??
-          data.phone ??
-          data.vendorPhone ??
-          "",
+        contactSource.alternateMobile ??
+        data.phone ??
+        data.vendorPhone ??
+        "",
         ""
       ),
       vendorPhone: normalizeStringValue(
@@ -270,7 +285,7 @@ export const buildVendorPayload = (data: Record<string, any>) => {
       ifsc: normalizeStringValue(bankSource.ifsc ?? bankSource.ifscCode, ""),
       accountType: normalizeEnumValue(bankSource.accountType, "CURRENT"),
       upiId: normalizeStringValue(bankSource.upiId, ""),
-      cancelledCheque: null,
+      cancelledCheque: normalizeStringValue(bankSource.cancelledCheque ?? bankSource.cancelledChequeRef, ""),
     },
     purchase: {
       openingBalance: normalizeNumberValue(data.openingBalance ?? purchaseSource.openingBalance ?? 0, 0),
@@ -279,19 +294,22 @@ export const buildVendorPayload = (data: Record<string, any>) => {
       creditDays: normalizeNumberValue(data.creditDays ?? purchaseSource.creditDays ?? 30, 30),
       paymentTerms: normalizeStringValue(data.paymentTerm ?? purchaseSource.paymentTerms, ""),
       paymentMode: normalizeEnumValue(data.paymentMode ?? purchaseSource.paymentMode, "BANK"),
-      currency: normalizeStringValue(data.currencyId ?? purchaseSource.currency, "INR"),
+      currency: normalizeCurrencyId(
+        data.currencyId ?? data.currency ?? purchaseSource.currencyId ?? purchaseSource.currency,
+        ""
+      ),
       gstSlab: normalizeStringValue(purchaseSource.gstSlab, ""),
       purchaseLedger: normalizeStringValue(purchaseSource.purchaseLedger, ""),
     },
     documents: documentFiles.length
       ? documentFiles.map((document: any, index: number) => ({
-          ...document,
-          documentType: normalizeDocumentType(document.documentType ?? documentTypes[index] ?? ""),
-        }))
+        ...document,
+        documentType: normalizeDocumentType(document.documentType ?? documentTypes[index] ?? ""),
+      }))
       : documentTypes.map((documentType: string) => ({
-          documentType: normalizeDocumentType(documentType),
-          fileUrl: "",
-          file: undefined,
-        })),
+        documentType: normalizeDocumentType(documentType),
+        fileUrl: "",
+        file: undefined,
+      })),
   };
 };

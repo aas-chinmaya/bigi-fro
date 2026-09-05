@@ -12,9 +12,11 @@ type BackendCreateBusinessPayload = {
   phone: string;
   websiteLink?: string | null;
   businessCategoryId: string;
+  businessSubCategoryId: string;
   industryId: string;
   registrationTypeId?: string | null;
   registrationNumber?: string | null;
+  licenseTypeId: string;
   tan?: string | null;
   msme?: string | null;
   currencyId: string;
@@ -39,9 +41,11 @@ const toBackendBusinessPayload = (
   phone: info.phone,
   websiteLink: info.websiteLink || null,
   businessCategoryId: info.businessCategoryId || "",
+  businessSubCategoryId: info.businessSubCategoryId || "",
   industryId: info.industryId || "",
   registrationTypeId: info.registrationType || null,
   registrationNumber: info.registrationNumber || null,
+  licenseTypeId: info.licenseTypeId || "",
   tan: info.tan || null,
   msme: info.msme || null,
   currencyId: info.currencyId || "",

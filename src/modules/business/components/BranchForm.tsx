@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Input,
-  Label,
   Card,
   CardHeader,
   CardContent,
@@ -28,11 +27,7 @@ const branchSchema = z.object({
     .string()
     .min(2, "Branch name is required"),
 
-  branchCode: z
-    .string()
-    .min(1, "Branch code is required"),
-
-  branchType: z.string(),
+  branchCode: z.string().optional(),
 
   status: z.string(),
 
@@ -40,8 +35,6 @@ const branchSchema = z.object({
   address1: z
     .string()
     .min(3, "Address is required"),
-
-  address2: z.string().optional(),
 
   country: z.string(),
 
@@ -52,27 +45,17 @@ const branchSchema = z.object({
   pincode: z.string(),
 
   // Contact
-  manager: z.string(),
-
   phone: z.string(),
-
-  mobile: z.string(),
-
   email: z.string().email(),
-
-  website: z.string().optional(),
-
-  // Tax
-  gstin: z.string().optional(),
-
-  pan: z.string().optional(),
-
-  licence: z.string().optional(),
+  branchManager: z.string().optional(),
+  GSTIN: z.string().optional(),
+  PAN: z.string().optional(),
+  licenseNumber: z.string().optional(),
 
   // Other
   openingDate: z.string().optional(),
 
-  notes: z.string().optional(),
+  note: z.string().optional(),
 });
 
 export type BranchFormData =
@@ -104,7 +87,6 @@ export default function BranchForm({
     resolver: zodResolver(branchSchema),
 
     defaultValues: {
-      branchType: "Branch",
       status: "Active",
       country: "India",
       ...initialValues,
@@ -113,12 +95,7 @@ export default function BranchForm({
 
   useEffect(() => {
     if (initialValues) {
-      reset({
-        branchType: "Branch",
-        status: "Active",
-        country: "India",
-        ...initialValues,
-      });
+      reset(initialValues);
     }
   }, [initialValues, reset]);
 
@@ -159,58 +136,12 @@ export default function BranchForm({
 
           <FormField
             label="Branch Code"
-            required
             error={errors.branchCode?.message}
           >
             <Input
               placeholder="BR001"
               {...register("branchCode")}
             />
-          </FormField>
-
-          <FormField
-            label="Branch Type"
-            error={errors.branchType?.message}
-          >
-            <Select
-              value={watch("branchType")}
-              onValueChange={(value) =>
-                setValue(
-                  "branchType",
-                  value
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-
-              <SelectContent>
-
-                <SelectItem value="Head Office">
-                  Head Office
-                </SelectItem>
-
-                <SelectItem value="Branch">
-                  Branch
-                </SelectItem>
-
-                <SelectItem value="Warehouse">
-                  Warehouse
-                </SelectItem>
-
-                <SelectItem value="Factory">
-                  Factory
-                </SelectItem>
-
-                <SelectItem value="Franchise">
-                  Franchise
-                </SelectItem>
-
-              </SelectContent>
-
-            </Select>
-
           </FormField>
 
           <FormField
@@ -271,7 +202,7 @@ export default function BranchForm({
           <div className="md:col-span-2">
 
             <FormField
-              label="Address Line 1"
+              label="Address "
               required
               error={errors.address1?.message}
             >
@@ -283,7 +214,7 @@ export default function BranchForm({
 
           </div>
 
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
 
             <FormField
               label="Address Line 2"
@@ -295,7 +226,7 @@ export default function BranchForm({
               />
             </FormField>
 
-          </div>
+          </div> */}
 
           {/* Country */}
 
@@ -405,11 +336,11 @@ export default function BranchForm({
 
           <FormField
             label="Branch Manager"
-            error={errors.manager?.message}
+            error={errors.branchManager?.message}
           >
             <Input
               placeholder="John Doe"
-              {...register("manager")}
+              {...register("branchManager")}
             />
           </FormField>
 
@@ -424,16 +355,6 @@ export default function BranchForm({
           </FormField>
 
           <FormField
-            label="Mobile Number"
-            error={errors.mobile?.message}
-          >
-            <Input
-              placeholder="9876543210"
-              {...register("mobile")}
-            />
-          </FormField>
-
-          <FormField
             label="Email Address"
             error={errors.email?.message}
           >
@@ -443,20 +364,6 @@ export default function BranchForm({
               {...register("email")}
             />
           </FormField>
-
-          <div className="md:col-span-2">
-
-            <FormField
-              label="Website"
-              error={errors.website?.message}
-            >
-              <Input
-                placeholder="https://company.com"
-                {...register("website")}
-              />
-            </FormField>
-
-          </div>
 
         </CardContent>
 
@@ -482,21 +389,21 @@ export default function BranchForm({
 
           <FormField
             label="GSTIN"
-            error={errors.gstin?.message}
+            error={errors.GSTIN?.message}
           >
             <Input
               placeholder="22AAAAA0000A1Z5"
-              {...register("gstin")}
+              {...register("GSTIN")}
             />
           </FormField>
 
           <FormField
             label="PAN Number"
-            error={errors.pan?.message}
+            error={errors.PAN?.message}
           >
             <Input
               placeholder="ABCDE1234F"
-              {...register("pan")}
+              {...register("PAN")}
             />
           </FormField>
 
@@ -504,11 +411,11 @@ export default function BranchForm({
 
             <FormField
               label="Licence Number"
-              error={errors.licence?.message}
+              error={errors.licenseNumber?.message}
             >
               <Input
                 placeholder="Trade / Shop / FSSAI Licence"
-                {...register("licence")}
+                {...register("licenseNumber")}
               />
             </FormField>
 
@@ -552,12 +459,12 @@ export default function BranchForm({
 
             <FormField
               label="Notes"
-              error={errors.notes?.message}
+              error={errors.note?.message}
             >
               <Textarea
                 rows={5}
                 placeholder="Additional information about this branch..."
-                {...register("notes")}
+                {...register("note")}
               />
             </FormField>
 

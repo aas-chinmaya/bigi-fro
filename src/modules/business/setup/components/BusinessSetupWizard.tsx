@@ -16,7 +16,7 @@ import StepIndicator from "./StepIndicator";
 
 import BusinessInfoStep from "./steps/BusinessInfoStep";
 import AddressStep from "./steps/AddressStep";
-import BranchStep from "./steps/BranchStep";
+// import BranchStep from "./steps/BranchStep";
 import BankStep from "./steps/BankStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
@@ -56,8 +56,6 @@ export default function BusinessSetupWizard({
         return <BusinessInfoStep />;
       case "address":
         return <AddressStep />;
-      case "branch":
-        return <BranchStep />;
       case "bank":
         return <BankStep />;
       case "documents":
@@ -132,7 +130,7 @@ export default function BusinessSetupWizard({
                   onClick={goNext}
                   className="min-w-[116px] rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                 >
-                  Next
+                  Submit
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               )}

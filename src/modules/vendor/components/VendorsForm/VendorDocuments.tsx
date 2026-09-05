@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, FileText, Trash2, Plus, Paperclip } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, Trash2, Plus, Paperclip } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 
 import {
@@ -16,12 +17,14 @@ import {
 import { FileUpload, FormField } from "@/components/form";
 import { vendorApi } from "@/modules/vendor/api/vendor.api";
 import { notify } from "@/lib/toast";
+import { useGlobalDocumentTypes } from "@/modules/vendor/masters/hooks/useGlobalDocumentTypes";
 
 interface Props {
   form: UseFormReturn<any>;
 }
 
 export default function VendorDocuments({ form }: Props) {
+  const router = useRouter();
   const {
     control,
     watch,
@@ -38,6 +41,21 @@ export default function VendorDocuments({ form }: Props) {
 
   const documentErrors = errors.documents as any;
   const documents = watch("documents") as Array<any>;
+  const { items: documentTypes } = useGlobalDocumentTypes();
+
+  useEffect(() => {
+    documents?.forEach((document, index) => {
+      if (document?.globalDocumentTypeID || !document?.documentType) return;
+
+      const legacyType = documentTypes.find(
+        (item) => item.id === document.documentType || item.code === document.documentType
+      );
+
+      if (legacyType) {
+        setValue(`documents.${index}.globalDocumentTypeID`, legacyType.id);
+      }
+    });
+  }, [documents, documentTypes, setValue]);
 
   const handleFileUpload =
     (index: number) => (file: File | null) => {
@@ -53,7 +71,7 @@ export default function VendorDocuments({ form }: Props) {
 
   const addDocument = () => {
     append({
-      documentType: "",
+      globalDocumentTypeID: "",
       fileUrl: "",
       file: undefined,
     });
@@ -63,18 +81,21 @@ export default function VendorDocuments({ form }: Props) {
     const docs = watch("documents") as Array<any>;
 
     // find existing index with same type
-    const existingIndex = docs.findIndex((d: any, i: number) => d?.documentType === value && i !== index);
+    const existingIndex = docs.findIndex(
+      (d: any, i: number) => d?.globalDocumentTypeID === value && i !== index
+    );
     if (existingIndex !== -1) {
       // remove previous entry so types remain unique
       remove(existingIndex);
       // if the removed index is before current index, adjusting index required by caller, but setValue will still work
     }
 
-    setValue(`documents.${index}.documentType`, value);
+    setValue(`documents.${index}.globalDocumentTypeID`, value);
 
-    // update a helper array `documentTypes` in form state for upload
-    const updated = (watch("documents") || []).map((d: any) => d?.documentType).filter(Boolean);
-    setValue("documentTypes", updated);
+    const updated = (watch("documents") || [])
+      .map((d: any) => d?.globalDocumentTypeID)
+      .filter(Boolean);
+    setValue("globalDocumentTypeIDs", updated);
   };
 
   const handleDeleteDocument = async (documentId: string, index: number) => {
@@ -140,97 +161,37 @@ export default function VendorDocuments({ form }: Props) {
                 <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
                   <FormField
                     label="Document Type"
-                    error={fieldError?.documentType?.message}
+                    error={fieldError?.globalDocumentTypeID?.message}
                   >
                     <Select
-                      value={document?.documentType ?? ""}
-                      onValueChange={(value) =>
-                        setValue(`documents.${index}.documentType`, value)
-                      }
+                      value={document?.globalDocumentTypeID ?? ""}
+                      onValueChange={(value) => {
+                        if (value === "__add_document_type__") {
+                          router.push("/vendors/masters/document-types");
+                          return;
+                        }
+                        handleDocumentTypeChange(index, value);
+                      }}
                     >
                       <SelectTrigger className="rounded-xl bg-white">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="GST_CERTIFICATE">
-                          GST Certificate
+                        {documentTypes.filter((item) => item.isActive).map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__add_document_type__" className="border-t border-gray-100 mt-1 font-medium text-primary">
+                          <span className="flex items-center gap-2"><Plus className="h-4 w-4" />Add document type</span>
                         </SelectItem>
-                        <SelectItem value="PAN_CARD">PAN Card</SelectItem>
-                        <SelectItem value="AADHAAR_CARD">
-                          Aadhaar Card
-                        </SelectItem>
-                        <SelectItem value="MSME_CERTIFICATE">
-                          MSME Certificate
-                        </SelectItem>
-                        <SelectItem value="UDYAM_CERTIFICATE">
-                          Udyam Certificate
-                        </SelectItem>
-                        <SelectItem value="TAN_CERTIFICATE">
-                          TAN Certificate
-                        </SelectItem>
-                        <SelectItem value="CIN_CERTIFICATE">
-                          CIN Certificate
-                        </SelectItem>
-                        <SelectItem value="IEC_CERTIFICATE">
-                          IEC Certificate
-                        </SelectItem>
-                        <SelectItem value="TRADE_LICENSE">
-                          Trade License
-                        </SelectItem>
-                        <SelectItem value="SHOP_ESTABLISHMENT">
-                          Shop Establishment
-                        </SelectItem>
-                        <SelectItem value="FSSAI_LICENSE">
-                          FSSAI License
-                        </SelectItem>
-                        <SelectItem value="DRUG_LICENSE">
-                          Drug License
-                        </SelectItem>
-                        <SelectItem value="PARTNERSHIP_DEED">
-                          Partnership Deed
-                        </SelectItem>
-                        <SelectItem value="LLP_AGREEMENT">
-                          LLP Agreement
-                        </SelectItem>
-                        <SelectItem value="INCORPORATION_CERTIFICATE">
-                          Incorporation Certificate
-                        </SelectItem>
-                        <SelectItem value="MEMORANDUM_OF_ASSOCIATION">
-                          MOA
-                        </SelectItem>
-                        <SelectItem value="ARTICLES_OF_ASSOCIATION">
-                          AOA
-                        </SelectItem>
-                        <SelectItem value="CANCELLED_CHEQUE">
-                          Cancelled Cheque
-                        </SelectItem>
-                        <SelectItem value="BANK_STATEMENT">
-                          Bank Statement
-                        </SelectItem>
-                        <SelectItem value="ADDRESS_PROOF">
-                          Address Proof
-                        </SelectItem>
-                        <SelectItem value="ID_PROOF">ID Proof</SelectItem>
-                        <SelectItem value="AGREEMENT">Agreement</SelectItem>
-                        <SelectItem value="CONTRACT">Contract</SelectItem>
-                        <SelectItem value="PURCHASE_AGREEMENT">
-                          Purchase Agreement
-                        </SelectItem>
-                        <SelectItem value="NDA">NDA</SelectItem>
-                        <SelectItem value="ISO_CERTIFICATE">
-                          ISO Certificate
-                        </SelectItem>
-                        <SelectItem value="INSURANCE_CERTIFICATE">
-                          Insurance Certificate
-                        </SelectItem>
-                        <SelectItem value="OTHER">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormField>
 
                   <FormField label="File" error={fieldError?.file?.message}>
                     <FileUpload
-                      value={document?.file ?? null}
+                      value={document?.file ?? document?.fileUrl ?? null}
                       onChange={handleFileUpload(index)}
                     />
                   </FormField>
@@ -251,7 +212,7 @@ export default function VendorDocuments({ form }: Props) {
                   <div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-600">
                     <FileText size={14} className="shrink-0 text-rose-500" />
                     <span className="truncate">
-                      {document.documentType?.replace(/_/g, " ") ||
+                      {documentTypes.find((item) => item.id === document.globalDocumentTypeID)?.name ||
                         "Document ready"}
                     </span>
                   </div>

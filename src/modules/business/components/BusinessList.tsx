@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Plus, Search, Store, UserCheck, CheckCircle2 } from "lucide-react";
+import { Building2, Plus, Search, Store, CheckCircle2 } from "lucide-react";
 import BusinessCard from "./BusinessCard";
 import { Button, Input } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/components/ui/utils";
 import { Business, Branch } from "../types";
 
@@ -79,9 +80,22 @@ export default function BusinessList({
         return list;
     }, [businesses, search, statusFilter]);
 
-    const [vendorModalOpen, setVendorModalOpen] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState<Business | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const router = useRouter();
+
+    const handleDeleteBusiness = async () => {
+        if (!pendingDelete || !onDeleteBusiness) return;
+
+        setDeleting(true);
+        try {
+            await onDeleteBusiness(pendingDelete.id);
+            setPendingDelete(null);
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     return (
         <>
@@ -255,13 +269,25 @@ export default function BusinessList({
                                 onAddVendor?.(business.id)
                             }
                             onEdit={() => onEditBusiness?.(business.id)}
-                            onDelete={() => onDeleteBusiness?.(business.id)}
+                            onDelete={() => setPendingDelete(business)}
                             onEditBranch={onEditBranch}
                             onDeleteBranch={onDeleteBranch}
                         />
                     ))}
                 </div>
             )}
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                title="Delete business?"
+                description={`Are you sure you want to delete ${pendingDelete?.name ?? "this business"}? This action cannot be undone.`}
+                confirmLabel="Delete Business"
+                loading={deleting}
+                onConfirm={() => void handleDeleteBusiness()}
+                onCancel={() => {
+                    if (!deleting) setPendingDelete(null);
+                }}
+            />
         </>
     );
 }

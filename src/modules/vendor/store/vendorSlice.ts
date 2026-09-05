@@ -52,7 +52,7 @@ const SECTIONS = [
 const calcProgress = (sections: Record<string, boolean>) => {
   const total = SECTIONS.length;
   const done = SECTIONS.reduce((acc, k) => acc + (sections[k] ? 1 : 0), 0);
-  return Math.round((done / total) * 100);
+  return Math.round((done / total) * 10);
 };
 
 // Async thunks for step-wise saving
@@ -135,11 +135,10 @@ export const savePurchase = createAsyncThunk(
 
 export const uploadVendorDocument = createAsyncThunk(
   "vendors/uploadVendorDocument",
-  async ({ vendorId, data }: { vendorId: string; data: Record<string, any> }, { rejectWithValue }) => {
+  async ({ vendorId, data }: { vendorId: string; data: FormData }, { rejectWithValue }) => {
     try {
       if (!vendorId) return rejectWithValue("Missing vendorId");
-      // data expected to be FormData
-      const res = await vendorApi.uploadDocuments(vendorId, data as FormData);
+      const res = await vendorApi.uploadDocuments(vendorId, data);
       return res?.data?.data ?? res?.data ?? null;
     } catch (err: any) {
       return rejectWithValue(err?.response?.data?.message || err.message);

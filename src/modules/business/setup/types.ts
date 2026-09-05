@@ -4,6 +4,25 @@
 // ============================================================
 
 export type EntityStatus = "active" | "inactive";
+export type MasterLoadStatus = "idle" | "loading" | "succeeded" | "failed";
+
+export interface BusinessSetupMasterState {
+  businessTypes: MasterOption[];
+  businessCategories: MasterOption[];
+  businessSubCategories: MasterOption[];
+  industries: MasterOption[];
+  registrationTypes: MasterOption[];
+  licenseTypes: MasterOption[];
+  currencies: MasterOption[];
+  timezones: MasterOption[];
+  financialYears: MasterOption[];
+  documentTypes: MasterOption[];
+  countries: MasterOption[];
+  statesByCountry: Record<string, MasterOption[]>;
+  citiesByState: Record<string, MasterOption[]>;
+  status: MasterLoadStatus;
+  error: string | null;
+}
 
 // ----------------------------------------------------------
 // 2.1 Business Information
@@ -23,9 +42,11 @@ export interface BusinessInfo {
   websiteLink?: string;
 
   businessCategoryId: string;
+  businessSubCategoryId: string;
   industryId: string;
 
   registrationType?: string;
+  licenseTypeId: string;
   registrationNumber?: string;
 
   otherRegistrationType?: string;
@@ -39,7 +60,7 @@ export interface BusinessInfo {
 
   description?: string;
 
-  logo?: File | null;
+  logo?: File | string | null;
 }
 
 // ----------------------------------------------------------
@@ -94,8 +115,8 @@ export interface BusinessBank {
 // 2.5 Business Document (zero or more)
 // ----------------------------------------------------------
 export interface BusinessDocument {
-  documentType: string;
-  file: File | null;
+  globalDocumentTypeId: string;
+  file: File | string | null;
   fileName?: string;
   fileUrl?: string;
 }
@@ -119,4 +140,5 @@ export interface MasterOption {
   name: string;
   parentId?: string; // used for state->country, city->state chaining
   meta?: string; // e.g. currency symbol, country dial code
+  icon?: string; // Lucide icon name for icon-enabled master records
 }

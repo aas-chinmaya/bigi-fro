@@ -1,41 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { businessService } from "../services/business.service";
-import { Business } from "../types";
+import { BranchPayload, Business, BusinessApiRecord } from "../types";
 
-export interface BusinessRecord extends Record<string, unknown> {
-  id?: string | number;
-  tenantId?: string | number;
-  displayName?: string;
-  legalName?: string;
-  tradeName?: string;
-  gstin?: string;
-  pan?: string;
-  businessType?: string;
-  status?: string;
-  phone?: string;
-  email?: string;
-  websiteLink?: string;
-  logo?: string;
-  industry?: { name?: string };
-  addresses?: Array<{ city?: string; state?: string; country?: string }>;
-  branches?: Array<{
-    id?: string | number;
-    branchName?: string;
-    branchCode?: string;
-    addressLine1?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    phone?: string;
-    email?: string;
-    user?: { name?: string };
-    status?: string;
-  }>;
-}
-
-export type BranchPayload = Record<string, unknown>;
-
-export const toBusinessCardModel = (item: BusinessRecord): Business => ({
+export const toBusinessCardModel = (item: BusinessApiRecord): Business => ({
   id: String(item.id ?? ""),
   name: item.displayName || item.legalName || item.tradeName || "Business",
   legalName: item.legalName || "",
@@ -63,7 +30,7 @@ export const toBusinessCardModel = (item: BusinessRecord): Business => ({
     country: branch.country || "",
     phone: branch.phone || "",
     email: branch.email || "",
-    manager: branch.user?.name || "",
+    branchManager: branch.branchManager || branch.user?.name || "",
     status: branch.status === "ACTIVE" ? "Active" : "Inactive",
   })),
 });
@@ -71,11 +38,16 @@ export const toBusinessCardModel = (item: BusinessRecord): Business => ({
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong. Please try again.";
 
-export const fetchBusinesses = createAsyncThunk<BusinessRecord[], void, { rejectValue: string }>(
+export const fetchBusinesses = createAsyncThunk<
+  BusinessApiRecord[],
+  void,
+  { rejectValue: string; state: { auth: { user: { role?: string | null } | null } } }
+>(
   "business/fetchBusinesses",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      return (await businessService.getBusinesses()) as BusinessRecord[];
+      const role = getState().auth?.user?.role;
+      return (await businessService.getBusinesses(role)) as BusinessApiRecord[];
     } catch (error) {
       return rejectWithValue(errorMessage(error));
     }
@@ -128,8 +100,19 @@ export const createBranch = createAsyncThunk<void, { tenantId: string | number; 
   }
 );
 
+export const fetchBranchById = createAsyncThunk<BusinessApiRecord, string, { rejectValue: string }>(
+  "business/fetchBranchById",
+  async (branchId, { rejectWithValue }) => {
+    try {
+      return (await businessService.getBranchById(branchId)) as BusinessApiRecord;
+    } catch (error) {
+      return rejectWithValue(errorMessage(error));
+    }
+  }
+);
+
 interface BusinessState {
-  records: BusinessRecord[];
+  records: BusinessApiRecord[];
   status: "idle" | "loading" | "succeeded" | "failed";
   mutationStatus: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
@@ -143,7 +126,7 @@ const businessSlice = createSlice({
   reducers: {
     clearBusinessError(state) { state.error = null; },
     resetBusinessState: () => initialState,
-    setBusinessRecords(state, action: PayloadAction<BusinessRecord[]>) {
+    setBusinessRecords(state, action: PayloadAction<BusinessApiRecord[]>) {
       state.records = action.payload;
       state.status = "succeeded";
     },

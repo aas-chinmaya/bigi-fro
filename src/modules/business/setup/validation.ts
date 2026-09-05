@@ -29,9 +29,11 @@ export const businessInfoSchema = z.object({
     .or(z.literal("")),
 
   businessCategoryId: z.string().min(1, "Business category is required"),
+  businessSubCategoryId: z.string().min(1, "Business sub-category is required"),
   industryId: z.string().min(1, "Industry is required"),
 
   registrationType: z.string().optional(),
+  licenseTypeId: z.string().min(1, "License type is required"),
   registrationNumber: z.string().optional(),
 
   otherRegistrationType: z.string().optional(),
@@ -81,7 +83,7 @@ export const businessBranchSchema = z.object({
   stateId: z.string().min(1, "State is required"),
   cityId: z.string().min(1, "City is required"),
 
-  status: z.enum(["active", "inactive"]).default("active"),
+  status: z.enum(["active", "inactive"]),
 });
 
 export const businessBranchesSchema = z.array(businessBranchSchema);
@@ -104,7 +106,7 @@ export const businessBankSchema = z.object({
 // 2.5 Business Document (each row, when present, must be valid)
 // ----------------------------------------------------------
 export const businessDocumentSchema = z.object({
-  documentType: z.string().min(1, "Document type is required"),
+  globalDocumentTypeId: z.string().min(1, "Document type is required"),
   file: z.any().nullable(),
   fileName: z.string().optional(),
   fileUrl: z.string().optional(),

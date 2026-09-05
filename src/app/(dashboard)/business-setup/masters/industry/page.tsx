@@ -1,4 +1,4 @@
-import IndustryMasterTable from '@/modules/business/masters/components/industrymaster';
+import IndustryMasterTable from '@/modules/business/masters/components/IndustryMaster';
 
 export default function IndustryMasterPage() {
     return (

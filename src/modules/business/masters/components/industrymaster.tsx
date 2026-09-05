@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
@@ -14,8 +14,6 @@ import {
 
 import {
   Button,
-  Badge,
-  Switch,
   Alert,
   AlertDescription,
   Input,
@@ -29,34 +27,32 @@ import {
   ModalFooter,
 } from "@/components/ui";
 import { FormField } from "@/components/form";
+import LucideIconRenderer from "@/components/common/LucideIconRenderer";
 import {
   DataTable,
   TableToolbar,
   Search,
-  Filters,
   Pagination,
   NoData,
 } from "@/components/data-table";
-import type { FilterItem } from "@/components/data-table/Filters";
-import { industryMasterApi } from "@/modules/business/masters/api/masterApi";
+import { industryMasterService } from "@/modules/business/masters/services/master.service";
 
 
 
 export interface Industry {
   id: string | number;
   industryName: string;
+  icon: string;
   description: string | null;
-  status: boolean;
   updatedAt: string;
 }
 
 interface IndustryPayload {
   industryName: string;
+  icon: string;
   description: string | null;
-  status: boolean;
 }
 
-type StatusFilter = "all" | "true" | "false";
 type BannerState = { type: "success" | "error"; text: string } | null;
 type ModalState =
   | { mode: "add" }
@@ -66,23 +62,11 @@ type ModalState =
 // ── Config ──────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 8;
 
-const statusFilterConfig: FilterItem[] = [
-  {
-    label: "Status",
-    key: "status",
-    options: [
-      { label: "Active", value: "true" },
-      { label: "Inactive", value: "false" },
-    ],
-  },
-];
-
 export default function IndustryMaster() {
 
   const [rows, setRows] = useState<Industry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const [banner, setBanner] = useState<BannerState>(null);
 
@@ -100,8 +84,16 @@ export default function IndustryMaster() {
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await industryMasterApi.list();
-      const rowsFromApi = Array.isArray(data) ? data : [];
+      const data = await industryMasterService.list();
+      const rowsFromApi: Industry[] = Array.isArray(data)
+        ? data.map((row) => ({
+            id: row.id,
+            industryName: typeof row.industryName === "string" ? row.industryName : "",
+            icon: typeof row.icon === "string" ? row.icon : "Building2",
+            description: typeof row.description === "string" ? row.description : null,
+            updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : "",
+          }))
+        : [];
       let filtered = rowsFromApi;
 
       if (search) {
@@ -109,48 +101,43 @@ export default function IndustryMaster() {
         filtered = filtered.filter((row) => row.industryName.toLowerCase().includes(query));
       }
 
-      if (statusFilter === "true" || statusFilter === "false") {
-        filtered = filtered.filter((row) => row.status === (statusFilter === "true"));
-      }
-
       setRows(filtered);
     } catch (err) {
       setRows([]);
-      showBanner("error", industryMasterApi.getErrorMessage(err, "Unable to load industries."));
+      showBanner("error", industryMasterService.getErrorMessage(err, "Unable to load industries."));
     } finally {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [search]);
 
   useEffect(() => {
     fetchRows();
   }, [fetchRows]);
 
-  useEffect(() => setPage(1), [search, statusFilter]);
+  useEffect(() => setPage(1), [search]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const resetFilters = () => {
     setSearch("");
-    setStatusFilter("all");
   };
 
   // ── Actions ────────────────────────────────────────────────────────────
   const handleCreate = async (payload: IndustryPayload) => {
     setSaving(true);
     try {
-      await industryMasterApi.create({
+      await industryMasterService.create({
         industryName: payload.industryName,
+        icon: payload.icon,
         description: payload.description,
-        status: payload.status,
       });
       showBanner("success", `"${payload.industryName}" added.`);
       setModal(null);
-      fetchRows();
+      await fetchRows();
     } catch (err) {
-      showBanner("error", industryMasterApi.getErrorMessage(err, "Failed to create industry."));
+      showBanner("error", industryMasterService.getErrorMessage(err, "Failed to create industry."));
     } finally {
       setSaving(false);
     }
@@ -159,50 +146,42 @@ export default function IndustryMaster() {
   const handleUpdate = async (id: string | number, payload: IndustryPayload) => {
     setSaving(true);
     try {
-      await industryMasterApi.update(id, {
+      await industryMasterService.update(id, {
         industryName: payload.industryName,
+        icon: payload.icon,
         description: payload.description,
-        status: payload.status,
       });
       showBanner("success", "Industry updated.");
       setModal(null);
-      fetchRows();
+      await fetchRows();
     } catch (err) {
-      showBanner("error", industryMasterApi.getErrorMessage(err, "Failed to update industry."));
+      showBanner("error", industryMasterService.getErrorMessage(err, "Failed to update industry."));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggleStatus = async (row: Industry) => {
-    try {
-      await industryMasterApi.update(row.id, { status: !row.status });
-      showBanner("success", `Marked ${!row.status ? "active" : "inactive"}.`);
-      fetchRows();
-    } catch (err) {
-      showBanner("error", industryMasterApi.getErrorMessage(err, "Failed to update status."));
-    }
-  };
-
   const handleDelete = async (row: Industry) => {
     try {
-      await industryMasterApi.remove(row.id);
+      await industryMasterService.remove(row.id);
       showBanner("success", `"${row.industryName}" deleted.`);
       setConfirmDelete(null);
-      fetchRows();
+      await fetchRows();
     } catch (err) {
-      showBanner("error", industryMasterApi.getErrorMessage(err, "Failed to delete industry."));
+      showBanner("error", industryMasterService.getErrorMessage(err, "Failed to delete industry."));
     }
   };
 
   // ── Columns ────────────────────────────────────────────────────────────
-  const columns = useMemo<ColumnDef<Industry>[]>(
-    () => [
+  const columns: ColumnDef<Industry>[] = [
       {
         accessorKey: "industryName",
         header: "Industry name",
         cell: ({ row }) => (
-          <span className="font-medium text-gray-900">{row.original.industryName}</span>
+          <div className="flex items-center gap-2">
+            <LucideIconRenderer name={row.original.icon} className="h-4 w-4 text-primary" />
+            <span className="font-medium text-gray-900">{row.original.industryName}</span>
+          </div>
         ),
       },
       {
@@ -213,26 +192,6 @@ export default function IndustryMaster() {
             {row.original.description || "—"}
           </span>
         ),
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-          const industry = row.original;
-          return (
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={industry.status}
-                onCheckedChange={() => handleToggleStatus(industry)}
-                aria-label={`Mark ${industry.industryName} ${industry.status ? "inactive" : "active"}`}
-              />
-              <Badge variant={industry.status ? "success" : "danger"}>
-                {industry.status ? "Active" : "Inactive"}
-              </Badge>
-            </div>
-          );
-        },
-        size: 160,
       },
       {
         id: "actions",
@@ -265,10 +224,7 @@ export default function IndustryMaster() {
         enableHiding: false,
         size: 60,
       },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+    ];
 
   return (
     <div className="space-y-5">
@@ -301,10 +257,6 @@ export default function IndustryMaster() {
       <TableToolbar>
         <div className="flex flex-1 flex-wrap items-center gap-3">
           <Search value={search} onChange={setSearch} placeholder="Search industries..." />
-          <Filters
-            filters={statusFilterConfig}
-            onChange={(values) => setStatusFilter((values.status as StatusFilter) || "all")}
-          />
         </div>
       </TableToolbar>
 
@@ -312,8 +264,8 @@ export default function IndustryMaster() {
       {!loading && rows.length === 0 ? (
         <NoData
           title="No industries found"
-          description="Try a different search or filter, or add a new industry."
-          buttonText="Clear filters"
+          description="Try a different search, or add a new industry."
+          buttonText="Clear search"
           onReset={resetFilters}
         />
       ) : (
@@ -380,16 +332,16 @@ interface IndustryFormModalProps {
 
 function IndustryFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: IndustryFormModalProps) {
   const [name, setName] = useState(row?.industryName || "");
+  const [icon, setIcon] = useState(row?.icon || "");
   const [description, setDescription] = useState(row?.description || "");
-  const [status, setStatus] = useState(row?.status ?? true);
   const [error, setError] = useState("");
 
   // Re-sync form fields whenever a different row is opened for editing.
   useEffect(() => {
     if (open) {
       setName(row?.industryName || "");
+      setIcon(row?.icon || "");
       setDescription(row?.description || "");
-      setStatus(row?.status ?? true);
       setError("");
     }
   }, [open, row]);
@@ -400,8 +352,12 @@ function IndustryFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: 
       setError("Industry name is required.");
       return;
     }
+    if (!icon.trim()) {
+      setError("Industry icon is required.");
+      return;
+    }
     setError("");
-    onSubmit({ industryName: name.trim(), description: description.trim() || null, status });
+    onSubmit({ industryName: name.trim(), icon: icon.trim(), description: description.trim() || null });
   };
 
   return (
@@ -427,6 +383,17 @@ function IndustryFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: 
               />
             </FormField>
 
+            <FormField label="Industry icon" required>
+              <Input
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="e.g. Factory"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Use a Lucide icon name, such as Factory, Cpu, or Landmark.
+              </p>
+            </FormField>
+
             <FormField label="Description">
               <Textarea
                 value={description}
@@ -436,12 +403,6 @@ function IndustryFormModal({ open, mode, row, saving, onOpenChange, onSubmit }: 
               />
             </FormField>
 
-            <FormField label="Status">
-              <div className="flex items-center gap-2">
-                <Switch checked={status} onCheckedChange={setStatus} />
-                <span className="text-sm text-gray-600">{status ? "Active" : "Inactive"}</span>
-              </div>
-            </FormField>
           </ModalBody>
 
           <ModalFooter>

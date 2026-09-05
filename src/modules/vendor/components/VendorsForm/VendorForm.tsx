@@ -23,7 +23,6 @@ import {
   saveContact,
   saveBanking,
   saveGSTTax,
-  uploadVendorDocument,
   markSectionSaved,
 } from "@/modules/vendor/store/vendorSlice";
 import { vendorApi } from "@/modules/vendor/api/vendor.api";
@@ -104,7 +103,7 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
   };
 
   const baseDocument = {
-    documentType: "",
+    globalDocumentTypeID: "",
     fileUrl: "",
   };
 
@@ -262,17 +261,32 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
       ? defaults.documents
       : Array.isArray(defaults?.documentTypes) && defaults.documentTypes.length
         ? defaults.documentTypes.map((documentType: string) => ({
-          documentType,
+          globalDocumentTypeID: documentType,
           fileUrl: "",
         }))
         : [];
 
+  const normalizedDocumentItems = normalizedDocuments.map((document: any) => ({
+    ...baseDocument,
+    ...document,
+    globalDocumentTypeID:
+      document.globalDocumentTypeID ??
+      document.globalDocumentTypeId ??
+      document.documentType?.id ??
+      document.documentType ??
+      "",
+  }));
+
   return {
     vendorCode: defaults?.vendorCode ?? "",
     businessId: defaults?.businessId ?? "",
-    tenantId: defaults?.tenantId ?? "tenant001",
+    tenantId: defaults?.tenantId ?? "",
     createdBy: defaults?.createdBy ?? "user001",
-    vendorType: defaults?.vendorType ?? "",
+    vendorType:
+      defaults?.vendorType?.id ??
+      defaults?.vendorTypeId ??
+      defaults?.vendorType ??
+      "",
     vendorName: defaults?.vendorName ?? "",
     legalName: defaults?.legalName ?? "",
     displayName: defaults?.displayName ?? "",
@@ -285,7 +299,13 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
     phone: defaults?.phone ?? defaults?.vendorPhone ?? contactSource.mobile ?? "",
     alternatevendorPhone: defaults?.alternatevendorPhone ?? "",
     websiteLink: resolveWebsiteLink(defaults?.websiteLink ?? contactSource.website ?? ""),
-    currencyId: defaults?.currencyId ?? purchaseSource.currency ?? "INR",
+    currencyId:
+      defaults?.currencyId?.id ??
+      defaults?.currencyId ??
+      purchaseSource.currencyId?.id ??
+      purchaseSource.currencyId ??
+      purchaseSource.currency ??
+      "",
     paymentTerm: defaults?.paymentTerm ?? purchaseSource.paymentTerms ?? "",
     paymentMode: defaults?.paymentMode ?? purchaseSource.paymentMode ?? "",
     gstSlab: defaults?.gstSlab ?? purchaseSource.gstSlab ?? "",
@@ -325,7 +345,7 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
       Array.isArray(defaults?.banks) && defaults.banks.length
         ? defaults.banks.map((item: any) => ({ ...baseBank, ...item }))
         : [normalizedBank],
-    documents: normalizedDocuments,
+    documents: normalizedDocumentItems,
   };
 };
 
@@ -515,7 +535,7 @@ export default function VendorForm({
           case "business": {
             const targetVendorId = vendorId ?? defaultValues?.vendorId ?? defaultValues?.id ?? defaultValues?._id;
             const payload = {
-              tenantId: values.tenantId ?? defaultValues?.tenantId ?? "tenant001",
+              tenantId: values.tenantId ?? defaultValues?.tenantId ?? "",
               branchId: values.branchId ?? defaultValues?.branchId ?? undefined,
               vendorCode: values.vendorCode ?? defaultValues?.vendorCode ?? undefined,
               createdBy: values.createdBy ?? defaultValues?.createdBy ?? "user001",
@@ -547,7 +567,7 @@ export default function VendorForm({
 
           case "payment": {
             const purchasePayload = {
-              currency: values.currencyId ?? values.currency ?? "INR",
+              currencyId: values.currencyId ?? values.currency ?? "",
               paymentTerms: values.paymentTerm ?? values.paymentTerms ?? "",
               paymentMode: values.paymentMode ?? "BANK",
               gstSlab: values.gstSlab ?? "",
@@ -652,24 +672,33 @@ export default function VendorForm({
           }
 
           case "documents": {
-            const formData = new FormData();
             const docs = values.documents ?? [];
-            const files = docs.filter((d: any) => d?.file);
-            const documentTypes = files
-              .map((d: any) => d?.documentType)
-              .filter(Boolean);
+            if (!vendorId) throw new Error("Missing vendor id for documents upload");
 
-            files.forEach((d: any, idx: number) => {
-              formData.append("documents", d.file, d.file.name ?? `doc_${idx + 1}`);
-            });
+            for (const [index, document] of docs.entries()) {
+              if (!document?.file) continue;
 
-            if (files.length > 0 && documentTypes.length > 0) {
-              formData.append("documentTypes", JSON.stringify(documentTypes));
-            }
+              const formData = new FormData();
+              const documentTypeId = document.globalDocumentTypeID;
+              const documentId = document.id ?? document.documentId ?? document._id;
 
-            if (files.length > 0) {
-              if (!vendorId) throw new Error("Missing vendor id for documents upload");
-              await dispatch(uploadVendorDocument({ vendorId: vendorId as string, data: formData })).unwrap();
+              formData.append(
+                "documents",
+                document.file,
+                document.file.name ?? `document_${index + 1}`
+              );
+
+              if (documentTypeId) {
+                const documentTypes = JSON.stringify([documentTypeId]);
+                formData.append("documentTypes", documentTypes);
+                formData.append("globalDocumentTypeIDs", documentTypes);
+              }
+
+              if (documentId) {
+                await vendorApi.updateDocument(vendorId, documentId, formData);
+              } else {
+                await vendorApi.uploadDocuments(vendorId, formData);
+              }
             }
 
             dispatch(markSectionSaved("documents"));

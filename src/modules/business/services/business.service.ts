@@ -1,8 +1,8 @@
 import { businessApi } from "../api/business.api";
 
 export const businessService = {
-  async getBusinesses() {
-    const response = await businessApi.getBusinesses();
+  async getBusinesses(role?: string | null) {
+    const response = await businessApi.getBusinesses(role);
     return response.data?.data ?? [];
   },
 
@@ -23,6 +23,11 @@ export const businessService = {
 
   async createBranch(tenantId: string | number, payload: Record<string, unknown>) {
     const response = await businessApi.createBranch(tenantId, payload as any);
+    return response.data?.data ?? null;
+  },
+
+  async getBranchById(branchId: string) {
+    const response = await businessApi.getBranchById(branchId);
     return response.data?.data ?? null;
   },
 

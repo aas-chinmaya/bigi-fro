@@ -12,44 +12,6 @@ const normalizeStatus = (value?: string) => {
   return normalized;
 };
 
-const normalizeDocumentType = (value?: string) => {
-  if (!value) return "OTHER";
-
-  const normalized = String(value).trim().toUpperCase().replace(/\s+/g, "_");
-  const allowed = [
-    "GST_CERTIFICATE",
-    "PAN_CARD",
-    "AADHAAR_CARD",
-    "MSME_CERTIFICATE",
-    "UDYAM_CERTIFICATE",
-    "TAN_CERTIFICATE",
-    "CIN_CERTIFICATE",
-    "IEC_CERTIFICATE",
-    "TRADE_LICENSE",
-    "SHOP_ESTABLISHMENT",
-    "FSSAI_LICENSE",
-    "DRUG_LICENSE",
-    "PARTNERSHIP_DEED",
-    "LLP_AGREEMENT",
-    "INCORPORATION_CERTIFICATE",
-    "MEMORANDUM_OF_ASSOCIATION",
-    "ARTICLES_OF_ASSOCIATION",
-    "CANCELLED_CHEQUE",
-    "BANK_STATEMENT",
-    "ADDRESS_PROOF",
-    "ID_PROOF",
-    "AGREEMENT",
-    "CONTRACT",
-    "PURCHASE_AGREEMENT",
-    "NDA",
-    "ISO_CERTIFICATE",
-    "INSURANCE_CERTIFICATE",
-    "OTHER",
-  ];
-
-  return allowed.includes(normalized) ? normalized : "OTHER";
-};
-
 const isFileLikeValue = (value: unknown): value is File | Blob => {
   if (typeof File !== "undefined" && value instanceof File) {
     return true;
@@ -83,6 +45,24 @@ const parseJsonValue = (value: unknown) => {
   }
 
   return value;
+};
+
+const getGlobalDocumentTypeIDs = (documents: any[], value: unknown) => {
+  const parsedValue = parseJsonValue(value);
+  const payloadIDs = Array.isArray(parsedValue)
+    ? parsedValue.filter(Boolean).map(String)
+    : [];
+
+  const documentIDs = documents
+    .map((document) =>
+      document?.globalDocumentTypeID ??
+      document?.globalDocumentTypeId ??
+      document?.documentType?.id
+    )
+    .filter(Boolean)
+    .map(String);
+
+  return documentIDs.length > 0 ? documentIDs : payloadIDs;
 };
 
 const appendFormValue = (formData: FormData, key: string, value: unknown) => {
@@ -127,7 +107,7 @@ export const vendorApi = {
     const formData = new FormData();
 
     const basePayload = {
-      tenantId: data.tenantId ?? "tenant001",
+      tenantId: data.tenantId ?? "",
       branchId: data.branchId ?? undefined,
       vendorScope: data.vendorScope ?? "BUSINESS",
       createdBy: data.createdBy ?? "user001",
@@ -135,7 +115,7 @@ export const vendorApi = {
       legalName: data.legalName ?? data.vendorName ?? "",
       displayName: data.displayName ?? data.vendorName ?? "",
       vendorType: data.vendorType ?? "SUPPLIER",
-      businessCategory: data.businessCategory ?? "Manufacturer",
+      businessCategory: data.businessCategory ?? "",
       status: normalizeStatus(data.status),
       logo: data.logo ?? null,
       remarks: data.remarks ?? null,
@@ -190,13 +170,6 @@ export const vendorApi = {
         ? [data.documents]
         : [];
 
-    const documentTypesFromPayload = parseJsonValue(data.documentTypes ?? []);
-    const documentTypes = Array.isArray(documentTypesFromPayload)
-      ? documentTypesFromPayload
-      : typeof documentTypesFromPayload === "string" && documentTypesFromPayload
-        ? [documentTypesFromPayload]
-        : [];
-
     documentsInput.forEach((document: any, index: number) => {
       const fileValue = document?.file ?? document;
 
@@ -209,17 +182,14 @@ export const vendorApi = {
       }
     });
 
-    const typedDocumentTypes = documentsInput
-      .map((document: any) => document?.documentType ?? document?.type)
-      .filter(Boolean)
-      .map((documentType: string) => normalizeDocumentType(documentType));
+    const globalDocumentTypeIDs = getGlobalDocumentTypeIDs(
+      documentsInput,
+      data.globalDocumentTypeIDs ?? data.documentTypes
+    );
 
-    const resolvedDocumentTypes = typedDocumentTypes.length > 0
-      ? typedDocumentTypes
-      : documentTypes.map((documentType: unknown) => normalizeDocumentType(String(documentType)));
-
-    if (resolvedDocumentTypes.length > 0) {
-      formData.append("documentTypes", JSON.stringify(resolvedDocumentTypes));
+    if (globalDocumentTypeIDs.length > 0) {
+      formData.append("documentTypes", JSON.stringify(globalDocumentTypeIDs));
+      formData.append("globalDocumentTypeIDs", JSON.stringify(globalDocumentTypeIDs));
     }
 
     return api.post("/vendor/createvendor", formData, {
@@ -293,13 +263,6 @@ export const vendorApi = {
         ? [data.documents]
         : [];
 
-    const documentTypesFromPayload = parseJsonValue(data.documentTypes ?? []);
-    const documentTypes = Array.isArray(documentTypesFromPayload)
-      ? documentTypesFromPayload
-      : typeof documentTypesFromPayload === "string" && documentTypesFromPayload
-        ? [documentTypesFromPayload]
-        : [];
-
     documentsInput.forEach((document: any, index: number) => {
       const fileValue = document?.file ?? document;
 
@@ -312,17 +275,14 @@ export const vendorApi = {
       }
     });
 
-    const typedDocumentTypes = documentsInput
-      .map((document: any) => document?.documentType ?? document?.type)
-      .filter(Boolean)
-      .map((documentType: string) => normalizeDocumentType(documentType));
+    const globalDocumentTypeIDs = getGlobalDocumentTypeIDs(
+      documentsInput,
+      data.globalDocumentTypeIDs ?? data.documentTypes
+    );
 
-    const resolvedDocumentTypes = typedDocumentTypes.length > 0
-      ? typedDocumentTypes
-      : documentTypes.map((documentType: unknown) => normalizeDocumentType(String(documentType)));
-
-    if (resolvedDocumentTypes.length > 0) {
-      formData.append("documentTypes", JSON.stringify(resolvedDocumentTypes));
+    if (globalDocumentTypeIDs.length > 0) {
+      formData.append("documentTypes", JSON.stringify(globalDocumentTypeIDs));
+      formData.append("globalDocumentTypeIDs", JSON.stringify(globalDocumentTypeIDs));
     }
 
     return api.put(`/vendor/updatevendor/${id}`, formData, {
@@ -367,6 +327,36 @@ export const vendorApi = {
 
   async uploadDocuments(id: string, formData: FormData) {
     return api.post(`/vendor/documents/${id}`, formData, { headers: { Accept: "application/json" } });
+  },
+
+  async updateDocument(vendorId: string, documentId: string, formData: FormData) {
+    return api.put(`/vendor/${vendorId}/documents/${documentId}`, formData, {
+      headers: { Accept: "application/json" },
+    });
+  },
+
+  async viewDocument(vendorId: string, documentId: string) {
+    return api.get(`/vendor/${vendorId}/documents/${documentId}/view`, {
+      responseType: "blob",
+    });
+  },
+
+  async downloadDocument(vendorId: string, documentId: string) {
+    return api.get(`/vendor/${vendorId}/documents/${documentId}/download`, {
+      responseType: "blob",
+    });
+  },
+
+  async viewLogo(vendorId: string) {
+    return api.get(`/vendor/${vendorId}/logo/view`, {
+      responseType: "blob",
+    });
+  },
+
+  async downloadLogo(vendorId: string) {
+    return api.get(`/vendor/${vendorId}/logo/download`, {
+      responseType: "blob",
+    });
   },
 
   async deleteDocument(documentId: string) {

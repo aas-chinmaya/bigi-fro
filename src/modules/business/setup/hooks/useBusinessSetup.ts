@@ -9,11 +9,12 @@ import {
   businessSetupSchema,
   BusinessSetupData,
 } from "../validation";
+
 import { businessService } from "../services/business.service";
 import { notify } from "@/lib/toast";
 
 export interface WizardStep {
-  key: "info" | "address" | "branch" | "bank" | "documents" | "review";
+  key: "info" | "address" | "bank" | "documents" | "review";
   title: string;
   description: string;
   fields: FieldPath<BusinessSetupData>[];
@@ -26,30 +27,28 @@ export const wizardSteps: WizardStep[] = [
     description: "Legal identity, tax IDs & preferences",
     fields: ["info"],
   },
+
   {
     key: "address",
     title: "Business Address",
     description: "Registered address of the business",
     fields: ["address"],
   },
-  {
-    key: "branch",
-    title: "Branches",
-    description: "Add branches now, or skip for later",
-    fields: ["branches"],
-  },
+
   {
     key: "bank",
     title: "Bank Details",
     description: "Where payments will be settled",
     fields: ["bank"],
   },
+
   {
     key: "documents",
     title: "Documents",
     description: "Upload supporting documents",
     fields: ["documents"],
   },
+
   {
     key: "review",
     title: "Review & Submit",
@@ -61,36 +60,53 @@ export const wizardSteps: WizardStep[] = [
 const defaultValues: BusinessSetupData = {
   info: {
     businessType: "retail",
+
     gstin: "",
     pan: "",
+
     legalName: "",
     tradeName: "",
     displayName: "",
+
     email: "",
     phone: "",
     websiteLink: "",
+
     businessCategoryId: "",
+    businessSubCategoryId: "",
     industryId: "",
+
     registrationType: "",
+    licenseTypeId: "",
     registrationNumber: "",
+    otherRegistrationType: "",
+
     tan: "",
     msme: "",
+
     currencyId: "inr",
     timezone: "Asia/Kolkata",
     financialYear: "2025-2026",
+
     description: "",
+
     logo: null,
   },
+
   address: {
     addressLine1: "",
     addressLine2: "",
     pincode: "",
+
     countryId: "in",
     stateId: "",
     cityId: "",
+
     isPrimary: true,
   },
+
   branches: [],
+
   bank: {
     accountHolderName: "",
     bankName: "",
@@ -99,17 +115,38 @@ const defaultValues: BusinessSetupData = {
     branch: "",
     upiId: "",
   },
+
   documents: [],
 };
 
-export function useBusinessSetup({ initialValues, initialBusinessId, initialTenantId }: { initialValues?: BusinessSetupData; initialBusinessId?: string; initialTenantId?: string } = {}) {
+interface UseBusinessSetupOptions {
+  initialValues?: BusinessSetupData;
+  initialBusinessId?: string;
+  initialTenantId?: string;
+}
+
+export function useBusinessSetup({
+  initialValues,
+  initialBusinessId,
+  initialTenantId,
+}: UseBusinessSetupOptions = {}) {
   const router = useRouter();
+
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [savedSteps, setSavedSteps] = useState<Record<string, boolean>>({});
-  const [businessId, setBusinessId] = useState<string | null>(initialBusinessId ?? null);
+
+  const [savedSteps, setSavedSteps] = useState<
+    Record<string, boolean>
+  >({});
+
+  const [businessId, setBusinessId] = useState<string | null>(
+    initialBusinessId ?? null
+  );
+
   const [tenantId, setTenantId] = useState<string | null>(
-    initialTenantId && initialTenantId.trim() ? initialTenantId.trim() : null
+    initialTenantId?.trim()
+      ? initialTenantId.trim()
+      : null
   );
 
   const form = useForm<BusinessSetupData>({
@@ -119,12 +156,20 @@ export function useBusinessSetup({ initialValues, initialBusinessId, initialTena
   });
 
   const currentStep = wizardSteps[stepIndex];
+
   const isFirstStep = stepIndex === 0;
-  const isLastStep = stepIndex === wizardSteps.length - 1;
+
+  const isLastStep =
+    stepIndex === wizardSteps.length - 1;
 
   async function saveCurrentStep() {
-    if (currentStep.key === "review") return;
-    if (savedSteps[currentStep.key]) return;
+    if (currentStep.key === "review") {
+      return { businessId, tenantId };
+    }
+
+    if (savedSteps[currentStep.key]) {
+      return { businessId, tenantId };
+    }
 
     try {
       const result = await businessService.saveStep(
@@ -142,46 +187,94 @@ export function useBusinessSetup({ initialValues, initialBusinessId, initialTena
         setTenantId(result.tenantId);
       }
 
-      setSavedSteps((prev) => ({ ...prev, [currentStep.key]: true }));
-    } catch (err) {
-      notify.error("Could not save this step. Please try again.");
-      throw err;
+      setSavedSteps((prev) => ({
+        ...prev,
+        [currentStep.key]: true,
+      }));
+
+      return result;
+    } catch (error) {
+      console.error(
+        `Failed to save ${currentStep.key}:`,
+        error
+      );
+
+      notify.error(
+        "Could not save this step. Please try again."
+      );
+
+      throw error;
     }
   }
 
   async function goNext() {
-    // Validate only the current step's fields before advancing.
-    const valid = await form.trigger(currentStep.fields, {
-      shouldFocus: true,
-    });
+    const valid = await form.trigger(
+      currentStep.fields,
+      {
+        shouldFocus: true,
+      }
+    );
 
-    if (!valid) return false;
+    if (!valid) {
+      return false;
+    }
 
     await saveCurrentStep();
-    setStepIndex((i) => Math.min(i + 1, wizardSteps.length - 1));
+
+    setStepIndex((index) =>
+      Math.min(
+        index + 1,
+        wizardSteps.length - 1
+      )
+    );
+
     return true;
   }
 
   function goBack() {
-    setStepIndex((i) => Math.max(i - 1, 0));
+    setStepIndex((index) =>
+      Math.max(index - 1, 0)
+    );
   }
 
   function goToStep(index: number) {
-    // Only allow jumping to a step that's already been reached.
-    if (index <= stepIndex) setStepIndex(index);
+    if (index <= stepIndex) {
+      setStepIndex(index);
+    }
   }
 
   async function submit() {
     const valid = await form.trigger();
-    if (!valid) return;
+
+    if (!valid) {
+      return;
+    }
 
     try {
       setSubmitting(true);
-      await saveCurrentStep();
-      notify.success("Business setup complete");
+
+      const result = await saveCurrentStep();
+      const targetBusinessId = result?.businessId ?? businessId;
+
+      notify.success(
+        "Business setup complete"
+      );
+
+      if (targetBusinessId) {
+        router.push(`/dashboard?businessId=${targetBusinessId}`);
+        return;
+      }
+
       router.push("/dashboard");
-    } catch (err) {
-      notify.error("Something went wrong while saving your business");
+    } catch (error) {
+      console.error(
+        "Business setup submission failed:",
+        error
+      );
+
+      notify.error(
+        "Something went wrong while saving your business"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -190,16 +283,22 @@ export function useBusinessSetup({ initialValues, initialBusinessId, initialTena
   return {
     form,
     steps: wizardSteps,
+
     stepIndex,
     currentStep,
+
     isFirstStep,
     isLastStep,
+
     submitting,
+
     businessId,
     tenantId,
+
     goNext,
     goBack,
     goToStep,
     submit,
   };
 }
+

@@ -69,7 +69,7 @@ const bankSchema = z.object({
 
 const documentSchema = z
   .object({
-    documentType: requiredString("Document type is required"),
+    globalDocumentTypeID: requiredString("Document type is required"),
     fileUrl: optionalString,
     file: z.any().optional(),
   })

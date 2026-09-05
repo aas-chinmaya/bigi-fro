@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
     Building2,
     Mail,
@@ -17,6 +18,7 @@ import {
     Badge,
     Button,
 } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { Branch } from "../types";
 
@@ -31,9 +33,25 @@ export default function BranchCard({
     onEdit,
     onDelete,
 }: BranchCardProps) {
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!onDelete) return;
+
+        setDeleting(true);
+        try {
+            await onDelete(branch);
+            setConfirmOpen(false);
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     return (
-        <Card
-            className="
+        <>
+            <Card
+                className="
                 border
                 border-gray-200
                 transition-all
@@ -41,7 +59,7 @@ export default function BranchCard({
                 hover:border-primary/30
                 hover:shadow-lg
             "
-        >
+            >
             <CardContent className="p-5">
 
                 {/* Header */}
@@ -140,7 +158,7 @@ export default function BranchCard({
                             </p>
 
                             <p className="text-sm text-text">
-                                {branch.manager}
+                                {branch.branchManager}
                             </p>
 
                         </div>
@@ -212,7 +230,7 @@ export default function BranchCard({
                     <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => onDelete?.(branch)}
+                        onClick={() => setConfirmOpen(true)}
                         className="gap-2"
                     >
                         <Trash2 size={16} />
@@ -222,6 +240,19 @@ export default function BranchCard({
                 </div>
 
             </CardContent>
-        </Card>
+            </Card>
+
+            <ConfirmDialog
+                open={confirmOpen}
+                title="Delete branch?"
+                description={`Are you sure you want to delete ${branch.name}? This action cannot be undone.`}
+                confirmLabel="Delete Branch"
+                loading={deleting}
+                onConfirm={() => void handleDelete()}
+                onCancel={() => {
+                    if (!deleting) setConfirmOpen(false);
+                }}
+            />
+        </>
     );
 }

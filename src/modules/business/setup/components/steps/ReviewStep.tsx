@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   Pencil,
@@ -98,7 +98,9 @@ export default function ReviewStep({ onEdit }: Props) {
   const {
     businessTypes,
     businessCategories,
+    businessSubCategories,
     industries,
+    licenseTypes,
     currencies,
     countries,
   } = useMasterData();
@@ -106,18 +108,35 @@ export default function ReviewStep({ onEdit }: Props) {
   const nameOf = (list: { id: string; name: string }[], id?: string) =>
     list.find((i) => i.id === id)?.name ?? id;
 
-  const logoPreview = useMemo(() => {
+  const objectUrlRef = useRef<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
     const logo = data.info.logo;
-    if (logo instanceof File) {
-      return URL.createObjectURL(logo);
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
     }
-    return null;
+
+    if (logo instanceof File) {
+      const nextUrl = URL.createObjectURL(logo);
+      objectUrlRef.current = nextUrl;
+      setLogoPreview(nextUrl);
+      return;
+    }
+
+    setLogoPreview(typeof logo === "string" && logo.trim() ? logo : null);
   }, [data.info.logo]);
 
   useEffect(() => {
-    if (!logoPreview) return;
-    return () => URL.revokeObjectURL(logoPreview);
-  }, [logoPreview]);
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-5">
@@ -184,7 +203,15 @@ export default function ReviewStep({ onEdit }: Props) {
           label="Category"
           value={nameOf(businessCategories, data.info.businessCategoryId)}
         />
+        <Row
+          label="Sub-category"
+          value={nameOf(businessSubCategories, data.info.businessSubCategoryId)}
+        />
         <Row label="Industry" value={nameOf(industries, data.info.industryId)} />
+        <Row
+          label="License Type"
+          value={nameOf(licenseTypes, data.info.licenseTypeId)}
+        />
         <Row label="Email" value={data.info.email} />
         <Row label="Phone" value={data.info.phone} />
         <Row label="GSTIN" value={data.info.gstin} />
@@ -212,35 +239,7 @@ export default function ReviewStep({ onEdit }: Props) {
         <Row label="Pincode" value={data.address.pincode} />
       </SummaryCard>
 
-      <SummaryCard
-        title="Branches"
-        icon={Building2}
-        tint="amber"
-        stepIndex={2}
-        onEdit={onEdit}
-      >
-        {data.branches.length === 0 ? (
-          <p className="py-1.5 text-sm text-muted">No branches added</p>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {data.branches.map((b, i) => (
-              <div key={i} className="flex items-center justify-between py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-800">
-                    {b.branchName || `Branch ${i + 1}`}
-                  </p>
-                  <p className="truncate text-xs text-muted">
-                    {[b.phone, b.email].filter(Boolean).join(" · ")}
-                  </p>
-                </div>
-                <Badge variant={b.status === "active" ? "success" : "warning"}>
-                  {b.status}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-      </SummaryCard>
+     
 
       <SummaryCard
         title="Bank Details"
@@ -276,7 +275,7 @@ export default function ReviewStep({ onEdit }: Props) {
             {data.documents.map((d, i) => (
               <div key={i} className="flex items-center justify-between py-2.5">
                 <span className="text-sm text-gray-800">
-                  {d.documentType || `Document ${i + 1}`}
+                  {d.globalDocumentTypeId || `Document ${i + 1}`}
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
                   {d.file?.name ? (
