@@ -4,7 +4,7 @@
 // ==========================================================
 
 export type ReceiptVoucherStatus =
-  | "DRAFT"
+  | "CANCELLED"
   | "RECEIVED";
 
 export type ReceiptSource =
@@ -44,8 +44,35 @@ export interface PaymentReceipt {
 
   paymentId?: string | null;
   invoiceId?: string | null;
-  paymentMethod: PaymentMethod;
-  amount: number;
+
+  payment?: {
+    id: string;
+    businessId?: string | null;
+    branchId?: string | null;
+    paymentNumber?: string | null;
+    customerId: string;
+    invoiceId?: string | null;
+    amount: string | number;
+    paymentMethod: PaymentMethod;
+    paymentStatus: string;
+    paymentDate: string;
+    remarks?: string | null;
+    documentType?: string | null;
+    documentNumber?: string | null;
+    paymentGateway?: string | null;
+    gatewayOrderId?: string | null;
+    gatewayPaymentId?: string | null;
+    gatewaySignature?: string | null;
+    transactionReference?: string | null;
+    gatewayResponse?: unknown;
+    createdBy: string;
+    updatedBy?: string | null;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string | null;
+  };
+
+  amount: number | string;
 
   remarks?: string | null;
   notes?: string | null;
@@ -56,7 +83,6 @@ export interface PaymentReceipt {
   updatedAt: string;
   deletedAt?: string | null;
 }
-
 // ==========================================================
 // PAYMENT RECEIPT FORM VALUES
 // ==========================================================
@@ -84,8 +110,8 @@ export interface PaymentReceiptFormValues {
 }
 
 export const PAYMENT_RECEIPT_FORM_DEFAULTS: PaymentReceiptFormValues = {
-  businessId: "busid101",
-  branchId: "brnch111",
+  businessId: "AASI-Ten-001",
+  branchId: "AASI-BR-001",
   receiptNumber: "",
   receiptDate: new Date().toISOString().slice(0, 10),
   financialYear: "",
@@ -99,7 +125,7 @@ export const PAYMENT_RECEIPT_FORM_DEFAULTS: PaymentReceiptFormValues = {
   amount: 0,
   remarks: "",
   notes: "",
-  createdBy: "system",
+  createdBy: "Chinmaya Das",
   
 };
 

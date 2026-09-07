@@ -86,9 +86,9 @@ function getFinancialYearOptions(): string[] {
 }
 
 const currentUser = {
-  createdBy: "DEVELOPER",
-  businessId: "business_0012",
-  branchId: "BRANCH_ID_1003",
+  createdBy: "Chinmaya Das",
+  businessId: "AASI-Ten-001",
+  branchId: "AASI-BR-001",
 };
 
 function Badge({ text }: { text: string }) {

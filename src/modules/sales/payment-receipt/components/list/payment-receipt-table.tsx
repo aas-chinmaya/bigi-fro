@@ -1,6 +1,9 @@
 
-"use client";
 
+
+
+
+"use client";
 
 import {
   DataTable,
@@ -10,31 +13,17 @@ import {
 } from "@/components/data-table";
 
 import PaymentReceiptFilters from "./payment-receipt-filters";
-
-import {
-  PaymentReceiptColumns,
-} from "./payment-receipt-columns";
-
+import { PaymentReceiptColumns } from "./payment-receipt-columns";
 import type { PaymentReceipt } from "../../types/payment-receipt.types";
-
-// ==========================================================
-// PROPS
-// ==========================================================
 
 interface PaymentReceiptTableProps {
   paymentReceipts: PaymentReceipt[];
-
   loading?: boolean;
-
   page?: number;
-
   totalPages?: number;
+  onPageChange?: (page: number) => void;
 
-  onPageChange?: (
-    page: number,
-  ) => void;
-
-  // Controlled filters (moved to parent for server-side queries)
+  // Controlled filters (parent handles server-side filtering)
   search?: string;
   onSearchChange?: (v: string) => void;
   status?: string;
@@ -42,9 +31,6 @@ interface PaymentReceiptTableProps {
   period?: string;
   onPeriodChange?: (v: string) => void;
 }
-// ==========================================================
-// COMPONENT
-// ==========================================================
 
 export default function PaymentReceiptTable({
   paymentReceipts,
@@ -59,25 +45,8 @@ export default function PaymentReceiptTable({
   period = "all",
   onPeriodChange = () => {},
 }: PaymentReceiptTableProps) {
-  // filters controlled by parent; no local state to avoid duplicate server/client filtering
-
-  // ========================================================
-  // FILTER
-  // ========================================================
-
-  // Server provides filtered list via params; use data directly
-  const filteredPaymentReceipts = paymentReceipts;
-
-  // ========================================================
-  // RENDER
-  // ========================================================
-
   return (
     <div className="space-y-4">
-      {/* ==================================================
-          TOOLBAR
-      ================================================== */}
-
       <TableToolbar>
         <Search
           placeholder="Search money receipt..."
@@ -93,28 +62,17 @@ export default function PaymentReceiptTable({
         />
       </TableToolbar>
 
-      {/* ==================================================
-          TABLE
-      ================================================== */}
-
       <DataTable
         columns={PaymentReceiptColumns}
-        data={filteredPaymentReceipts}
+        data={paymentReceipts}
         loading={loading}
         emptyMessage="No payment receipts found."
       />
 
-      {/* ==================================================
-          PAGINATION
-      ================================================== */}
-
       <Pagination
         page={page}
         totalPages={totalPages}
-        onPageChange={
-          onPageChange ??
-          (() => {})
-        }
+        onPageChange={onPageChange ?? (() => {})}
       />
     </div>
   );

@@ -12,10 +12,14 @@ type PaymentReceiptActionsProps = {
   status?: string | null;
 };
 
-export default function PaymentReceiptActions({
+export function PaymentReceiptActions({
   id,
 }: PaymentReceiptActionsProps) {
   const router = useRouter();
+
+  const handleView = () => {
+    router.push(`/sales/payment-receipt/${id}`);
+  };
 
   return (
     <div className="flex items-center justify-end gap-1">
@@ -25,12 +29,8 @@ export default function PaymentReceiptActions({
         size="icon"
         aria-label="View money receipt"
         title="View money receipt"
-        onClick={() =>
-          router.push(
-            `/sales/payment-receipt/${id}`,
-          )
-        }
-        className="hover:bg-violet-50 hover:text-violet-600"
+        onClick={handleView}
+        className="text-muted hover:bg-violet/10 hover:text-violet"
       >
         <Eye className="size-4" />
       </Button>

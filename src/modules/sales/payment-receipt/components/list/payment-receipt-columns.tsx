@@ -1,190 +1,287 @@
 
+
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  Banknote,
+  CreditCard,
+  CircleCheck,
+  CircleX,
+  FileText,
+  Globe,
+  Landmark,
+  Smartphone,
+  Store,
+} from "lucide-react";
 
-import { Badge } from "@/components/ui";
+import {
+  PaymentMethod,
+  PaymentReceipt,
+} from "../../types/payment-receipt.types";
 
-import type { PaymentReceipt } from "../../types/payment-receipt.types";
+import { PaymentReceiptActions } from "./payment-receipt-actions";
 
-import PaymentReceiptActions from "./payment-receipt-actions";
+/* -------------------------------------------------------------------------- */
+/* Payment Method Config                                                     */
+/* -------------------------------------------------------------------------- */
+
+const paymentMethodConfig: Record<
+  PaymentMethod,
+  {
+    label: string;
+    icon: typeof Banknote;
+    className: string;
+  }
+> = {
+  CASH: {
+    label: "Cash",
+    icon: Banknote,
+    className: "text-success",
+  },
+
+  UPI: {
+    label: "UPI",
+    icon: Smartphone,
+    className: "text-violet",
+  },
+
+  CARD: {
+    label: "Card",
+    icon: CreditCard,
+    className: "text-info",
+  },
+
+  NET_BANKING: {
+    label: "Net Banking",
+    icon: Landmark,
+    className: "text-warning",
+  },
+};
+
+/* -------------------------------------------------------------------------- */
+/* Receipt Source Config                                                     */
+/* -------------------------------------------------------------------------- */
+
+const sourceConfig = {
+  MANUAL: {
+    label: "Manual",
+    icon: FileText,
+    className: "bg-neutral/10 text-neutral",
+  },
+
+  ONLINE: {
+    label: "Online",
+    icon: Globe,
+    className: "bg-violet/10 text-violet",
+  },
+
+  OTHER: {
+    label: "Other",
+    icon: FileText,
+    className: "bg-neutral/10 text-neutral",
+  },
+
+  POS: {
+    label: "POS",
+    icon: Store,
+    className: "bg-info/10 text-info",
+  },
+} as const;
+
+/* -------------------------------------------------------------------------- */
+/* Receipt Status Config                                                     */
+/* -------------------------------------------------------------------------- */
+
+const statusConfig = {
+  RECEIVED: {
+    label: "Received",
+    icon: CircleCheck,
+    className: "bg-success/10 text-success",
+  },
+
+  CANCELLED: {
+    label: "Cancelled",
+    icon: CircleX,
+    className: "bg-danger/10 text-danger",
+  },
+} as const;
+
+/* -------------------------------------------------------------------------- */
+/* Columns                                                                   */
+/* -------------------------------------------------------------------------- */
 
 export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
-  // ========================================================
-  // RECEIPT
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Receipt                                                                */
+  /* ---------------------------------------------------------------------- */
 
   {
     accessorKey: "receiptNumber",
     header: "Receipt",
 
     cell: ({ row }) => {
-      const paymentReceipt = row.original;
+      const receipt = row.original;
 
       return (
-        <div className="min-w-[160px]">
-          <p className="font-medium">
-            {paymentReceipt.receiptNumber ?? "-"}
-          </p>
+        <div className="flex flex-col">
+          <span className="font-medium text-text">
+            {receipt.receiptNumber}
+          </span>
 
-          <p className="text-xs text-muted-foreground">
-            {paymentReceipt.customerName ??
-              "No customer"}
-          </p>
+          {receipt.customerName && (
+            <span className="text-sm text-muted">
+              {receipt.customerName}
+            </span>
+          )}
         </div>
       );
     },
   },
 
-  // ========================================================
-  // RECEIPT DATE
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Date                                                                   */
+  /* ---------------------------------------------------------------------- */
 
   {
     accessorKey: "receiptDate",
-    header: "Receipt Date",
+    header: "Date",
 
     cell: ({ row }) => {
-      const date =
-        row.original.receiptDate;
-
-      if (!date) {
-        return (
-          <span className="text-muted-foreground">
-            -
-          </span>
-        );
-      }
-
-      const parsedDate = new Date(date);
-
-      if (
-        Number.isNaN(
-          parsedDate.getTime(),
-        )
-      ) {
-        return (
-          <span className="text-muted-foreground">
-            -
-          </span>
-        );
-      }
+      const date = row.original.receiptDate;
 
       return (
-        <span>
-          {parsedDate.toLocaleDateString(
-            "en-IN",
-            {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            },
-          )}
+        <span className="text-sm text-text">
+          {new Date(date).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
         </span>
       );
     },
   },
 
-  // ========================================================
-  // AMOUNT
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Amount                                                                 */
+  /* ---------------------------------------------------------------------- */
 
   {
     accessorKey: "amount",
     header: "Amount",
 
     cell: ({ row }) => {
-      const amount = Number(
-        row.original.amount ?? 0,
-      );
+      const amount = Number(row.original.amount ?? 0);
 
       return (
-        <p className="font-medium">
+        <span className="font-medium text-text">
           ₹
-          {amount.toLocaleString(
-            "en-IN",
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            },
-          )}
-        </p>
+          {amount.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
       );
     },
   },
 
-  // ========================================================
-  // RECEIPT SOURCE
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Payment Method                                                         */
+  /* ---------------------------------------------------------------------- */
 
   {
-    accessorKey: "receiptSource",
-    header: "Source",
+    id: "paymentMethod",
+    header: "Payment Method",
 
     cell: ({ row }) => {
-      const source = row.original.receiptSource ?? "POS";
+      const paymentMethod = row.original.payment?.paymentMethod;
 
-      return <span className="capitalize">{source.toLowerCase()}</span>;
+      if (!paymentMethod) {
+        return <span className="text-muted">—</span>;
+      }
+
+      const config = paymentMethodConfig[paymentMethod as PaymentMethod];
+
+      if (!config) {
+        return (
+          <span className="inline-flex items-center rounded-full bg-muted/10 px-2.5 py-1 text-xs font-medium text-muted">
+            {paymentMethod}
+          </span>
+        );
+      }
+
+      const Icon = config.icon;
+
+      return (
+        <div className="inline-flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${config.className}`} />
+
+          <span className={`text-sm font-medium ${config.className}`}>
+            {config.label}
+          </span>
+        </div>
+      );
     },
   },
 
-  // ========================================================
-  // STATUS
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Status                                                                 */
+  /* ---------------------------------------------------------------------- */
 
   {
     accessorKey: "receiptStatus",
     header: "Status",
 
     cell: ({ row }) => {
-      const status = (
-        row.original.receiptStatus ?? ""
-      ).toUpperCase();
+      const status = row.original.receiptStatus;
 
-      const variant =
-        status === "POSTED"
-          ? "success"
-          : status === "DRAFT"
-            ? "secondary"
-            : "outline";
+      const config =
+        statusConfig[status as keyof typeof statusConfig];
+
+      if (!config) {
+        return (
+          <span className="inline-flex items-center rounded-full bg-muted/10 px-2.5 py-1 text-xs font-medium text-muted">
+            {status || "—"}
+          </span>
+        );
+      }
+
+      const Icon = config.icon;
 
       return (
-        <Badge variant={variant}>
-          {status || "-"}
-        </Badge>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.className}`}
+        >
+          <Icon className="h-3.5 w-3.5" />
+
+          {config.label}
+        </span>
       );
     },
   },
 
-  // ========================================================
-  // ACTIONS
-  // ========================================================
+  /* ---------------------------------------------------------------------- */
+  /* Actions                                                                */
+  /* ---------------------------------------------------------------------- */
 
   {
     id: "actions",
-
-    header: () => (
-      <div className="text-right">
-        Actions
-      </div>
-    ),
-
-    cell: ({ row }) => {
-      const paymentReceipt =
-        row.original;
-
-      return (
-        <div className="text-right">
-          <PaymentReceiptActions
-            id={paymentReceipt.id}
-            receiptNumber={paymentReceipt.receiptNumber ?? undefined}
-            status={paymentReceipt.receiptStatus}
-          />
-        </div>
-      );
-    },
-
+    header: "",
     enableSorting: false,
     enableHiding: false,
+
+  cell: ({ row }) => {
+  const receipt = row.original;
+
+  return (
+    <div className="flex justify-end">
+      <PaymentReceiptActions
+        id={receipt.id}
+        receiptNumber={receipt.receiptNumber ?? undefined}
+        status={receipt.receiptStatus}
+      />
+    </div>
+  );
+},
   },
 ];

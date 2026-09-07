@@ -14,6 +14,16 @@
 
   --font-heading: "Saira", sans-serif;
   --font-body: "Saira", sans-serif;
+
+
+
+   /* Generic Semantic  Colors */
+  --success: #059669;
+  --info: #2563eb;
+  --warning: #ea580c;
+  --danger: #dc2626;
+  --violet: #7c3aed;
+  --neutral: #64748b;
 }
 
 /* Tailwind Theme */
@@ -26,6 +36,15 @@
 
   --color-text: var(--text);
   --color-muted: var(--muted);
+
+
+  
+   --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-violet: var(--violet);
+  --color-neutral: var(--neutral);
 
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
