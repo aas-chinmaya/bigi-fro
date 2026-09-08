@@ -7,6 +7,9 @@ import type {
   PaymentReceiptQueryParams,
   CreatePaymentReceiptPayload,
   UpdatePaymentReceiptPayload,
+
+  PaymentAdjustmentPayload,
+  PaymentAdjustment,
 } from "../types/payment-receipt.types";
 
 export const paymentReceiptApi = {
@@ -57,6 +60,34 @@ getPaymentReceiptById: async (
     );
 
     return response.data;
+  },
+  // ==========================================================
+  // PAYMENT ADJUSTMENT
+  // ==========================================================
+
+  createPaymentAdjustment: async (
+    payload: PaymentAdjustmentPayload,
+  ): Promise<PaymentAdjustment> => {
+    const response = await api.post<PaymentAdjustment>(
+      "/payments/adjust",
+      payload,
+    );
+
+    return response.data;
+  },
+
+  getPaymentAdjustmentById: async (
+    id: string,
+    businessId?: string,
+  ): Promise<PaymentAdjustment> => {
+    const response = await api.get<PaymentAdjustment>(
+      `/payments/${id}`,
+      {
+        params: businessId ? { businessId } : undefined,
+      },
+    );
+
+    return response?.data;
   },
 };
 

@@ -4,7 +4,7 @@ import { paymentReceiptApi } from "../api/payment-receipt.api";
 import type {
   PaymentReceiptQueryParams,
   CreatePaymentReceiptPayload,
-  UpdatePaymentReceiptPayload,
+  UpdatePaymentReceiptPayload,PaymentAdjustmentPayload
 } from "../types/payment-receipt.types";
 
 export const paymentReceiptService = {
@@ -31,6 +31,29 @@ getPaymentReceiptById: (id: string, businessId?: string) => {
     return paymentReceiptApi.updatePaymentReceipt(
       id,
       payload,
+    );
+  },
+
+
+   // ==========================================================
+  // PAYMENT ADJUSTMENT
+  // ==========================================================
+
+  createPaymentAdjustment: (
+    payload: PaymentAdjustmentPayload,
+  ) => {
+    return paymentReceiptApi.createPaymentAdjustment(
+      payload,
+    );
+  },
+
+  getPaymentAdjustmentById: (
+    id: string,
+    businessId?: string,
+  ) => {
+    return paymentReceiptApi.getPaymentAdjustmentById(
+      id,
+      businessId,
     );
   },
 };

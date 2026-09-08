@@ -195,3 +195,26 @@ export interface PaymentReceiptListResponse {
     totalPages: number;
   };
 }
+
+
+
+
+
+
+
+export interface PaymentAdjustmentPayload {
+  paymentReceiptId: string;
+  adjustmentAmount: number;
+  adjustmentType: string;
+  reason?: string;
+}
+
+export interface PaymentAdjustment {
+  id: string;
+  paymentReceiptId: string;
+  adjustmentAmount: number;
+  adjustmentType: string;
+  reason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { PaymentReceipt } from "../../types/payment-receipt.types";
-
+import { IndianRupee } from "lucide-react";
 interface ReceiptPreviewProps {
   paymentReceipt: PaymentReceipt;
 }
@@ -12,7 +12,6 @@ export default function ReceiptPreview({ paymentReceipt }: ReceiptPreviewProps) 
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-
   const customer = (paymentReceipt as any).customer;
   const payment = paymentReceipt.payment;
 
@@ -99,30 +98,14 @@ export default function ReceiptPreview({ paymentReceipt }: ReceiptPreviewProps) 
                 {numberToWords(amount)} Only
               </p>
             </div>
-            <p className="text-xl font-bold text-gray-900">{formattedAmount}</p>
-          </div>
+<p className="text-xl text-gray-900 flex items-center gap-1">
+  <IndianRupee className="h-5 w-5" />
+  {formattedAmount}
+</p>          </div>
         </div>
 
-        {/* Note */}
-        <div className="border-b border-gray-300 px-5 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Note</p>
-          <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-xs text-gray-600">
-            <li>This is a system generated receipt. It does not require official signature.</li>
-            <li>Thank You</li>
-          </ul>
-        </div>
 
-        {/* Signature */}
-        <div className="flex items-end justify-between px-5 py-5">
-          <div>
-            <p className="text-[11px] text-gray-500">Received By</p>
-            <p className="mt-3 text-sm font-medium">{paymentReceipt.createdBy || "—"}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[11px] text-gray-500">Authorised Signatory</p>
-            <div className="mt-6 h-px w-32 bg-gray-300" />
-          </div>
-        </div>
+       
       </div>
     </div>
   );

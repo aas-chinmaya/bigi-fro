@@ -71,7 +71,7 @@ export default function ReceiptDetailsWrapper({
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/sales/payment-receipt")}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+              className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
               title="Back to list"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -111,7 +111,7 @@ export default function ReceiptDetailsWrapper({
       {/* DESKTOP RIGHT SIDE */}
       <div
         className={`
-          relative hidden min-h-full shrink-0 flex-col border-l border-gray-200 bg-white transition-all duration-500 ease-in-out lg:flex
+           relative hidden min-h-full shrink-0 flex-col border-l border-gray-200 bg-white transition-all duration-500 ease-in-out lg:flex
           ${sidebarOpen ? "w-[340px] xl:w-[360px]" : "w-12"}
         `}
       >
@@ -126,7 +126,7 @@ export default function ReceiptDetailsWrapper({
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-all duration-300 hover:text-gray-800"
+            className="cursor-pointer ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-all duration-300 hover:text-gray-800"
           >
             <PanelRightClose
               className={`h-4 w-4 transition-transform duration-500 ease-in-out ${
@@ -155,7 +155,7 @@ export default function ReceiptDetailsWrapper({
       {/* MOBILE DRAWER */}
       {sidebarOpen && (
         <div
-          className="absolute inset-0 z-40 bg-black/30 transition-opacity duration-300 lg:hidden"
+          className="cursor-pointer absolute inset-0 z-40 bg-black/30 transition-opacity duration-300 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

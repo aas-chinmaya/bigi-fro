@@ -8,7 +8,8 @@ import type {
   PaymentReceiptListResponse,
   PaymentReceiptQueryParams,
   CreatePaymentReceiptPayload,
-  UpdatePaymentReceiptPayload,
+  UpdatePaymentReceiptPayload,PaymentAdjustment,
+  PaymentAdjustmentPayload,
 } from "../types/payment-receipt.types";
 
 // ==========================================================
@@ -19,6 +20,7 @@ interface PaymentReceiptState {
   paymentReceipts: PaymentReceipt[];
   selectedPaymentReceipt: PaymentReceipt | null;
 
+  paymentAdjustment: PaymentAdjustment | null;
   loading: boolean;
   error: string | null;
 
@@ -37,7 +39,7 @@ interface PaymentReceiptState {
 const initialState: PaymentReceiptState = {
   paymentReceipts: [],
   selectedPaymentReceipt: null,
-
+ paymentAdjustment:  null,
   loading: false,
   error: null,
 
@@ -144,7 +146,54 @@ export const editPaymentReceipt = createAsyncThunk<
     }
   },
 );
+// ==========================================================
+// CREATE PAYMENT ADJUSTMENT
+// ==========================================================
 
+export const createPaymentAdjustment = createAsyncThunk<
+  PaymentAdjustment,
+  PaymentAdjustmentPayload,
+  { rejectValue: string }
+>(
+  "paymentReceipt/createPaymentAdjustment",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await paymentReceiptService.createPaymentAdjustment(
+        payload,
+      );
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message ||
+          "Failed to create payment adjustment",
+      );
+    }
+  },
+);
+
+// ==========================================================
+// FETCH PAYMENT ADJUSTMENT BY ID
+// ==========================================================
+
+export const fetchPaymentAdjustmentById = createAsyncThunk<
+  PaymentAdjustment,
+  { id: string; businessId?: string },
+  { rejectValue: string }
+>(
+  "paymentReceipt/fetchPaymentAdjustmentById",
+  async ({ id, businessId }, { rejectWithValue }) => {
+    try {
+      return await paymentReceiptService.getPaymentAdjustmentById(
+        id,
+        businessId,
+      );
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message ||
+          "Failed to fetch payment adjustment",
+      );
+    }
+  },
+);
 // ==========================================================
 // SLICE
 // ==========================================================
@@ -327,7 +376,74 @@ const paymentReceiptSlice = createSlice({
             action.payload ||
             "Failed to update payment receipt";
         },
-      );
+      )
+      
+      // ====================================================
+        // CREATE PAYMENT ADJUSTMENT
+        // ====================================================
+
+        .addCase(
+          createPaymentAdjustment.pending,
+          (state) => {
+            state.loading = true;
+            state.error = null;
+          },
+        )
+
+        .addCase(
+          createPaymentAdjustment.fulfilled,
+          (state, action) => {
+            state.loading = false;
+
+            state.paymentAdjustment =
+              action.payload;
+          },
+        )
+
+        .addCase(
+          createPaymentAdjustment.rejected,
+          (state, action) => {
+            state.loading = false;
+
+            state.error =
+              action.payload ||
+              "Failed to create payment adjustment";
+          },
+        )
+
+        // ====================================================
+        // FETCH PAYMENT ADJUSTMENT BY ID
+        // ====================================================
+
+        .addCase(
+          fetchPaymentAdjustmentById.pending,
+          (state) => {
+            state.loading = true;
+            state.error = null;
+          },
+        )
+
+        .addCase(
+          fetchPaymentAdjustmentById.fulfilled,
+          (state, action) => {
+            state.loading = false;
+
+            state.paymentAdjustment =
+              action.payload;
+          },
+        )
+
+        .addCase(
+          fetchPaymentAdjustmentById.rejected,
+          (state, action) => {
+            state.loading = false;
+
+            state.error =
+              action.payload ||
+              "Failed to fetch payment adjustment";
+          },
+        )
+      ;
   },
 });
 
