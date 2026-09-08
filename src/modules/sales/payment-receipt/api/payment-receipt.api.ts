@@ -7,7 +7,7 @@ import type {
   PaymentReceiptQueryParams,
   CreatePaymentReceiptPayload,
   UpdatePaymentReceiptPayload,
-
+PaymentReceiptResponse,
   PaymentAdjustmentPayload,
   PaymentAdjustment,
 } from "../types/payment-receipt.types";
@@ -30,7 +30,7 @@ getPaymentReceiptById: async (
   id: string,
   businessId?: string,
 ): Promise<PaymentReceipt> => {
-  const response = await api.get<PaymentReceipt>(
+  const response = await api.get<PaymentReceiptResponse>(
     `/payment-receipts/${id}`,
     {
       params: businessId ? { businessId } : undefined,

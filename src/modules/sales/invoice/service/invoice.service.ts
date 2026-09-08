@@ -4,7 +4,6 @@ export const invoiceService = {
   // Drafts
   createDraft: (data: unknown) => invoiceApi.createDraft(data),
 
-  getDrafts: () => invoiceApi.getDrafts(),
   getDrafts: (params?: Record<string, any>) => invoiceApi.getDrafts(params),
 
   getDraftById: (id: string) => invoiceApi.getDraftById(id),

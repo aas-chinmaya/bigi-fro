@@ -278,7 +278,7 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
         <PaymentReceiptActions
           id={receipt.id}
           receiptNumber={receipt.receiptNumber ?? undefined}
-          businessId={receipt.businessId}
+           businessId={receipt.businessId ?? undefined}
           status={receipt.receiptStatus}
         />
       </div>

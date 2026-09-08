@@ -181,6 +181,12 @@ export interface PaymentReceiptQueryParams {
   toDate?: string;
 }
 
+export interface PaymentReceiptResponse {
+  success: boolean;
+  message: string;
+  data: PaymentReceipt;
+}
+
 // ==========================================================
 // LIST RESPONSE
 // ==========================================================
@@ -203,10 +209,21 @@ export interface PaymentReceiptListResponse {
 
 
 export interface PaymentAdjustmentPayload {
-  paymentReceiptId: string;
-  adjustmentAmount: number;
-  adjustmentType: string;
-  reason?: string;
+  businessId: string;
+  branchId?: string;
+  customerId: string;
+  paymentId: string;
+
+  documentType: "SALES_INVOICE";
+  documentId: string;
+  documentNumber: string;
+
+  amount: number;
+  adjustmentType: "ADVANCE" | "INSTALLMENT";
+
+  adjustmentDate?: string;
+  remarks?: string;
+  createdBy: string;
 }
 
 export interface PaymentAdjustment {

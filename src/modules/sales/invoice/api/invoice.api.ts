@@ -9,9 +9,16 @@ export const invoiceApi = {
     return api.post("/sales-invoices/drafts", data);
   },
 
-  getDrafts() {
-    return api.get("/sales-invoices/fetch-drafts", { params: arguments[0] });
-  },
+  // getDrafts() {
+  //   return api.get("/sales-invoices/fetch-drafts", { params: arguments[0] });
+  // },
+  getDrafts: async (params?: Record<string, any>) => {
+  const response = await api.get("/sales-invoices/fetch-drafts", {
+    params,
+  });
+
+  return response.data;
+},
 
   getDraftById(id: string) {
     return api.get(`/sales-invoices/fetch-drafts/${id}`);

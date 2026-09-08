@@ -1,11 +1,6 @@
-
-
-
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
 import { Loader2, Search, X } from "lucide-react";
 
 import {
@@ -23,24 +18,13 @@ import { notify } from "@/lib/toast";
 
 import { useInvoiceQuery } from "@/modules/sales/invoice/hooks/use-invoice-query";
 import { usePaymentAdjustment } from "@/modules/sales/payment-receipt/hooks/use-payment-adjustment";
-import type { PaymentReceipt } from "../../types/payment-receipt.types";
+
+import type {
+  PaymentReceipt,
+  PaymentAdjustmentPayload,
+} from "../../types/payment-receipt.types";
 
 const REMARKS_MAX = 200;
-
-const schema = z.object({
-  businessId: z.string().min(1),
-  branchId: z.string().optional(),
-  customerId: z.string().min(1),
-  paymentId: z.string().min(1),
-  documentType: z.enum(["SALES_INVOICE"]),
-  documentId: z.string().min(1, "Please select an invoice"),
-  documentNumber: z.string().min(1, "Please select an invoice"),
-  amount: z.coerce.number().positive(),
-  adjustmentType: z.enum(["ADVANCE", "INSTALLMENT"]),
-  adjustmentDate: z.string().optional(),
-  remarks: z.string().optional(),
-  createdBy: z.string().min(1),
-});
 
 interface PaymentAdjustmentDialogProps {
   open: boolean;
@@ -64,13 +48,25 @@ export default function PaymentAdjustmentDialog({
 
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [invoiceFocused, setInvoiceFocused] = useState(false);
-  const [adjustmentType, setAdjustmentType] = useState<"ADVANCE" | "INSTALLMENT">("ADVANCE");
+
+  const [adjustmentType, setAdjustmentType] = useState<
+    "ADVANCE" | "INSTALLMENT"
+  >("ADVANCE");
+
   const [remarks, setRemarks] = useState("");
   const [documentId, setDocumentId] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
 
-  const { invoices, getInvoices, loading: invoicesLoading } = useInvoiceQuery();
-  const { createAdjustment, loading: adjustmentLoading } = usePaymentAdjustment();
+  const {
+    invoices,
+    getInvoices,
+    loading: invoicesLoading,
+  } = useInvoiceQuery();
+
+  const {
+    createAdjustment,
+    loading: adjustmentLoading,
+  } = usePaymentAdjustment();
 
   const resetForm = () => {
     setInvoiceQuery("");
@@ -91,7 +87,9 @@ export default function PaymentAdjustmentDialog({
   const matchingInvoices = useMemo(() => {
     const q = (invoiceQuery || "").trim().toLowerCase();
     const list = invoices ?? [];
+
     if (!q) return list;
+
     return list.filter(
       (inv: any) =>
         String(inv.id).toLowerCase().includes(q) ||
@@ -102,10 +100,14 @@ export default function PaymentAdjustmentDialog({
 
   const selectInvoice = (inv: any) => {
     const pending = Number(inv.pendingAmount ?? 0);
+
     if (pending < receiptAmount) {
-      notify.error("This invoice cannot fully settle the cash receipt amount");
+      notify.error(
+        "This invoice cannot fully settle the cash receipt amount",
+      );
       return;
     }
+
     setDocumentId(String(inv.id));
     setDocumentNumber(String(inv.invoiceNumber || inv.id));
     setInvoiceQuery(String(inv.invoiceNumber || inv.id));
@@ -120,31 +122,38 @@ export default function PaymentAdjustmentDialog({
 
   const handleSubmit = async () => {
     try {
-      const payload = {
+      if (!documentId) {
+        notify.error("Please select an invoice");
+        return;
+      }
+
+      const payload: PaymentAdjustmentPayload = {
         businessId: paymentReceipt.businessId || "",
         branchId: paymentReceipt.branchId || "",
         customerId: paymentReceipt.customerId || "",
         paymentId: paymentReceipt.paymentId || "",
-        documentType: "SALES_INVOICE" as const,
+
+        documentType: "SALES_INVOICE",
         documentId,
         documentNumber,
+
         amount: receiptAmount,
         adjustmentType,
+
         adjustmentDate: new Date().toISOString(),
         remarks: remarks || undefined,
-        createdBy: paymentReceipt.createdBy ,
+        createdBy: paymentReceipt.createdBy,
       };
 
-      const parsed = schema.parse(payload);
-      await createAdjustment(parsed);
+      await createAdjustment(payload);
+
       notify.success("Payment adjustment created successfully");
+
       onOpenChange(false);
     } catch (err: any) {
-      if (err instanceof z.ZodError) {
-        notify.error("Validation failed");
-      } else {
-        notify.error(err || "Failed to create adjustment");
-      }
+      notify.error(
+        err?.message || err || "Failed to create adjustment",
+      );
     }
   };
 
@@ -158,25 +167,32 @@ export default function PaymentAdjustmentDialog({
         </DialogHeader>
 
         <div className="space-y-4 px-4 py-4">
+          {/* Cash received */}
           <div className="rounded-lg bg-slate-50 px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wider text-slate-400">
               Cash received
             </p>
+
             <p className="mt-0.5 text-base font-semibold text-slate-900">
               ₹ {formatInr(receiptAmount)}
             </p>
           </div>
 
+          {/* Invoice */}
           <div className="space-y-1.5">
             <Label className="text-xs">
               Invoice <span className="text-red-500">*</span>
             </Label>
+
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+
               <Input
                 value={invoiceQuery}
                 onFocus={() => setInvoiceFocused(true)}
-                onBlur={() => setTimeout(() => setInvoiceFocused(false), 150)}
+                onBlur={() =>
+                  setTimeout(() => setInvoiceFocused(false), 150)
+                }
                 onChange={(e) => {
                   setInvoiceQuery(e.target.value);
                   setInvoiceFocused(true);
@@ -185,6 +201,7 @@ export default function PaymentAdjustmentDialog({
                 className="h-9 pl-8 pr-7 text-sm"
                 disabled={adjustmentLoading}
               />
+
               {invoiceQuery && !adjustmentLoading && (
                 <button
                   type="button"
@@ -194,6 +211,7 @@ export default function PaymentAdjustmentDialog({
                   <X className="size-3.5" />
                 </button>
               )}
+
               {invoiceFocused && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[200px] overflow-y-auto rounded-md border bg-white p-1 shadow-lg">
                   {invoicesLoading ? (
@@ -203,30 +221,42 @@ export default function PaymentAdjustmentDialog({
                     </div>
                   ) : matchingInvoices.length ? (
                     matchingInvoices.map((inv: any) => {
-                      const isSelected = String(documentId) === String(inv.id);
-                      const totalAmount = Number(inv.grandTotal ?? inv.totalAmount ?? 0);
-                      const pendingAmount = Number(inv.pendingAmount ?? 0);
-                      const eligible = pendingAmount >= receiptAmount;
+                      const isSelected =
+                        String(documentId) === String(inv.id);
+
+                      const totalAmount = Number(
+                        inv.grandTotal ?? inv.totalAmount ?? 0,
+                      );
+
+                      const pendingAmount = Number(
+                        inv.pendingAmount ?? 0,
+                      );
+
+                      const eligible =
+                        pendingAmount >= receiptAmount;
 
                       return (
                         <button
                           key={inv.id}
                           type="button"
-                          onClick={() => eligible && selectInvoice(inv)}
+                          onClick={() =>
+                            eligible && selectInvoice(inv)
+                          }
                           disabled={!eligible}
                           className={`flex w-full items-start justify-between gap-2 rounded px-2.5 py-2 text-left text-xs transition-colors ${
                             !eligible
                               ? "cursor-not-allowed opacity-60"
                               : isSelected
-                                ? "bg-violet-50 "
-                                : "hover:bg-slate-50 cursor-pointer"
+                                ? "bg-violet-50"
+                                : "cursor-pointer hover:bg-slate-50"
                           }`}
                         >
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-1.5">
-                              <span className="font-medium truncate">
+                              <span className="truncate font-medium">
                                 {inv.invoiceNumber || inv.id}
                               </span>
+
                               <span
                                 className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
                                   eligible
@@ -234,9 +264,12 @@ export default function PaymentAdjustmentDialog({
                                     : "bg-rose-50 text-rose-600"
                                 }`}
                               >
-                                {eligible ? "Eligible" : "Not eligible"}
+                                {eligible
+                                  ? "Eligible"
+                                  : "Not eligible"}
                               </span>
                             </span>
+
                             <span className="mt-0.5 block text-[10px] text-slate-500">
                               Total: ₹ {formatInr(totalAmount)}
                               {" · "}
@@ -256,8 +289,10 @@ export default function PaymentAdjustmentDialog({
             </div>
           </div>
 
+          {/* Adjustment Type */}
           <div className="space-y-1.5">
             <Label className="text-xs">Type</Label>
+
             <div className="flex gap-4">
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
@@ -265,42 +300,53 @@ export default function PaymentAdjustmentDialog({
                   name="adjustmentType"
                   value="ADVANCE"
                   checked={adjustmentType === "ADVANCE"}
-                  onChange={() => setAdjustmentType("ADVANCE")}
+                  onChange={() =>
+                    setAdjustmentType("ADVANCE")
+                  }
                   disabled={adjustmentLoading}
-                  className="size-3.5 "
+                  className="size-3.5"
                 />
+
                 Advance
               </label>
+
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="radio"
                   name="adjustmentType"
                   value="INSTALLMENT"
                   checked={adjustmentType === "INSTALLMENT"}
-                  onChange={() => setAdjustmentType("INSTALLMENT")}
+                  onChange={() =>
+                    setAdjustmentType("INSTALLMENT")
+                  }
                   disabled={adjustmentLoading}
-                  className="size-3.5 "
+                  className="size-3.5"
                 />
+
                 Installment
               </label>
             </div>
           </div>
 
+          {/* Remarks */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-xs">
-                Remarks{" "}
-              </Label>
+              <Label className="text-xs">Remarks</Label>
+
               <span className="text-[10px] text-slate-400">
                 {remarks.length}/{REMARKS_MAX}
               </span>
             </div>
+
             <Textarea
               placeholder="Optional remarks…"
               value={remarks}
               onChange={(e) => {
                 const v = e.target.value;
-                if (v.length <= REMARKS_MAX) setRemarks(v);
+
+                if (v.length <= REMARKS_MAX) {
+                  setRemarks(v);
+                }
               }}
               maxLength={REMARKS_MAX}
               rows={2}
@@ -310,6 +356,7 @@ export default function PaymentAdjustmentDialog({
           </div>
         </div>
 
+        {/* Footer */}
         <DialogFooter className="border-t px-4 py-2.5">
           <Button
             variant="outline"
@@ -319,6 +366,7 @@ export default function PaymentAdjustmentDialog({
           >
             Reset
           </Button>
+
           <Button
             onClick={handleSubmit}
             disabled={adjustmentLoading || !documentId}
