@@ -14,9 +14,9 @@ export const paymentReceiptService = {
     return paymentReceiptApi.getPaymentReceipts(params);
   },
 
-  getPaymentReceiptById: (id: string) => {
-    return paymentReceiptApi.getPaymentReceiptById(id);
-  },
+getPaymentReceiptById: (id: string, businessId?: string) => {
+  return paymentReceiptApi.getPaymentReceiptById(id, businessId);
+},
 
   createPaymentReceipt: (
     payload: CreatePaymentReceiptPayload,

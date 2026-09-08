@@ -10,15 +10,17 @@ type PaymentReceiptActionsProps = {
   id: string;
   receiptNumber?: string;
   status?: string | null;
+  businessId?: string;
 };
 
 export function PaymentReceiptActions({
   id,
+  businessId,
 }: PaymentReceiptActionsProps) {
   const router = useRouter();
 
   const handleView = () => {
-    router.push(`/sales/payment-receipt/${id}`);
+    router.push(`/sales/payment-receipt/${id}?businessId=${encodeURIComponent(businessId ?? "")}`);
   };
 
   return (

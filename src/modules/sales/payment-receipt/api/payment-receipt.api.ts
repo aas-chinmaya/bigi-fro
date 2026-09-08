@@ -23,16 +23,18 @@ export const paymentReceiptApi = {
 
   },
 
-  getPaymentReceiptById: async (
-    id: string,
-  ): Promise<PaymentReceipt> => {
-    const response = await api.get<PaymentReceipt>(
-      `/payment-receipts/${id}`,
-    );
-    return response.data;
-
-
-  },
+getPaymentReceiptById: async (
+  id: string,
+  businessId?: string,
+): Promise<PaymentReceipt> => {
+  const response = await api.get<PaymentReceipt>(
+    `/payment-receipts/${id}`,
+    {
+      params: businessId ? { businessId } : undefined,
+    },
+  );
+  return response?.data?.data;
+},
 
   createPaymentReceipt: async (
     payload: CreatePaymentReceiptPayload,
@@ -57,4 +59,11 @@ export const paymentReceiptApi = {
     return response.data;
   },
 };
+
+
+
+
+
+
+
 

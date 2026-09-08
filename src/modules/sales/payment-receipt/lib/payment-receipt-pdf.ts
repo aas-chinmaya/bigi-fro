@@ -1,4 +1,3 @@
-
 import jsPDF from "jspdf";
 import type { PaymentReceipt } from "../types/payment-receipt.types";
 
@@ -10,22 +9,17 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
   });
 
   const pageW = pdf.internal.pageSize.getWidth();
-  const m = 16;
-  const w = pageW - m * 2;
+  const m = 15;
+  const contentW = pageW - m * 2;
 
   const amount = Number(receipt.amount ?? 0);
-
-  // ==========================================================
-  // HELPERS
-  // ==========================================================
+  const customer = (receipt as any).customer;
+  const payment = receipt.payment;
 
   const formatDate = (v?: string | null) => {
-    if (!v) return "-";
-
+    if (!v) return "—";
     const d = new Date(v);
-
-    if (Number.isNaN(d.getTime())) return "-";
-
+    if (Number.isNaN(d.getTime())) return "—";
     return d.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
@@ -34,501 +28,233 @@ export function generatePaymentReceiptPdf(receipt: PaymentReceipt) {
   };
 
   const formatLabel = (v?: string | null) => {
-    if (!v) return "-";
-
+    if (!v) return "—";
     return v
       .replaceAll("_", " ")
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  // ==========================================================
-  // OUTER BORDER
-  // ==========================================================
-
-  pdf.setDrawColor(0);
-  pdf.setLineWidth(0.5);
-
-  pdf.rect(
-    m,
-    m,
-    w,
-    265
-  );
-
-  // ==========================================================
-  // HEADER
-  // ==========================================================
-
-  pdf.setFillColor(0);
-
-  pdf.rect(
-    m,
-    m,
-    w,
-    20,
-    "F"
-  );
-
-  pdf.setTextColor(255);
-
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.setFontSize(16);
-
-  pdf.text(
-    "MONEY RECEIPT",
-    pageW / 2,
-    m + 9,
-    {
-      align: "center",
-    }
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.setFontSize(8);
-
-  pdf.text(
-    "Customer Payment Receipt",
-    pageW / 2,
-    m + 15,
-    {
-      align: "center",
-    }
-  );
-
-  // ==========================================================
-  // META STRIP
-  // ==========================================================
-
-  let y = m + 28;
-
-  pdf.setFillColor(245);
-
-  pdf.rect(
-    m + 2,
-    y - 3,
-    w - 4,
-    14,
-    "F"
-  );
-
-  pdf.setDrawColor(200);
-  pdf.setLineWidth(0.2);
-
-  pdf.rect(
-    m + 2,
-    y - 3,
-    w - 4,
-    14
-  );
-
-  pdf.setTextColor(0);
-  pdf.setFontSize(9);
-
-  // Receipt Number
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.text(
-    "No:",
-    m + 6,
-    y + 3
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.text(
-    receipt.receiptNumber ?? "-",
-    m + 16,
-    y + 3
-  );
-
-  // Date
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.text(
-    "Date:",
-    pageW / 2 - 10,
-    y + 3
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.text(
-    formatDate(receipt.receiptDate),
-    pageW / 2 + 2,
-    y + 3
-  );
-
-  // Status
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.text(
-    "Status:",
-    pageW - m - 42,
-    y + 3
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.text(
-    formatLabel(receipt.receiptStatus),
-    pageW - m - 28,
-    y + 3
-  );
-
-  // ==========================================================
-  // DETAILS
-  // ==========================================================
-
-  y += 20;
-
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.setFontSize(10);
-
-  pdf.text(
-    "DETAILS",
-    m + 4,
-    y
-  );
-
-  pdf.setLineWidth(0.3);
-  pdf.setDrawColor(0);
-
-  pdf.line(
-    m + 4,
-    y + 1.5,
-    m + 28,
-    y + 1.5
-  );
-
-  y += 9;
-
-  const left = m + 6;
-  const mid = pageW / 2 + 2;
-  const labelW = 38;
-
-  // ==========================================================
-  // ROW HELPER
-  // ==========================================================
-
-  const row = (
-    label: string,
-    value: string,
-    x: number,
-    cy: number
-  ) => {
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(8.5);
-
-    pdf.setTextColor(60);
-
-    pdf.text(
-      label,
-      x,
-      cy
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setTextColor(0);
-
-    pdf.text(
-      value,
-      x + labelW,
-      cy
-    );
+  const numberToWords = (num: number): string => {
+    if (num === 0) return "Zero";
+    const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    const convert = (n: number): string => {
+      if (n < 20) return ones[n];
+      if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
+      if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + convert(n % 100) : "");
+      if (n < 100000) return convert(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + convert(n % 1000) : "");
+      if (n < 10000000) return convert(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + convert(n % 100000) : "");
+      return convert(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + convert(n % 10000000) : "");
+    };
+    return convert(Math.floor(num));
   };
 
-  // Customer
-  row(
-    "Customer",
-    receipt.customerName ?? "-",
-    left,
-    y
-  );
+  let y = m;
 
-  // Customer ID
-  if (receipt.customerId) {
-    y += 6;
+  // Outer border
+  pdf.setDrawColor(160);
+  pdf.setLineWidth(0.4);
+  pdf.rect(m, m, contentW, 260);
 
-    row(
-      "Customer ID",
-      receipt.customerId,
-      left,
-      y
-    );
-  }
+  // Header
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(m, m, contentW, 18, "F");
 
-  // Receipt Status
-  y += 6;
-
-  row(
-    "Receipt Status",
-    formatLabel(receipt.receiptStatus ?? "RECEIVED"),
-    left,
-    y
-  );
-
-  // Receipt Source
-  y += 6;
-
-  row(
-    "Receipt Source",
-    formatLabel(receipt.receiptSource ?? "POS"),
-    left,
-    y
-  );
-
-  // Financial Year
-  const ry =
-    y -
-    (receipt.customerId
-      ? 18
-      : 12);
-
-  row(
-    "Financial Year",
-    receipt.financialYear ?? "-",
-    mid,
-    ry
-  );
-
-  // ==========================================================
-  // AMOUNT SECTION
-  // ==========================================================
-
-  y += 12;
-
-  pdf.setDrawColor(0);
-  pdf.setLineWidth(0.6);
-
-  pdf.setFillColor(248);
-
-  pdf.roundedRect(
-    m + 4,
-    y,
-    w - 8,
-    18,
-    1.5,
-    1.5,
-    "FD"
-  );
-
-  // Amount Label
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
+  pdf.setFillColor(30, 30, 30);
+  pdf.rect(m + 4, m + 4, 10, 10, "F");
+  pdf.setTextColor(255);
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
+  pdf.text("A", m + 9, m + 10.5, { align: "center" });
 
   pdf.setTextColor(0);
-
-  pdf.text(
-    "Amount Received",
-    m + 10,
-    y + 7
-  );
-
-  // Amount
-  pdf.setFontSize(14);
-
-  const formattedAmount =
-    amount.toLocaleString(
-      "en-IN",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    );
-
-  const amountText =
-    `Rs. ${formattedAmount}`;
-
-  pdf.text(
-    amountText,
-    pageW - m - 10,
-    y + 12,
-    {
-      align: "right",
-    }
-  );
-
-  // ==========================================================
-  // REMARKS
-  // ==========================================================
-
-  y += 26;
-
-  pdf.setFont(
-    "helvetica",
-    "bold"
-  );
-
-  pdf.setFontSize(10);
-
-  pdf.text(
-    "REMARKS",
-    m + 4,
-    y
-  );
-
-  pdf.setLineWidth(0.3);
-
-  pdf.line(
-    m + 4,
-    y + 1.5,
-    m + 26,
-    y + 1.5
-  );
-
-  y += 7;
-
-  const remarks =
-    receipt.remarks ?? "-";
-
-  const lines =
-    pdf.splitTextToSize(
-      remarks,
-      w - 14
-    );
-
-  const rh = Math.max(
-    16,
-    lines.length * 4.5 + 6
-  );
-
-  pdf.setDrawColor(200);
-  pdf.setLineWidth(0.2);
-
-  pdf.setFillColor(252);
-
-  pdf.rect(
-    m + 4,
-    y,
-    w - 8,
-    rh,
-    "FD"
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.setFontSize(8.5);
-
-  pdf.setTextColor(50);
-
-  pdf.text(
-    lines,
-    m + 8,
-    y + 5
-  );
-
-  // ==========================================================
-  // FOOTER
-  // ==========================================================
-
-  const fy = 272;
-
-  pdf.setDrawColor(200);
-  pdf.setLineWidth(0.2);
-
-  pdf.line(
-    m + 4,
-    fy - 4,
-    pageW - m - 4,
-    fy - 4
-  );
-
-  pdf.setFont(
-    "helvetica",
-    "normal"
-  );
-
-  pdf.setFontSize(7.5);
-
-  pdf.setTextColor(120);
-
-  pdf.text(
-    "This is a system generated money receipt.",
-    pageW / 2,
-    fy,
-    {
-      align: "center",
-    }
-  );
-
-  // ==========================================================
-  // AUTHORIZED SIGNATORY
-  // ==========================================================
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.text("AAS International", m + 17, m + 8);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(90);
+  pdf.text("Bhubaneswar, Odisha", m + 17, m + 12.5);
 
   pdf.setFontSize(8);
+  pdf.text("GSTIN: 21ABCDE1234F1Z5", pageW - m - 4, m + 10, { align: "right" });
 
-  pdf.setTextColor(60);
+  y = m + 18;
+  pdf.setDrawColor(180);
+  pdf.setLineWidth(0.3);
+  pdf.line(m, y, pageW - m, y);
 
-  pdf.text(
-    "Authorized Signatory",
-    pageW - m - 22,
-    fy - 14,
-    {
-      align: "center",
-    }
-  );
+  // Title
+  y += 9;
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(13);
+  pdf.setTextColor(0);
+  pdf.text("PAYMENT RECEIPT", pageW / 2, y, { align: "center" });
 
-  pdf.setDrawColor(140);
+  y += 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(90);
+  pdf.text(`Date: ${formatDate(receipt.receiptDate)}`, pageW / 2, y, { align: "center" });
 
-  pdf.line(
-    pageW - m - 45,
-    fy - 17,
-    pageW - m - 5,
-    fy - 17
-  );
+  y += 5;
+  pdf.setDrawColor(180);
+  pdf.line(m, y, pageW - m, y);
 
-  // ==========================================================
-  // SAVE PDF
-  // ==========================================================
+  // Meta
+  const colW = contentW / 3;
+  const metaY = y;
 
-  pdf.save(
-    `${receipt.receiptNumber ?? "money-receipt"}.pdf`
-  );
+  pdf.line(m + colW, metaY, m + colW, metaY + 14);
+  pdf.line(m + colW * 2, metaY, m + colW * 2, metaY + 14);
+  pdf.line(m, metaY + 14, pageW - m, metaY + 14);
+
+  const metaItems = [
+    { label: "Receipt No.", value: receipt.receiptNumber || "—" },
+    { label: "Financial Year", value: receipt.financialYear || "—" },
+    { label: "Status", value: formatLabel(receipt.receiptStatus) },
+  ];
+
+  metaItems.forEach((item, i) => {
+    const x = m + 4 + i * colW;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(100);
+    pdf.text(item.label, x, metaY + 5);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(0);
+    pdf.text(item.value, x, metaY + 10.5);
+  });
+
+  y = metaY + 14;
+
+  // Section helper
+  const drawSection = (title: string, rows: { label: string; value?: string | null }[]) => {
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(m, y, contentW, 7, "F");
+    pdf.setDrawColor(180);
+    pdf.line(m, y, pageW - m, y);
+    pdf.line(m, y + 7, pageW - m, y + 7);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8);
+    pdf.setTextColor(70);
+    pdf.text(title.toUpperCase(), m + 4, y + 4.8);
+
+    y += 7;
+
+    const validRows = rows.filter((r) => r.value);
+    const rowH = 5.8;
+    const sectionH = validRows.length * rowH + 4;
+
+    validRows.forEach((row, idx) => {
+      const ry = y + 4 + idx * rowH;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(100);
+      pdf.text(row.label, m + 4, ry);
+      pdf.setTextColor(0);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(row.value || "—", m + 42, ry);
+    });
+
+    y += sectionH;
+    pdf.setDrawColor(180);
+    pdf.line(m, y, pageW - m, y);
+  };
+
+  drawSection("Received From", [
+    { label: "Customer Name", value: receipt.customerName || customer?.name },
+    { label: "Company", value: customer?.companyName },
+    { label: "Phone", value: receipt.customerPhone || customer?.mobile },
+    { label: "Email", value: customer?.email },
+    { label: "GSTIN", value: receipt.customerGSTIN || customer?.gstin },
+    { label: "PAN", value: customer?.pan },
+  ]);
+
+  drawSection("Payment Details", [
+    { label: "Source", value: formatLabel(receipt.receiptSource) },
+    { label: "Payment Method", value: formatLabel(payment?.paymentMethod || "CASH") },
+    { label: "Payment No.", value: payment?.paymentNumber },
+    { label: "Payment Status", value: formatLabel(payment?.paymentStatus) },
+    { label: "Document No.", value: payment?.documentNumber },
+  ]);
+
+  // Amount
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(m, y, contentW, 16, "F");
+  pdf.setDrawColor(180);
+  pdf.line(m, y + 16, pageW - m, y + 16);
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8);
+  pdf.setTextColor(70);
+  pdf.text("AMOUNT RECEIVED (Rs.)", m + 4, y + 5.5);
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(90);
+  pdf.text(`${numberToWords(amount)} Only`, m + 4, y + 11);
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(13);
+  pdf.setTextColor(0);
+  const amt = amount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  pdf.text(amt, pageW - m - 4, y + 10, { align: "right" });
+
+  y += 16;
+
+  // Note
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8);
+  pdf.setTextColor(70);
+  pdf.text("NOTE", m + 4, y + 5);
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(90);
+  pdf.text("• This is a system generated receipt. It does not require official signature.", m + 4, y + 10);
+  pdf.text("• Thank You", m + 4, y + 14.5);
+
+  y += 20;
+  pdf.setDrawColor(180);
+  pdf.line(m, y, pageW - m, y);
+
+  // Signature
+  y += 8;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(100);
+  pdf.text("Received By", m + 4, y);
+  pdf.text("Authorised Signatory", pageW - m - 4, y, { align: "right" });
+
+  y += 12;
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(0);
+  pdf.text(receipt.createdBy || "—", m + 4, y);
+
+  pdf.setDrawColor(150);
+  pdf.setLineWidth(0.3);
+  pdf.line(pageW - m - 45, y, pageW - m - 4, y);
+
+  // Footer
+  const footerY = 275;
+  pdf.setDrawColor(180);
+  pdf.setLineWidth(0.3);
+  pdf.line(m + 4, footerY - 4, pageW - m - 4, footerY - 4);
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(110);
+  pdf.text("This is a computer-generated money receipt.", pageW / 2, footerY, {
+    align: "center",
+  });
+
+  pdf.save(`${receipt.receiptNumber ?? "payment-receipt"}.pdf`);
 }
-

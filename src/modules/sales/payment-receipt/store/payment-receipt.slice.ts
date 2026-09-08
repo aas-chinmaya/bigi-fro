@@ -77,13 +77,13 @@ export const fetchPaymentReceipts = createAsyncThunk<
 
 export const fetchPaymentReceiptById = createAsyncThunk<
   PaymentReceipt,
-  string,
+  { id: string; businessId?: string },   // ← change argument type
   { rejectValue: string }
 >(
   "paymentReceipt/fetchPaymentReceiptById",
-  async (id, { rejectWithValue }) => {
+  async ({ id, businessId }, { rejectWithValue }) => {
     try {
-      return await paymentReceiptService.getPaymentReceiptById(id);
+      return await paymentReceiptService.getPaymentReceiptById(id, businessId);
     } catch (error: any) {
       return rejectWithValue(
         error?.response?.data?.message ||

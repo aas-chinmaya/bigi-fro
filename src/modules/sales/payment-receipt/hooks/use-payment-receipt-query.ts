@@ -16,7 +16,7 @@ import type {
 
 export const usePaymentReceiptQuery = (
   params?: PaymentReceiptQueryParams,
-  id?: string,
+  id?: string,businessId?: string,
 ) => {
   const dispatch = useAppDispatch();
 
@@ -30,12 +30,12 @@ export const usePaymentReceiptQuery = (
 
   useEffect(() => {
     if (id) {
-      dispatch(fetchPaymentReceiptById(id));
+      dispatch(fetchPaymentReceiptById({id,businessId}));
       return;
     }
 
     dispatch(fetchPaymentReceipts(params));
-  }, [dispatch, id, params]);
+  }, [dispatch, id, params,businessId]);
 
   return {
     paymentReceipts,

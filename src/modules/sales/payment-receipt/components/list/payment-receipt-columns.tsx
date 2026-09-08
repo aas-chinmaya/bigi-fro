@@ -264,24 +264,25 @@ export const PaymentReceiptColumns: ColumnDef<PaymentReceipt>[] = [
   /* Actions                                                                */
   /* ---------------------------------------------------------------------- */
 
-  {
-    id: "actions",
-    header: "",
-    enableSorting: false,
-    enableHiding: false,
 
+{
+  id: "actions",
+  header: "",
+  enableSorting: false,
+  enableHiding: false,
   cell: ({ row }) => {
-  const receipt = row.original;
+    const receipt = row.original;
 
-  return (
-    <div className="flex justify-end">
-      <PaymentReceiptActions
-        id={receipt.id}
-        receiptNumber={receipt.receiptNumber ?? undefined}
-        status={receipt.receiptStatus}
-      />
-    </div>
-  );
-},
+    return (
+      <div className="flex justify-end">
+        <PaymentReceiptActions
+          id={receipt.id}
+          receiptNumber={receipt.receiptNumber ?? undefined}
+          businessId={receipt.businessId}
+          status={receipt.receiptStatus}
+        />
+      </div>
+    );
   },
+},
 ];
