@@ -1,6 +1,79 @@
+// "use client";
+
+// import { useEffect } from "react";
+// import { useDispatch, useSelector } from "react-redux";
+
+// import type {
+//   AppDispatch,
+//   RootState,
+// } from "@/store/store";
+
+// import {
+//   fetchInvoices,
+//   fetchDrafts,
+//   fetchInvoiceById,
+//   fetchDraftById,
+// } from "../store/invoice.slice";
+
+// export function useInvoiceQuery(params?: Record<string, any>) {
+//   const dispatch = useDispatch<AppDispatch>();
+
+//   const {
+//     invoices,
+//     invoicesMeta,
+//     drafts,
+//     draftsMeta,
+//     selectedInvoice,
+//     selectedDraft,
+//     loading,
+//     error,
+//   } = useSelector(
+//     (state: RootState) => state.invoice,
+//   );
+
+//   const getInvoices = (p?: Record<string, any>) => {
+//     return dispatch(fetchInvoices(p ?? params));
+//   };
+
+//   const getDrafts = (p?: Record<string, any>) => {
+//     return dispatch(fetchDrafts(p ?? params));
+//   };
+
+//   const getInvoiceById = (id: string) => {
+//     return dispatch(fetchInvoiceById(id));
+//   };
+
+//   const getDraftById = (id: string) => {
+//     return dispatch(fetchDraftById(id));
+//   };
+
+//   return {
+//     // Data
+//     invoices,
+//     invoicesMeta,
+//     draftsMeta,
+//     drafts,
+//     selectedInvoice,
+//     selectedDraft,
+
+//     // State
+//     loading,
+//     error,
+
+//     // Queries
+//     getInvoices,
+//     getDrafts,
+//     getInvoiceById,
+//     getDraftById,
+//   };
+// }
+
+
+
+
 "use client";
 
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type {
@@ -15,7 +88,9 @@ import {
   fetchDraftById,
 } from "../store/invoice.slice";
 
-export function useInvoiceQuery(params?: Record<string, any>) {
+export function useInvoiceQuery(
+  params?: Record<string, any>,
+) {
   const dispatch = useDispatch<AppDispatch>();
 
   const {
@@ -31,21 +106,33 @@ export function useInvoiceQuery(params?: Record<string, any>) {
     (state: RootState) => state.invoice,
   );
 
-  const getInvoices = (p?: Record<string, any>) => {
-    return dispatch(fetchInvoices(p ?? params));
-  };
+  const getInvoices = useCallback(
+    (p?: Record<string, any>) => {
+      return dispatch(fetchInvoices(p ?? params));
+    },
+    [dispatch, params],
+  );
 
-  const getDrafts = (p?: Record<string, any>) => {
-    return dispatch(fetchDrafts(p ?? params));
-  };
+  const getDrafts = useCallback(
+    (p?: Record<string, any>) => {
+      return dispatch(fetchDrafts(p ?? params));
+    },
+    [dispatch, params],
+  );
 
-  const getInvoiceById = (id: string) => {
-    return dispatch(fetchInvoiceById(id));
-  };
+  const getInvoiceById = useCallback(
+    (id: string) => {
+      return dispatch(fetchInvoiceById(id));
+    },
+    [dispatch],
+  );
 
-  const getDraftById = (id: string) => {
-    return dispatch(fetchDraftById(id));
-  };
+  const getDraftById = useCallback(
+    (id: string) => {
+      return dispatch(fetchDraftById(id));
+    },
+    [dispatch],
+  );
 
   return {
     // Data

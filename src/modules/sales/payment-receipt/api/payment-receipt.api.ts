@@ -69,7 +69,7 @@ getPaymentReceiptById: async (
     payload: PaymentAdjustmentPayload,
   ): Promise<PaymentAdjustment> => {
     const response = await api.post<PaymentAdjustment>(
-      "/payments/adjust",
+      "/payment-adjustments/adjust",
       payload,
     );
 
@@ -81,7 +81,7 @@ getPaymentReceiptById: async (
     businessId?: string,
   ): Promise<PaymentAdjustment> => {
     const response = await api.get<PaymentAdjustment>(
-      `/payments/${id}`,
+      `/payment-adjustments/${id}`,
       {
         params: businessId ? { businessId } : undefined,
       },
