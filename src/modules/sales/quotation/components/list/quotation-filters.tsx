@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -87,11 +86,7 @@ export default function QuotationFilters({
       <Select
         value={period || "all"}
         onValueChange={(next) =>
-          onPeriodChange?.(
-            next === "all"
-              ? "all"
-              : next,
-          )
+          onPeriodChange?.(next)
         }
       >
         <SelectTrigger className="w-44">

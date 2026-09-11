@@ -1,0 +1,72 @@
+view/
+│
+├── quotation-view.tsx
+│   // Main quotation view page.
+│   // Controls preview + sidebar + active sidebar section.
+│
+├── quotation-preview.tsx
+│   // Wrapper for the quotation document preview.
+│   // Keeps the A4/PDF-like document area separate from the sidebar.
+│
+├── header/
+│   └── quotation-view-header.tsx
+│       // Top header actions: Edit, Send, Share, PDF, Print,
+│       // Duplicate, Create Invoice, More, etc.
+│
+├── preview/
+│   ├── quotation-document.tsx
+│   │   // Actual A4 quotation document.
+│   │   // Main component reused for screen preview, print and PDF.
+│   │
+│   ├── quotation-items-table.tsx
+│   │   // Displays quotation line items.
+│   │   // Product, quantity, rate, discount, tax, amount.
+│   │
+│   ├── quotation-summary.tsx
+│   │   // Displays subtotal, discount, tax and grand total.
+│   │
+│   ├── quotation-terms.tsx
+│   │   // Displays payment terms, delivery terms,
+│   │   // warranty and other quotation conditions.
+│   │
+│   └── quotation-signature.tsx
+│       // Displays authorized/customer signature section.
+│
+└── sidebar/
+    ├── quotation-sidebar.tsx
+    │   // Right sidebar container.
+    │   // Displays the currently selected sidebar panel.
+    │
+    ├── quotation-sidebar-nav.tsx
+    │   // Sidebar navigation menu.
+    │   // Settings, Design, Payment, Acceptance, Audit, Linked Documents.
+    │
+    ├── settings/
+    │   └── quotation-settings-panel.tsx
+    │       // Quotation configuration/settings.
+    │       // Status, validity, currency, tax and other settings.
+    │
+    ├── design/
+    │   └── quotation-design-panel.tsx
+    │       // Controls quotation appearance.
+    │       // Template, logo, colors, typography, fields, footer, etc.
+    │
+    ├── payment/
+    │   └── quotation-payment-panel.tsx
+    │       // Payment and bank information.
+    │       // Bank account, UPI, payment terms and instructions.
+    │
+    ├── acceptance/
+    │   └── quotation-acceptance-history.tsx
+    │       // Customer acceptance/rejection history.
+    │       // Status, date, method, comments, etc.
+    │
+    ├── audit/
+    │   └── quotation-audit-history.tsx
+    │       // System/user activity history.
+    │       // Created, updated, sent, status changed, etc.
+    │
+    └── linked-documents/
+        └── quotation-linked-documents.tsx
+            // Documents connected to this quotation.
+            // Sales order, invoice, payment receipt, etc.

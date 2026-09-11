@@ -1,0 +1,58 @@
+components/
+└── form/
+    │
+    ├── quotation-form.tsx
+    │   // MAIN FORM CONTROLLER
+    │   // Owns React Hook Form state.
+    │   // Handles CREATE + EDIT.
+    │   // Handles validation, submit, loading, errors,
+    │   // default values, reset, add/remove items, etc.
+    │   // Calls create/update API depending on mode.
+    │   // Passes form methods/state to all sections.
+    │
+    ├── quotation-details-section.tsx
+    │   // ROW 1 — Quotation details.
+    │   // Quotation number, quotation date, valid until,
+    │   // logo/company information and other quotation metadata.
+    │
+    ├── quotation-parties-section.tsx
+    │   // ROW 2 — From / To.
+    │   // LEFT: From/company details.
+    │   // RIGHT: Customer details.
+    │   // Uses CustomerSelect from sales/shared.
+    │
+    ├── quotation-items-section.tsx
+    │   // Item details section.
+    │   // Manages the quotation item LIST UI.
+    │   // Add item, remove item, reorder item if required.
+    │   // Renders quotation-item-row for each item.
+    │
+    ├── quotation-item-row.tsx
+    │   // ONE item inside the items list.
+    │   // Item/service selector, quantity, rate,
+    │   // discount, tax and line amount.
+    │
+    ├── quotation-payment-section.tsx
+    │   // ROW 2 / SIDE COLUMN — Payment & Bank details.
+    │   // Payment terms, bank account, UPI,
+    │   // payment instructions, etc.
+    │
+    ├── quotation-summary-section.tsx
+    │   // ROW 2 / SIDE COLUMN — Summary.
+    │   // Subtotal, discount, tax, other charges,
+    │   // round-off and grand total.
+    │
+    ├── quotation-signature-section.tsx
+    │   // Authorized signature section.
+    │   // Authorized person, designation,
+    │   // signature/upload/digital signature if supported.
+    │
+    ├── quotation-terms-section.tsx
+    │   // Terms & Conditions.
+    │   // Payment terms, delivery terms,
+    │   // warranty and other conditions.
+    │
+    └── quotation-form-actions.tsx
+        // FORM ACTIONS.
+        // Create/Update, Save Draft, Cancel, etc.
+        // Button text changes based on CREATE/EDIT mode.

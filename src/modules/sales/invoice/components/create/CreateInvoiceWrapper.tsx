@@ -19,16 +19,6 @@ import type {
   CreateInvoicePayload,
 } from "../../types/invoice-api.types";
 
-// ==========================================================
-// CREATE INVOICE WRAPPER
-//
-// Validation now lives entirely in schemas/invoice.schema.ts
-// (Zod) via useCreateInvoiceForm's resolver. form.handleSubmit
-// only calls the handlers below when the form is valid —
-// react-hook-form sets field errors for us automatically, so
-// there's no manual validateInvoice()/getRequiredFieldErrors()
-// step left in this component.
-// ==========================================================
 
 export default function CreateInvoiceWrapper() {
   const router = useRouter();

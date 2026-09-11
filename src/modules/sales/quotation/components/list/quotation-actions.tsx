@@ -1,32 +1,36 @@
-
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, Pencil } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+} from "lucide-react";
 
 import { Button } from "@/components/ui";
 
-type MoneyReceiptActionsProps = {
+type QuotationActionsProps = {
   id: string;
-  receiptNo?: string;
+  quotationNumber?: string;
   status?: string | null;
 };
 
-export default function MoneyReceiptActions({
+export default function QuotationActions({
   id,
-}: MoneyReceiptActionsProps) {
+}: QuotationActionsProps) {
   const router = useRouter();
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {/* View */}
+      {/* ==================================================
+          VIEW
+      ================================================== */}
 
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        aria-label="View money receipt"
-        title="View money receipt"
+        aria-label="View quotation"
+        title="View quotation"
         onClick={() =>
           router.push(
             `/sales/quotation/${id}`,
@@ -37,14 +41,16 @@ export default function MoneyReceiptActions({
         <Eye className="size-4" />
       </Button>
 
-      {/* Edit */}
+      {/* ==================================================
+          EDIT
+      ================================================== */}
 
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        aria-label="Edit money receipt"
-        title="Edit money receipt"
+        aria-label="Edit quotation"
+        title="Edit quotation"
         onClick={() =>
           router.push(
             `/sales/quotation/${id}/edit`,
