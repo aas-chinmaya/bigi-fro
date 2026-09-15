@@ -1,15 +1,10 @@
-import QuotationDetailsWrapper from "@/modules/sales/quotation/components/view/quotation-details-wrapper";
+import { QuotationView } from "@/modules/sales/quotation/components/view/quotation-view";
 
-interface QuotationDetailsPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default async function QuotationDetailsPage({
-  params,
-}: QuotationDetailsPageProps) {
+export default async function QuotationDetailPage({ params }: PageProps) {
   const { id } = await params;
-
-  return <QuotationDetailsWrapper id={id} />;
+  return <QuotationView id={id} />;
 }

@@ -67,7 +67,7 @@ export default function Accordion({ sections, defaultOpenId }: AccordionProps) {
         return (
           <div
             key={section.id}
-            className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
+            className={`overflow-hidden rounded-xl border transition-all duration-200 ${
               isOpen
                 ? `border-transparent shadow-sm ring-1 ${tone.ring}`
                 : "border-gray-100 hover:border-gray-200"

@@ -36,10 +36,8 @@ view/
     ├── quotation-sidebar.tsx
     │   // Right sidebar container.
     │   // Displays the currently selected sidebar panel.
-    │
-    ├── quotation-sidebar-nav.tsx
-    │   // Sidebar navigation menu.
     │   // Settings, Design, Payment, Acceptance, Audit, Linked Documents.
+    │
     │
     ├── settings/
     │   └── quotation-settings-panel.tsx
