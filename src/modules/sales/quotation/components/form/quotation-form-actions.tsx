@@ -1,33 +1,22 @@
-// ============================================================
-// components/sales/quotation/form/quotation-form-actions.tsx
-// ============================================================
-
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import type { QuotationFormMode } from "../../types/quotation-form.types";
 
-interface Props {
-  mode: "create" | "edit";
+interface QuotationFormActionsProps {
+  mode: QuotationFormMode;
   isSubmitting: boolean;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
-export function QuotationFormActions({ mode, isSubmitting, onCancel }: Props) {
+export function QuotationFormActions({
+  mode,
+  isSubmitting,
+  onCancel,
+}: QuotationFormActionsProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-xl font-semibold">
-          {mode === "create" ? "Create Quotation" : "Edit Quotation"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {mode === "create"
-            ? "Fill in the details to create a new quotation"
-            : "Update the quotation details"}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-end gap-3 pt-4 border-t">
+      {onCancel && (
         <Button
           type="button"
           variant="outline"
@@ -36,12 +25,17 @@ export function QuotationFormActions({ mode, isSubmitting, onCancel }: Props) {
         >
           Cancel
         </Button>
+      )}
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {mode === "create" ? "Create Quotation" : "Update Quotation"}
-        </Button>
-      </div>
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting
+          ? mode === "create"
+            ? "Creating..."
+            : "Updating..."
+          : mode === "create"
+            ? "Create Quotation"
+            : "Update Quotation"}
+      </Button>
     </div>
   );
 }

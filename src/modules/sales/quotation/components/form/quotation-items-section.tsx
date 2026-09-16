@@ -1,63 +1,80 @@
-// ============================================================
-// components/sales/quotation/form/quotation-items-section.tsx
-// ============================================================
+
 
 "use client";
 
-import { UseFieldArrayReturn } from "react-hook-form";
-import { Plus } from "lucide-react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import type { QuotationFormValues } from "../../types/quotation-form.types";
 import { QuotationItemRow } from "./quotation-item-row";
-import type { QuotationFormValues } from "./quotation.schema";
 
-interface Props {
-  fields: UseFieldArrayReturn<QuotationFormValues, "items">["fields"];
-  append: UseFieldArrayReturn<QuotationFormValues, "items">["append"];
-  remove: UseFieldArrayReturn<QuotationFormValues, "items">["remove"];
-}
+export function QuotationItemsSection() {
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<QuotationFormValues>();
 
-export function QuotationItemsSection({ fields, append, remove }: Props) {
-  const handleAddItem = () => {
-    append({
-      name: "",
-      description: "",
-      quantity: 1,
-      unit: "pcs",
-      rate: 0,
-      discountType: "percentage",
-      discountValue: 0,
-      taxRate: 0,
-      taxAmount: 0,
-      amount: 0,
-    });
-  };
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "items",
+  });
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Items</CardTitle>
-        <Button type="button" size="sm" variant="outline" onClick={handleAddItem}>
-          <Plus className="mr-2 h-4 w-4" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div>
+          <CardTitle className="text-base font-semibold tracking-tight">
+            Items
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Search & add products or services
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            append({
+              itemId: null,
+              itemName: "",
+              description: null,
+              quantity: 1,
+              unit: "NOS",
+              rate: 0,
+              discount: 0,
+              discountType: "PERCENTAGE",
+              taxRate: 18,
+              taxAmount: 0,
+              amount: 0,
+            })
+          }
+        >
+          <Plus className="h-4 w-4 mr-1.5" />
           Add Item
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Header */}
-        <div className="hidden grid-cols-12 gap-2 text-xs font-medium text-muted-foreground md:grid">
-          <div className="col-span-4">Item / Description</div>
-          <div className="col-span-1 text-right">Qty</div>
+
+      <CardContent className="space-y-3">
+        {errors.items && typeof errors.items.message === "string" && (
+          <p className="text-xs text-destructive">{errors.items.message}</p>
+        )}
+
+        {/* Desktop column headers */}
+        <div className="hidden md:grid grid-cols-12 gap-3 px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="col-span-4">Item</div>
+          <div className="col-span-2">Qty</div>
+          <div className="col-span-2">Rate</div>
+          <div className="col-span-2">Tax %</div>
           <div className="col-span-1">Unit</div>
-          <div className="col-span-1 text-right">Rate</div>
-          <div className="col-span-2 text-right">Discount</div>
-          <div className="col-span-1 text-right">Tax %</div>
-          <div className="col-span-1 text-right">Amount</div>
-          <div className="col-span-1"></div>
+          <div className="col-span-1" />
         </div>
 
         {fields.map((field, index) => (

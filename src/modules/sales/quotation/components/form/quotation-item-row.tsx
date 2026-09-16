@@ -1,155 +1,238 @@
-// ============================================================
-// components/sales/quotation/form/quotation-item-row.tsx
-// ============================================================
+
+
 
 "use client";
 
-import { useFormContext, useWatch } from "react-hook-form";
-import { Trash2 } from "lucide-react";
+import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { QuotationFormValues } from "./quotation.schema";
+import { Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import type { QuotationFormValues } from "../../types/quotation-form.types";
 
-interface Props {
+// ── Dummy items (replace later with API) ───────────────────────────────────
+const DUMMY_ITEMS = [
+  {
+    id: "item-1",
+    name: "Website Development",
+    description: "Custom responsive website",
+    rate: 45000,
+    unit: "NOS",
+    taxRate: 18,
+  },
+  {
+    id: "item-2",
+    name: "UI/UX Design",
+    description: "Figma design system + screens",
+    rate: 28000,
+    unit: "NOS",
+    taxRate: 18,
+  },
+  {
+    id: "item-3",
+    name: "SEO Package (Monthly)",
+    description: "On-page + off-page SEO",
+    rate: 12000,
+    unit: "MOS",
+    taxRate: 18,
+  },
+  {
+    id: "item-4",
+    name: "Cloud Hosting (Annual)",
+    description: "Managed VPS hosting",
+    rate: 18000,
+    unit: "YRS",
+    taxRate: 18,
+  },
+  {
+    id: "item-5",
+    name: "Maintenance Retainer",
+    description: "Monthly support & updates",
+    rate: 8000,
+    unit: "MOS",
+    taxRate: 18,
+  },
+];
+
+interface QuotationItemRowProps {
   index: number;
   onRemove: () => void;
   canRemove: boolean;
 }
 
-export function QuotationItemRow({ index, onRemove, canRemove }: Props) {
-  const { register, setValue, control } = useFormContext<QuotationFormValues>();
+export function QuotationItemRow({
+  index,
+  onRemove,
+  canRemove,
+}: QuotationItemRowProps) {
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<QuotationFormValues>();
 
-  const quantity = useWatch({ control, name: `items.${index}.quantity` }) || 0;
-  const rate = useWatch({ control, name: `items.${index}.rate` }) || 0;
-  const discountType =
-    useWatch({ control, name: `items.${index}.discountType` }) || "percentage";
-  const discountValue =
-    useWatch({ control, name: `items.${index}.discountValue` }) || 0;
-  const taxRate = useWatch({ control, name: `items.${index}.taxRate` }) || 0;
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate line amount
-  const lineGross = Number(quantity) * Number(rate);
-  let lineDiscount = 0;
-  if (discountType === "percentage") {
-    lineDiscount = (lineGross * Number(discountValue)) / 100;
-  } else {
-    lineDiscount = Number(discountValue);
-  }
-  const taxable = lineGross - lineDiscount;
-  const lineTax = (taxable * Number(taxRate)) / 100;
-  const lineAmount = taxable + lineTax;
+  const itemErrors = errors.items?.[index];
+  const currentItemName = watch(`items.${index}.itemName`) || "";
 
-  // Keep amount in sync
-  setValue(`items.${index}.amount`, Number(lineAmount.toFixed(2)), {
-    shouldDirty: false,
-  });
-  setValue(`items.${index}.taxAmount`, Number(lineTax.toFixed(2)), {
-    shouldDirty: false,
-  });
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredItems = DUMMY_ITEMS.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleSelect = (item: (typeof DUMMY_ITEMS)[0]) => {
+    setValue(`items.${index}.itemId`, item.id, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(`items.${index}.itemName`, item.name, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(`items.${index}.description`, item.description, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(`items.${index}.rate`, item.rate, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(`items.${index}.unit`, item.unit, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(`items.${index}.taxRate`, item.taxRate, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    setSearch(item.name);
+    setIsOpen(false);
+  };
 
   return (
-    <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 md:grid-cols-12 md:items-start md:gap-2 md:border-0 md:p-0">
-      {/* Name + Description */}
-      <div className="space-y-1 md:col-span-4">
+    <div className="grid grid-cols-12 gap-3 items-start rounded-lg border p-3">
+      {/* ── Item Search / Select ── */}
+      <div className="col-span-12 md:col-span-4 space-y-1 relative" ref={containerRef}>
         <Input
-          placeholder="Item name *"
-          {...register(`items.${index}.name`)}
+          placeholder="Search or type item name..."
+          value={search || currentItemName}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setValue(`items.${index}.itemName`, e.target.value, {
+              shouldDirty: true,
+            });
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className="h-10"
         />
-        <Input
-          placeholder="Description (optional)"
-          className="text-xs"
-          {...register(`items.${index}.description`)}
-        />
+
+        {/* Hidden fields for form */}
+        <input type="hidden" {...register(`items.${index}.itemId`)} />
+        <input type="hidden" {...register(`items.${index}.itemName`)} />
+
+        {itemErrors?.itemName && (
+          <p className="text-xs text-destructive">
+            {itemErrors.itemName.message}
+          </p>
+        )}
+
+        {/* Simple dropdown */}
+        {isOpen && filteredItems.length > 0 && (
+          <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-56 overflow-auto">
+            {filteredItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors flex flex-col"
+                onClick={() => handleSelect(item)}
+              >
+                <span className="font-medium">{item.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  ₹{item.rate.toLocaleString()} · {item.unit}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quantity */}
-      <div className="md:col-span-1">
+      <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
           step="any"
-          className="text-right"
-          {...register(`items.${index}.quantity`)}
+          min={0}
+          placeholder="Qty"
+          className="h-10"
+          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
         />
-      </div>
-
-      {/* Unit */}
-      <div className="md:col-span-1">
-        <Input placeholder="pcs" {...register(`items.${index}.unit`)} />
       </div>
 
       {/* Rate */}
-      <div className="md:col-span-1">
+      <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
           step="any"
-          className="text-right"
-          {...register(`items.${index}.rate`)}
-        />
-      </div>
-
-      {/* Discount */}
-      <div className="flex gap-1 md:col-span-2">
-        <Select
-          value={discountType}
-          onValueChange={(val) =>
-            setValue(`items.${index}.discountType`, val as "percentage" | "fixed")
-          }
-        >
-          <SelectTrigger className="w-[70px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="percentage">%</SelectItem>
-            <SelectItem value="fixed">₹</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="number"
-          step="any"
-          className="text-right"
-          {...register(`items.${index}.discountValue`)}
+          min={0}
+          placeholder="Rate"
+          className="h-10"
+          {...register(`items.${index}.rate`, { valueAsNumber: true })}
         />
       </div>
 
       {/* Tax % */}
-      <div className="md:col-span-1">
+      <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
           step="any"
-          className="text-right"
-          placeholder="0"
-          {...register(`items.${index}.taxRate`)}
+          min={0}
+          placeholder="Tax %"
+          className="h-10"
+          {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
         />
       </div>
 
-      {/* Amount */}
-      <div className="md:col-span-1">
+      {/* Unit */}
+      <div className="col-span-4 md:col-span-1">
         <Input
-          readOnly
-          className="bg-muted text-right font-medium"
-          value={lineAmount.toFixed(2)}
+          placeholder="Unit"
+          className="h-10"
+          {...register(`items.${index}.unit`)}
         />
       </div>
 
       {/* Remove */}
-      <div className="flex justify-end md:col-span-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onRemove}
-          disabled={!canRemove}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+      <div className="col-span-4 md:col-span-1 flex justify-end">
+        {canRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -1,16 +1,9 @@
-// ============================================================
-// components/sales/quotation/form/quotation-details-section.tsx
-// ============================================================
+
+
 
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,7 +13,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { QuotationFormValues } from "./quotation.schema";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { QuotationFormValues } from "../../types/quotation-form.types";
+
+const CURRENCIES = [
+  { value: "INR", label: "Indian Rupee (₹)" },
+  { value: "USD", label: "US Dollar ($)" },
+  { value: "EUR", label: "Euro (€)" },
+  { value: "GBP", label: "British Pound (£)" },
+  { value: "AED", label: "UAE Dirham (د.إ)" },
+  { value: "SGD", label: "Singapore Dollar (S$)" },
+];
 
 export function QuotationDetailsSection() {
   const {
@@ -30,22 +38,27 @@ export function QuotationDetailsSection() {
     formState: { errors },
   } = useFormContext<QuotationFormValues>();
 
+  const currency = watch("currency");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Quotation Details</CardTitle>
+        <CardTitle>Quotation Details</CardTitle>
       </CardHeader>
+
       <CardContent>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="quotationDate">
               Quotation Date <span className="text-destructive">*</span>
             </Label>
+
             <Input
               id="quotationDate"
               type="date"
               {...register("quotationDate")}
             />
+
             {errors.quotationDate && (
               <p className="text-xs text-destructive">
                 {errors.quotationDate.message}
@@ -54,44 +67,47 @@ export function QuotationDetailsSection() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="validUntil">Valid Until</Label>
-            <Input id="validUntil" type="date" {...register("validUntil")} />
+            <Label htmlFor="validUntil">
+              Valid Until <span className="text-destructive">*</span>
+            </Label>
+
+            <Input
+              id="validUntil"
+              type="date"
+              {...register("validUntil")}
+            />
+
+            {errors.validUntil && (
+              <p className="text-xs text-destructive">
+                {errors.validUntil.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Currency</Label>
+
             <Select
-              value={watch("currency")}
-              onValueChange={(val) => setValue("currency", val)}
+              value={currency || "INR"}
+              onValueChange={(value) =>
+                setValue("currency", value, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="INR">INR - Indian Rupee</SelectItem>
-                <SelectItem value="USD">USD - US Dollar</SelectItem>
-                <SelectItem value="EUR">EUR - Euro</SelectItem>
-                <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                {CURRENCIES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="referenceNumber">Reference Number</Label>
-            <Input
-              id="referenceNumber"
-              placeholder="Optional reference"
-              {...register("referenceNumber")}
-            />
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes">Notes (visible to customer)</Label>
-            <Input
-              id="notes"
-              placeholder="Any notes for the customer..."
-              {...register("notes")}
-            />
           </div>
         </div>
       </CardContent>

@@ -1,572 +1,412 @@
-// // ============================================================
-// // QUOTATION ENUMS
-// // ============================================================
-
-// export type QuotationStatus =
-//   | "DRAFT"
-//   | "SENT"
-//   | "ACCEPTED"
-//   | "REJECTED"
-//   | "EXPIRED"
-//   | "CANCELLED";
-
-// export type QuotationSource =
-//   | "MANUAL"
-//   | "ONLINE"
-//   | "POS"
-//   | "OTHER";
-
-// export type PaymentTerms =
-//   | "DUE_ON_RECEIPT"
-//   | "NET_7"
-//   | "NET_15"
-//   | "NET_30"
-//   | "NET_45"
-//   | "NET_60";
-
-// export type DiscountType =
-//   | "PERCENTAGE"
-//   | "FIXED";
-
-
-// // ============================================================
-// // CUSTOMER
-// // ============================================================
-
-// export interface QuotationCustomer {
-//   id: string;
-//   name: string;
-//   phone?: string;
-//   email?: string;
-//   gstin?: string;
-// }
-
-
-// // ============================================================
-// // QUOTATION ITEM
-// // ============================================================
-
-// export interface QuotationItem {
-//   id?: string;
-
-//   productId?: string;
-//   productName?: string;
-//   description?: string;
-
-//   quantity: number;
-//   unit?: string;
-
-//   rate: number;
-
-//   discount?: number;
-//   discountType?: DiscountType;
-
-//   taxRate?: number;
-//   taxAmount?: number;
-
-//   amount?: number;
-// }
-
-
-// // ============================================================
-// // QUOTATION
-// // ============================================================
-
-// export interface Quotation {
-//   id: string;
-
-//   businessId?: string;
-//   branchId?: string;
-
-//   quotationNumber?: string;
-//   quotationDate: string;
-//   validUntil?: string;
-
-//   financialYear?: string;
-
-//   status: QuotationStatus;
-//   source?: QuotationSource;
-
-//   customerId: string;
-
-//   customerName?: string;
-//   customerPhone?: string;
-//   customerEmail?: string;
-//   customerGSTIN?: string;
-
-//   customer?: QuotationCustomer;
-
-//   items?: QuotationItem[];
-
-//   subtotal?: number;
-//   discount?: number;
-//   taxableAmount?: number;
-//   taxAmount?: number;
-//   roundOff?: number;
-
-//   totalAmount: number;
-
-//   paymentTerms?: PaymentTerms;
-
-//   notes?: string;
-//   termsAndConditions?: string;
-//   remarks?: string;
-
-//   createdAt?: string;
-//   updatedAt?: string;
-
-//   createdBy?: string;
-//   updatedBy?: string;
-// }
-
-
-// // ============================================================
-// // LIST QUERY PARAMETERS
-// // ============================================================
-
-// export interface QuotationListParams {
-//   page?: number;
-//   limit?: number;
-
-//   search?: string;
-
-//   status?: QuotationStatus;
-//   source?: QuotationSource;
-
-//   customerId?: string;
-//   branchId?: string;
-
-//   financialYear?: string;
-
-//   fromDate?: string;
-//   toDate?: string;
-
-//   sortBy?: string;
-//   sortOrder?: "asc" | "desc";
-// }
-
-
-// // ============================================================
-// // PAGINATION
-// // ============================================================
-
-// export interface QuotationPagination {
-//   page: number;
-//   limit: number;
-//   total: number;
-//   totalPages: number;
-// }
-
-
-// // ============================================================
-// // API RESPONSES
-// // ============================================================
-
-// export interface QuotationListResponse {
-//   success: boolean;
-//   message: string;
-//   data: Quotation[];
-//   pagination?: QuotationPagination;
-// }
-
-// export interface QuotationResponse {
-//   success: boolean;
-//   message: string;
-//   data: Quotation;
-// }
-
-
-// // ============================================================
-// // CREATE QUOTATION
-// // ============================================================
-
-// export interface QuotationCreatePayload {
-//   businessId?: string;
-//   branchId?: string;
-
-//   quotationDate: string;
-//   validUntil?: string;
-
-//   customerId: string;
-
-//   source?: QuotationSource;
-
-//   items: QuotationItem[];
-
-//   paymentTerms?: PaymentTerms;
-
-//   notes?: string;
-//   termsAndConditions?: string;
-//   remarks?: string;
-// }
-
-
-// // ============================================================
-// // UPDATE QUOTATION
-// // ============================================================
-
-// export interface QuotationUpdatePayload {
-//   quotationDate?: string;
-//   validUntil?: string;
-
-//   customerId?: string;
-
-//   source?: QuotationSource;
-
-//   items?: QuotationItem[];
-
-//   paymentTerms?: PaymentTerms;
-
-//   notes?: string;
-//   termsAndConditions?: string;
-//   remarks?: string;
-// }
-
-
-// // ============================================================
-// // UPDATE STATUS
-// // ============================================================
-
-// export interface QuotationStatusPayload {
-//   status: QuotationStatus;
-//   remarks?: string;
-// }
-
-
-// // ============================================================
-// // CANCEL QUOTATION
-// // ============================================================
-
-// export interface QuotationCancelPayload {
-//   reason?: string;
-// }
-
-
-// // ============================================================
-// // SEND QUOTATION
-// // ============================================================
-
-// export interface QuotationSendPayload {
-//   email?: string;
-//   phone?: string;
-//   message?: string;
-// }
-
-
-// // ============================================================
-// // DUPLICATE QUOTATION
-// // ============================================================
-
-// export interface QuotationDuplicatePayload {
-//   quotationDate?: string;
-//   validUntil?: string;
-//   customerId?: string;
-// }
-
-
-// // ============================================================
-// // CONVERT QUOTATION TO INVOICE
-// // ============================================================
-
-// export interface QuotationConvertToInvoicePayload {
-//   invoiceDate?: string;
-//   dueDate?: string;
-//   notes?: string;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
 // ============================================================
+// QUOTATION TYPES
 // modules/sales/quotation/types/quotation.types.ts
 // ============================================================
 
+// --------------------
+// ENUMS
+// --------------------
+
 export type QuotationStatus =
-  | "draft"
-  | "sent"
-  | "viewed"
-  | "accepted"
-  | "rejected"
-  | "expired"
-  | "cancelled"
-  | "converted";
+  | "DRAFT"
+  | "SENT"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "CANCELLED";
 
-export type DiscountType = "percentage" | "fixed";
+export type ReceiptSource =
+  | "MANUAL"
+  | "ONLINE"
+  | "POS"
+  | "OTHER";
 
-// --------------------
-// Item (supports CGST / SGST)
-// --------------------
+export type DiscountType =
+  | "PERCENTAGE"
+  | "FIXED";
+
+export type TaxType =
+  | "CGST_SGST"
+  | "IGST"
+  | "NO_TAX";
+
+
+// ============================================================
+// CUSTOMER
+// ============================================================
+
+export interface QuotationCustomer {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+}
+
+
+// ============================================================
+// QUOTATION ITEM
+// ============================================================
 
 export interface QuotationItem {
   id?: string;
-  productId?: string | null;
-  name: string;
-  description?: string;
-  hsnSac?: string;
+
+  itemId?: string | null;
+  itemName?: string | null;
+  description?: string | null;
+
   quantity: number;
-  unit?: string;
+  unit?: string | null;
+
   rate: number;
+
+  discount?: number;
   discountType?: DiscountType;
-  discountValue?: number;
-  gstRate?: number;           // e.g. 18
-  cgstAmount?: number;
-  sgstAmount?: number;
-  igstAmount?: number;
-  amount: number;             // taxable amount (qty * rate - discount)
-  total: number;              // amount + tax
-  imageUrl?: string;
-  sortOrder?: number;
+
+  taxRate?: number;
+  taxAmount?: number;
+
+  amount?: number;
 }
 
-// --------------------
-// Main Quotation (FLAT)
-// --------------------
+
+// ============================================================
+// MAIN QUOTATION
+// ============================================================
 
 export interface Quotation {
   id: string;
-  quotationNumber: string;
+
+  businessId: string;
+  branchId?: string | null;
+
+  quotationNumber?: string | null;
   quotationDate: string;
-  validUntil?: string | null;
-  status: QuotationStatus;
-  currency: string;
-  poNumber?: string;
-  referenceNumber?: string;
-  notes?: string;
-  internalNotes?: string;
-  subtitle?: string;
+  validUntil: string;
 
-  // ---------- FROM (Company) ----------
-  fromName: string;
-  fromEmail?: string;
-  fromPhone?: string;
-  fromGstin?: string;
-  fromPan?: string;
-  fromAddressLine1?: string;
-  fromAddressLine2?: string;
-  fromCity?: string;
-  fromState?: string;
-  fromCountry?: string;
-  fromPincode?: string;
-  fromLogoUrl?: string;
+  financialYear?: string | null;
 
-  // ---------- TO (Customer) ----------
+  quotationStatus: QuotationStatus;
+
+  // ----------------------------------------------------------
+  // Quotation From - Business Snapshot
+  // ----------------------------------------------------------
+
+  businessName: string;
+  businessLegalName?: string | null;
+  businessGSTIN?: string | null;
+  businessPAN?: string | null;
+
+  businessPhone?: string | null;
+  businessEmail?: string | null;
+
+  businessAddressLine1?: string | null;
+  businessAddressLine2?: string | null;
+  businessCity?: string | null;
+  businessState?: string | null;
+  businessStateCode?: string | null;
+  businessPincode?: string | null;
+  businessCountry: string;
+
+  // ----------------------------------------------------------
+  // Quotation To - Prospect Snapshot
+  // ----------------------------------------------------------
+
+  prospectName: string;
+  prospectCompanyName?: string | null;
+  prospectGSTIN?: string | null;
+  prospectPAN?: string | null;
+
+  prospectPhone?: string | null;
+  prospectEmail?: string | null;
+
+  prospectAddressLine1?: string | null;
+  prospectAddressLine2?: string | null;
+  prospectCity?: string | null;
+  prospectState?: string | null;
+  prospectStateCode?: string | null;
+  prospectPincode?: string | null;
+  prospectCountry: string;
+
+  // ----------------------------------------------------------
+  // Customer
+  // ----------------------------------------------------------
+
   customerId?: string | null;
-  toName: string;
-  toEmail?: string;
-  toPhone?: string;
-  toGstin?: string;
-  toPan?: string;
-  toContactPerson?: string;
-  toAddressLine1?: string;
-  toAddressLine2?: string;
-  toCity?: string;
-  toState?: string;
-  toCountry?: string;
-  toPincode?: string;
+  customer?: QuotationCustomer | null;
 
-  // ---------- Items ----------
+  // ----------------------------------------------------------
+  // Commercial Details
+  // ----------------------------------------------------------
+
+  placeOfSupply?: string | null;
+  placeOfSupplyCode?: string | null;
+
+  taxType?: TaxType | null;
+
+  reverseCharge: boolean;
+  isExport: boolean;
+  isSEZ: boolean;
+
+  currency: string;
+  exchangeRate?: number | null;
+
+  // ----------------------------------------------------------
+  // Totals
+  // ----------------------------------------------------------
+
+  totalItems: number;
+  totalQuantity: number;
+
+  taxableAmount: number;
+  discountAmount: number;
+
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
+  cessAmount: number;
+
+  roundOffAmount: number;
+  grandTotal: number;
+
+  // ----------------------------------------------------------
+  // Acceptance
+  // ----------------------------------------------------------
+
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
+
+  // ----------------------------------------------------------
+  // Rejection
+  // ----------------------------------------------------------
+
+  rejectedAt?: string | null;
+  rejectedBy?: string | null;
+  rejectionReason?: string | null;
+
+  // ----------------------------------------------------------
+  // Additional
+  // ----------------------------------------------------------
+
+  notes?: string | null;
+  termsAndConditions?: string | null;
+
+  printCount: number;
+
+  // ----------------------------------------------------------
+  // Items
+  // ----------------------------------------------------------
+
   items: QuotationItem[];
 
-  // ---------- Summary ----------
-  subtotal: number;
-  discountTotal: number;
-  cgstTotal: number;
-  sgstTotal: number;
-  igstTotal: number;
-  taxTotal: number;
-  otherCharges: number;
-  roundOff: number;
-  grandTotal: number;
-  totalInWords?: string;
+  // ----------------------------------------------------------
+  // Audit
+  // ----------------------------------------------------------
 
-  // ---------- Payment ----------
-  showBankDetails: boolean;
-  bankAccountId?: string | null;
-  bankName?: string;
-  accountNumber?: string;
-  ifsc?: string;
-  accountHolderName?: string;
+  createdBy: string;
+  updatedBy?: string | null;
 
-  showUpiDetails: boolean;
-  upiId?: string;
-  upiLinkedBank?: string;
-
-  paymentTerms?: string;
-  paymentInstructions?: string;
-
-  // ---------- Signature ----------
-  signatureType?: "simple" | "digital";
-  signatureUrl?: string | null;
-  signatureLabel?: string;
-  authorizedPerson?: string;
-  designation?: string;
-
-  // ---------- Terms ----------
-  terms: string[];                // simple list of terms
-
-  // ---------- Meta ----------
-  salesPersonId?: string | null;
-  salesPersonName?: string;
-  templateId?: string | null;
-
-  // ---------- Linked ----------
-  salesOrderId?: string | null;
-  invoiceId?: string | null;
-
-  // ---------- Audit ----------
   createdAt: string;
   updatedAt: string;
-  createdBy?: string;
-  updatedBy?: string;
+
+  deletedAt?: string | null;
 }
 
-// --------------------
-// API Wrappers
-// --------------------
 
-export interface QuotationResponse {
-  success: boolean;
-  message?: string;
-  data: Quotation;
-}
-
-export interface QuotationListResponse {
-  success: boolean;
-  message?: string;
-  data: Quotation[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+// ============================================================
+// LIST QUERY PARAMETERS
+// ============================================================
 
 export interface QuotationListParams {
   page?: number;
   limit?: number;
+
   search?: string;
-  status?: QuotationStatus | QuotationStatus[];
+
+  status?: QuotationStatus;
   customerId?: string;
+  branchId?: string;
+
+  financialYear?: string;
+
   fromDate?: string;
   toDate?: string;
+
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
 
-// --------------------
-// Payloads
-// --------------------
 
-export interface QuotationCreatePayload {
-  quotationDate: string;
-  validUntil?: string | null;
-  status?: QuotationStatus;
-  currency?: string;
-  poNumber?: string;
-  referenceNumber?: string;
-  notes?: string;
-  internalNotes?: string;
-  subtitle?: string;
+// ============================================================
+// PAGINATION
+// ============================================================
 
-  // From
-  fromName: string;
-  fromEmail?: string;
-  fromPhone?: string;
-  fromGstin?: string;
-  fromPan?: string;
-  fromAddressLine1?: string;
-  fromAddressLine2?: string;
-  fromCity?: string;
-  fromState?: string;
-  fromCountry?: string;
-  fromPincode?: string;
-  fromLogoUrl?: string;
-
-  // To
-  customerId?: string | null;
-  toName: string;
-  toEmail?: string;
-  toPhone?: string;
-  toGstin?: string;
-  toPan?: string;
-  toContactPerson?: string;
-  toAddressLine1?: string;
-  toAddressLine2?: string;
-  toCity?: string;
-  toState?: string;
-  toCountry?: string;
-  toPincode?: string;
-
-  items: QuotationItem[];
-
-  subtotal: number;
-  discountTotal: number;
-  cgstTotal: number;
-  sgstTotal: number;
-  igstTotal: number;
-  taxTotal: number;
-  otherCharges: number;
-  roundOff: number;
-  grandTotal: number;
-  totalInWords?: string;
-
-  showBankDetails: boolean;
-  bankAccountId?: string | null;
-  bankName?: string;
-  accountNumber?: string;
-  ifsc?: string;
-  accountHolderName?: string;
-
-  showUpiDetails: boolean;
-  upiId?: string;
-  upiLinkedBank?: string;
-
-  paymentTerms?: string;
-  paymentInstructions?: string;
-
-  signatureType?: "simple" | "digital";
-  signatureUrl?: string | null;
-  signatureLabel?: string;
-  authorizedPerson?: string;
-  designation?: string;
-
-  terms: string[];
+export interface QuotationPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
-export type QuotationUpdatePayload = Partial<QuotationCreatePayload>;
+
+// ============================================================
+// API RESPONSES
+// ============================================================
+
+export interface QuotationListResponse {
+  success: boolean;
+  message: string;
+  data: Quotation[];
+  pagination?: QuotationPagination;
+}
+
+export interface QuotationResponse {
+  success: boolean;
+  message: string;
+  data: Quotation;
+}
+
+
+// ============================================================
+// CREATE QUOTATION
+// ============================================================
+
+export interface QuotationCreatePayload {
+  businessId: string;
+  branchId?: string | null;
+
+  quotationDate: string;
+  validUntil: string;
+
+  financialYear?: string | null;
+
+  // Business snapshot
+  businessName: string;
+  businessLegalName?: string | null;
+  businessGSTIN?: string | null;
+  businessPAN?: string | null;
+  businessPhone?: string | null;
+  businessEmail?: string | null;
+
+  businessAddressLine1?: string | null;
+  businessAddressLine2?: string | null;
+  businessCity?: string | null;
+  businessState?: string | null;
+  businessStateCode?: string | null;
+  businessPincode?: string | null;
+  businessCountry?: string;
+
+  // Prospect snapshot
+  prospectName: string;
+  prospectCompanyName?: string | null;
+  prospectGSTIN?: string | null;
+  prospectPAN?: string | null;
+  prospectPhone?: string | null;
+  prospectEmail?: string | null;
+
+  prospectAddressLine1?: string | null;
+  prospectAddressLine2?: string | null;
+  prospectCity?: string | null;
+  prospectState?: string | null;
+  prospectStateCode?: string | null;
+  prospectPincode?: string | null;
+  prospectCountry?: string;
+
+  // Customer
+  customerId?: string | null;
+
+  // Commercial
+  placeOfSupply?: string | null;
+  placeOfSupplyCode?: string | null;
+
+  taxType?: TaxType | null;
+
+  reverseCharge?: boolean;
+  isExport?: boolean;
+  isSEZ?: boolean;
+
+  currency?: string;
+  exchangeRate?: number | null;
+
+  // Items
+  items: QuotationItem[];
+
+  // Totals
+  totalItems?: number;
+  totalQuantity?: number;
+
+  taxableAmount?: number;
+  discountAmount?: number;
+
+  cgstAmount?: number;
+  sgstAmount?: number;
+  igstAmount?: number;
+  cessAmount?: number;
+
+  roundOffAmount?: number;
+  grandTotal?: number;
+
+  notes?: string | null;
+  termsAndConditions?: string | null;
+
+  createdBy: string;
+}
+
+
+// ============================================================
+// UPDATE QUOTATION
+// ============================================================
+
+export interface QuotationUpdatePayload
+  extends Partial<Omit<QuotationCreatePayload, "businessId" | "createdBy">> {
+  updatedBy?: string;
+}
+
+
+// ============================================================
+// UPDATE STATUS
+// ============================================================
 
 export interface QuotationStatusPayload {
   status: QuotationStatus;
-  notes?: string;
+  remarks?: string;
 }
+
+
+// ============================================================
+// CANCEL QUOTATION
+// ============================================================
 
 export interface QuotationCancelPayload {
   reason?: string;
-  notes?: string;
 }
 
+
+// ============================================================
+// SEND QUOTATION
+// ============================================================
+
 export interface QuotationSendPayload {
-  toEmails?: string[];
-  ccEmails?: string[];
-  subject?: string;
+  email?: string;
+  phone?: string;
   message?: string;
-  attachPdf?: boolean;
 }
+
+
+// ============================================================
+// DUPLICATE QUOTATION
+// ============================================================
 
 export interface QuotationDuplicatePayload {
   quotationDate?: string;
   validUntil?: string;
-  keepCustomer?: boolean;
+  customerId?: string | null;
 }
+
+
+// ============================================================
+// CONVERT QUOTATION TO INVOICE
+// ============================================================
 
 export interface QuotationConvertToInvoicePayload {
   invoiceDate?: string;
