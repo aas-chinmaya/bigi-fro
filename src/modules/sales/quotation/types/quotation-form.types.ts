@@ -1,7 +1,3 @@
-// ============================================================
-// quotation-form.types.ts
-// ============================================================
-
 import type { Quotation } from "./quotation.types";
 import type { QuotationCreateSchema } from "../schemas/quotation.schema";
 
@@ -14,5 +10,4 @@ export interface QuotationFormProps {
   onCancel?: () => void;
 }
 
-/** Form values = create schema (used for both create & edit) */
 export type QuotationFormValues = QuotationCreateSchema;

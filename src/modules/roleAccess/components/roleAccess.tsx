@@ -82,7 +82,7 @@ export default function RoleAccessPage() {
   >([]);
 
   /* -------------------------------------------------------------------------- */
-  /*                         MAP PERMISSIONS TO TREE                             */
+  /*                         MAP PERMISSIONS TO TREE                            */
   /* -------------------------------------------------------------------------- */
 
   const mapPermissionsToTree = useCallback(
@@ -96,7 +96,7 @@ export default function RoleAccessPage() {
   );
 
   /* -------------------------------------------------------------------------- */
-  /*                         LOAD ROLE ACCESS                                    */
+  /*                         LOAD ROLE ACCESS                                   */
   /* -------------------------------------------------------------------------- */
 
   useEffect(() => {
@@ -546,7 +546,7 @@ export default function RoleAccessPage() {
       String(roleId);
 
     console.log(
-      "🔄 Changing role:",
+      "Changing role:",
       normalizedRoleId
     );
 
@@ -612,7 +612,7 @@ export default function RoleAccessPage() {
       }
 
       console.log(
-        "💾 Saving permissions:",
+        "Saving permissions:",
         {
           roleId: String(
             selectedRoleId
@@ -644,7 +644,7 @@ export default function RoleAccessPage() {
       );
     } catch (error) {
       console.error(
-        "❌ Save permissions failed:",
+        "Save permissions failed:",
         error
       );
 

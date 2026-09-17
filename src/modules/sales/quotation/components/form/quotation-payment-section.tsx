@@ -1,6 +1,4 @@
-
-
-  "use client";
+"use client";
 
 import { useState, type ReactNode } from "react";
 import {
@@ -26,7 +24,6 @@ export function QuotationPaymentSection() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* ===================== BANK ACCOUNT ===================== */}
         <PaymentBlock
           icon={<Landmark className="h-4 w-4" />}
           title="Bank Account Details"
@@ -53,7 +50,6 @@ export function QuotationPaymentSection() {
           </div>
         </PaymentBlock>
 
-        {/* ===================== UPI ===================== */}
         <PaymentBlock
           icon={<QrCode className="h-4 w-4" />}
           title="UPI Details"
@@ -83,8 +79,6 @@ export function QuotationPaymentSection() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-
 function PaymentBlock({
   icon,
   title,
@@ -102,7 +96,6 @@ function PaymentBlock({
 }) {
   return (
     <div className="rounded-xl border">
-      {/* Header */}
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -114,21 +107,16 @@ function PaymentBlock({
           </div>
         </div>
 
-        {/* Show on Quotation toggle */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Show on Quotation
           </span>
-          <Switch
-            checked={showOnQuotation}
-            onCheckedChange={onShowChange}
-          />
+          <Switch checked={showOnQuotation} onCheckedChange={onShowChange} />
         </div>
       </div>
 
       <Separator />
 
-      {/* Content always visible */}
       <div className="px-4 py-3">{children}</div>
     </div>
   );

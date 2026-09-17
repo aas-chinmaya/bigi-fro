@@ -52,7 +52,7 @@ const SECTIONS = [
 const calcProgress = (sections: Record<string, boolean>) => {
   const total = SECTIONS.length;
   const done = SECTIONS.reduce((acc, k) => acc + (sections[k] ? 1 : 0), 0);
-  return Math.round((done / total) * 10);
+  return Math.round((done / total) * 100);
 };
 
 // Async thunks for step-wise saving

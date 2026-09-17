@@ -146,21 +146,6 @@ export default function CategoryForm({
         {/* Header */}
 
         <div className="mb-6 flex items-start justify-between">
-
-          {/* <div>
-            <h1 className="text-3xl font-bold">
-              {isEdit
-                ? "Edit Category"
-                : "Add Category"}
-            </h1>
-
-            <p className="mt-1 text-gray-500">
-              {isEdit
-                ? "Update the category details."
-                : "Create a new master category."}
-            </p>
-          </div> */}
-
           {isEdit && (
             <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600">
               Editing

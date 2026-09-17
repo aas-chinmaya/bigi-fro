@@ -1,7 +1,3 @@
-
-
-
-
 "use client";
 
 import { useFormContext } from "react-hook-form";
@@ -53,9 +49,7 @@ export function QuotationAdditionalsSection() {
 
       <CardContent className="space-y-3 px-4 pb-4 pt-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium">
-            Terms & Conditions
-          </Label>
+          <Label className="text-xs font-medium">Terms & Conditions</Label>
 
           <RichTextEditor
             value={termsAndConditions}
@@ -70,9 +64,7 @@ export function QuotationAdditionalsSection() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium">
-            Internal Notes
-          </Label>
+          <Label className="text-xs font-medium">Internal Notes</Label>
 
           <RichTextEditor
             value={notes}

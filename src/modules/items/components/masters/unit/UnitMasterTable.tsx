@@ -40,9 +40,7 @@ export default function UnitMasterTable({
       const matchesStatus =
         statusFilter === "all"
           ? true
-          : statusFilter === "active"
-            ? unit.status
-            : !unit.status;
+          : statusFilter === "active";
 
       return matchesSearch && matchesStatus;
     });
@@ -68,7 +66,8 @@ export default function UnitMasterTable({
         </div>
       </TableToolbar>
 
-      <DataTable columns={UnitMasterColumns(onRefresh)} data={filteredUnits} loading={loading} emptyMessage="No unit records found." />
+      <DataTable columns={UnitMasterColumns(onRefresh)} data={filteredUnits} loading={loading} emptyMessage="No unit records found." page={page}
+        pageSize={10}/>
 
       <Pagination page={page} totalPages={totalPages} totalRecords={totalRecords} onPageChange={(nextPage) => onPageChange?.(nextPage)} />
     </div>

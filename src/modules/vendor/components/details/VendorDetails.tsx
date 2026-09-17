@@ -32,7 +32,7 @@ import { vendorApi } from "@/modules/vendor/api/vendor.api";
 import { notify } from "@/lib/toast";
 import { Button } from "@/components/ui";
 
-const resolveLogoUrl = (value: unknown) => {
+const resolveFileUrl = (value: unknown) => {
   if (typeof value !== "string" || !value.trim()) return "";
 
   const url = value.trim().replace(/\/uploads\/\/uploads\//g, "/uploads/");
@@ -64,8 +64,6 @@ export default function VendorDetails() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
-  const [processingDocument, setProcessingDocument] = useState<string | null>(null);
-  const [logoViewUrl, setLogoViewUrl] = useState<string | null>(null);
 
   const loadVendor = async () => {
     if (!vendorId) return;
@@ -90,28 +88,6 @@ export default function VendorDetails() {
     loadVendor();
   }, [vendorId]);
 
-  useEffect(() => {
-    if (!vendorId) return;
-
-    let objectUrl: string | null = null;
-
-    const loadLogo = async () => {
-      try {
-        const response = await vendorApi.viewLogo(vendorId);
-        objectUrl = URL.createObjectURL(response.data);
-        setLogoViewUrl(objectUrl);
-      } catch {
-        setLogoViewUrl(null);
-      }
-    };
-
-    void loadLogo();
-
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [vendorId]);
-
   const handleDeleteDocument = async (documentId: string) => {
     if (!documentId) return;
 
@@ -130,41 +106,29 @@ export default function VendorDetails() {
     }
   };
 
-  const handleViewDocument = async (documentId: string) => {
-    if (!vendorId || !documentId) return;
-
-    try {
-      setProcessingDocument(`${documentId}:view`);
-      const response = await vendorApi.viewDocument(vendorId, documentId);
-      const url = URL.createObjectURL(response.data);
-      window.open(url, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (err: any) {
-      notify.error(err?.response?.data?.message || "Failed to view document");
-    } finally {
-      setProcessingDocument(null);
+  const handleViewDocument = (fileUrl?: string) => {
+    if (!fileUrl) {
+      notify.error("Document link is unavailable");
+      return;
     }
+
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleDownloadDocument = async (documentId: string, fileName?: string) => {
-    if (!vendorId || !documentId) return;
-
-    try {
-      setProcessingDocument(`${documentId}:download`);
-      const response = await vendorApi.downloadDocument(vendorId, documentId);
-      const url = URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName || "vendor-document";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      notify.error(err?.response?.data?.message || "Failed to download document");
-    } finally {
-      setProcessingDocument(null);
+  const handleDownloadDocument = (fileUrl?: string, fileName?: string) => {
+    if (!fileUrl) {
+      notify.error("Document link is unavailable");
+      return;
     }
+
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.download = fileName || "vendor-document";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const handleCopy = async (value: string, field: string) => {
@@ -260,14 +224,7 @@ export default function VendorDetails() {
   // NORMALIZED FIELDS
   // --------------------------------------------------------------------------
 
-  const logoUrl = resolveLogoUrl(
-    logoViewUrl ||
-      (typeof vendor.logo === "string" ? vendor.logo :
-        vendor.logo?.fileUrl?.view || vendor.logo?.fileUrl || vendor.logo?.url || "") ||
-      vendor.logoUrl?.view ||
-      vendor.logoUrl?.download ||
-      ""
-  );
+  const logoUrl = resolveFileUrl(vendor.logoUrl);
 
   const contactName =
     vendor.contact?.contactPerson ||
@@ -1258,6 +1215,7 @@ export default function VendorDetails() {
                   {vendor.documents.map((doc: any) => {
                     const documentId = doc.id || doc.documentId || doc._id;
                     const documentName = doc.originalName || doc.fileName || "vendor-document";
+                    const documentUrl = resolveFileUrl(doc.fileUrl);
 
                     return (
                       <div
@@ -1282,11 +1240,10 @@ export default function VendorDetails() {
                         </div>
 
                         <div className="flex shrink-0 gap-1">
-                          {documentId && (
+                          {documentUrl && (
                             <button
                               type="button"
-                              onClick={() => handleViewDocument(documentId)}
-                              disabled={processingDocument === `${documentId}:view`}
+                              onClick={() => handleViewDocument(documentUrl)}
                               className="rounded-lg p-2 text-sky-600 transition hover:bg-sky-50"
                               title="View"
                             >
@@ -1294,11 +1251,10 @@ export default function VendorDetails() {
                             </button>
                           )}
 
-                          {documentId && (
+                          {documentUrl && (
                             <button
                               type="button"
-                              onClick={() => handleDownloadDocument(documentId, documentName)}
-                              disabled={processingDocument === `${documentId}:download`}
+                              onClick={() => handleDownloadDocument(documentUrl, documentName)}
                               className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
                               title="Download"
                             >

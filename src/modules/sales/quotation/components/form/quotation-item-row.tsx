@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import { useFormContext } from "react-hook-form";
@@ -10,7 +7,6 @@ import { Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import type { QuotationFormValues } from "../../types/quotation-form.types";
 
-// ── Dummy items (replace later with API) ───────────────────────────────────
 const DUMMY_ITEMS = [
   {
     id: "item-1",
@@ -79,7 +75,6 @@ export function QuotationItemRow({
   const itemErrors = errors.items?.[index];
   const currentItemName = watch(`items.${index}.itemName`) || "";
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -129,8 +124,10 @@ export function QuotationItemRow({
 
   return (
     <div className="grid grid-cols-12 gap-3 items-start rounded-lg border p-3">
-      {/* ── Item Search / Select ── */}
-      <div className="col-span-12 md:col-span-4 space-y-1 relative" ref={containerRef}>
+      <div
+        className="col-span-12 md:col-span-4 space-y-1 relative"
+        ref={containerRef}
+      >
         <Input
           placeholder="Search or type item name..."
           value={search || currentItemName}
@@ -145,7 +142,6 @@ export function QuotationItemRow({
           className="h-10"
         />
 
-        {/* Hidden fields for form */}
         <input type="hidden" {...register(`items.${index}.itemId`)} />
         <input type="hidden" {...register(`items.${index}.itemName`)} />
 
@@ -155,7 +151,6 @@ export function QuotationItemRow({
           </p>
         )}
 
-        {/* Simple dropdown */}
         {isOpen && filteredItems.length > 0 && (
           <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-56 overflow-auto">
             {filteredItems.map((item) => (
@@ -175,7 +170,6 @@ export function QuotationItemRow({
         )}
       </div>
 
-      {/* Quantity */}
       <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
@@ -187,7 +181,6 @@ export function QuotationItemRow({
         />
       </div>
 
-      {/* Rate */}
       <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
@@ -199,7 +192,6 @@ export function QuotationItemRow({
         />
       </div>
 
-      {/* Tax % */}
       <div className="col-span-4 md:col-span-2">
         <Input
           type="number"
@@ -211,7 +203,6 @@ export function QuotationItemRow({
         />
       </div>
 
-      {/* Unit */}
       <div className="col-span-4 md:col-span-1">
         <Input
           placeholder="Unit"
@@ -220,7 +211,6 @@ export function QuotationItemRow({
         />
       </div>
 
-      {/* Remove */}
       <div className="col-span-4 md:col-span-1 flex justify-end">
         {canRemove && (
           <Button

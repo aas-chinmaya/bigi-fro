@@ -34,12 +34,38 @@ export type PermissionRequestPayload =
   | PermissionPayload
   | PermissionPayload[];
 
+export interface PermissionTreeApi {
+  id?: string | number;
+}
+
+export interface PermissionTreeFeature {
+  id?: string | number;
+  apis?: PermissionTreeApi[];
+}
+
+export interface PermissionTreeFeature {
+  id?: string | number;
+  apis?: PermissionTreeApi[];
+}
+
+export interface PermissionTreeSubmodule {
+  id?: string | number;
+  features?: PermissionTreeFeature[];
+}
+
+export interface PermissionTreeModule {
+  id?: string | number;
+  subModules?: PermissionTreeSubmodule[];
+}
+
 /* ============================================================
  * API NODE
  * ============================================================ */
 
 export interface ApiNode extends API {
   checked: boolean;
+
+  isAllowed?: boolean;
 
   indeterminate?: boolean;
 
@@ -56,6 +82,8 @@ export interface ApiNode extends API {
 
 export interface FeatureNode extends Feature {
   checked: boolean;
+
+  isAllowed?: boolean;
 
   indeterminate: boolean;
 
@@ -74,6 +102,8 @@ export interface FeatureNode extends Feature {
 
 export interface SubmoduleNode extends Submodule {
   checked: boolean;
+
+  isAllowed?: boolean;
 
   indeterminate: boolean;
 
@@ -94,6 +124,8 @@ export interface SubmoduleNode extends Submodule {
 
 export interface ModuleNode extends Module {
   checked: boolean;
+
+  isAllowed?: boolean;
 
   indeterminate: boolean;
 

@@ -1,12 +1,7 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type {
-  ChangeEvent,
-  MouseEvent,
-  TouchEvent,
-} from "react";
+import type { ChangeEvent, MouseEvent, TouchEvent } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   Card,
@@ -15,13 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Check,
-  Eraser,
-  FileSignature,
-  Upload,
-  X,
-} from "lucide-react";
+import { Check, Eraser, FileSignature, Upload, X } from "lucide-react";
 import type { QuotationFormValues } from "../../types/quotation-form.types";
 
 export function QuotationSignatureSection() {
@@ -51,16 +40,13 @@ export function QuotationSignatureSection() {
     e: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>,
   ) => {
     const canvas = canvasRef.current;
-
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-
     const clientX =
-      "touches" in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
-
+      "touches" in e ? (e.touches[0]?.clientX ?? 0) : e.clientX;
     const clientY =
-      "touches" in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
+      "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
 
     return {
       x: ((clientX - rect.left) / rect.width) * canvas.width,
@@ -72,17 +58,13 @@ export function QuotationSignatureSection() {
     e: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>,
   ) => {
     e.preventDefault();
-
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-
     if (!canvas || !ctx) return;
 
     const { x, y } = getPosition(e);
-
     ctx.beginPath();
     ctx.moveTo(x, y);
-
     setIsDrawing(true);
   };
 
@@ -90,19 +72,15 @@ export function QuotationSignatureSection() {
     e: MouseEvent<HTMLCanvasElement> | TouchEvent<HTMLCanvasElement>,
   ) => {
     if (!isDrawing) return;
-
     e.preventDefault();
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-
     if (!canvas || !ctx) return;
 
     const { x, y } = getPosition(e);
-
     ctx.lineTo(x, y);
     ctx.stroke();
-
     setHasDrawing(true);
   };
 
@@ -112,11 +90,9 @@ export function QuotationSignatureSection() {
 
   const addSignature = () => {
     const canvas = canvasRef.current;
-
     if (!canvas || !hasDrawing) return;
 
     const dataUrl = canvas.toDataURL("image/png");
-
     setPreview(dataUrl);
     setValue("signature", dataUrl, {
       shouldDirty: true,
@@ -127,7 +103,6 @@ export function QuotationSignatureSection() {
   const clearPad = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-
     if (!canvas || !ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -140,29 +115,23 @@ export function QuotationSignatureSection() {
       shouldDirty: true,
       shouldValidate: true,
     });
-
     clearPad();
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file || !file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
-
     reader.onload = () => {
       const result = reader.result as string;
-
       setPreview(result);
       setValue("signature", result, {
         shouldDirty: true,
         shouldValidate: true,
       });
-
       clearPad();
     };
-
     reader.readAsDataURL(file);
     e.target.value = "";
   };
@@ -236,9 +205,7 @@ export function QuotationSignatureSection() {
 
               {!hasDrawing && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <span className="text-[11px] text-muted">
-                    Sign here
-                  </span>
+                  <span className="text-[11px] text-muted">Sign here</span>
                 </div>
               )}
 

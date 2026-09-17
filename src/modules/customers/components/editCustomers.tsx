@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,49 @@ import { useAppSelector } from "@/store/hooks";
 import { customerSchema, CustomerFormData } from "../validation";
 import { customersService } from "../services/customers.service";
 
+const emptyAddress = {
+  type: "BILLING",
+  label: "",
+  contactPerson: "",
+  contactNumber: "",
+  addressLine1: "",
+  addressLine2: "",
+  landmark: "",
+  city: "",
+  district: "",
+  state: "",
+  stateCode: "",
+  country: "",
+  pincode: "",
+  isDefault: true,
+  isActive: true,
+};
+
+function getCustomerAddresses(data: any) {
+  const source = data?.customer || data;
+  const addresses = source?.addresses || source?.customerAddresses || source?.address;
+  const addressList = Array.isArray(addresses) ? addresses : addresses ? [addresses] : [];
+
+  return (addressList.length ? addressList : [emptyAddress]).map((address: any) => ({
+    id: address.id,
+    type: address.type || "BILLING",
+    label: address.label || "",
+    contactPerson: address.contactPerson || "",
+    contactNumber: address.contactNumber || "",
+    addressLine1: address.addressLine1 || address.line1 || "",
+    addressLine2: address.addressLine2 || address.line2 || "",
+    landmark: address.landmark || "",
+    city: address.city || "",
+    district: address.district || "",
+    state: address.state || "",
+    stateCode: address.stateCode || "",
+    country: address.country || "",
+    pincode: address.pincode || address.pinCode || "",
+    isDefault: address.isDefault !== false,
+    isActive: address.isActive !== false,
+  }));
+}
+
 export default function EditCustomers() {
   const router = useRouter();
   const params = useParams();
@@ -38,7 +81,6 @@ export default function EditCustomers() {
     setValue,
     reset,
     formState: { errors, isSubmitting },
-    setValue: setFormValue,
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -60,6 +102,11 @@ export default function EditCustomers() {
       rewardPoints: 0,
       isActive: true,
       notes: "",
+      addresses: [{
+        type: "BILLING", label: "", contactPerson: "", contactNumber: "",
+        addressLine1: "", addressLine2: "", landmark: "", city: "", district: "",
+        state: "", stateCode: "", country: "", pincode: "", isDefault: true, isActive: true,
+      }],
     },
   });
 
@@ -92,6 +139,7 @@ export default function EditCustomers() {
           rewardPoints: Number(data.rewardPoints ?? 0),
           isActive: Boolean(data.isActive),
           notes: data.notes || "",
+          addresses: getCustomerAddresses(data),
         });
       } catch (error) {
         notify.error("Failed to fetch customer details.");
@@ -106,6 +154,11 @@ export default function EditCustomers() {
       const payload = {
         ...data,
         updatedBy: user?.id || "",
+        addresses: data.addresses.map((address) => ({
+          businessId: data.businessId,
+          customerId,
+          ...address,
+        })),
       };
 
       if (!payload.updatedBy) {
@@ -152,6 +205,146 @@ export default function EditCustomers() {
           <FormField label="Branch ID" required error={errors.branchId?.message}>
             <Input placeholder="Enter Branch ID" {...register("branchId")} />
           </FormField>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold">Address</h3>
+          <p className="text-sm text-muted">
+            Add the customer&apos;s contact and location details.
+          </p>
+        </CardHeader>
+
+        <CardContent className="grid gap-5">
+          {/* Address Line 1 */}
+          <FormField
+            label="Address Line 1"
+            error={errors.addresses?.[0]?.addressLine1?.message}
+          >
+            <Input
+              placeholder="Street / building"
+              {...register("addresses.0.addressLine1")}
+            />
+          </FormField>
+
+          {/* Address Line 2 */}
+          <FormField
+            label="Address Line 2"
+            error={errors.addresses?.[0]?.addressLine2?.message}
+          >
+            <Input
+              placeholder="Area / locality"
+              {...register("addresses.0.addressLine2")}
+            />
+          </FormField>
+
+          {/* Landmark + City */}
+          <div className="grid gap-5 md:grid-cols-2">
+            <FormField
+              label="Landmark"
+              error={errors.addresses?.[0]?.landmark?.message}
+            >
+              <Input
+                placeholder="Nearby landmark"
+                {...register("addresses.0.landmark")}
+              />
+            </FormField>
+
+            <FormField
+              label="City"
+              error={errors.addresses?.[0]?.city?.message}
+            >
+              <Input
+                placeholder="City"
+                {...register("addresses.0.city")}
+              />
+            </FormField>
+          </div>
+
+          {/* District + State + Pincode */}
+          <div className="grid gap-5 md:grid-cols-3">
+            <FormField
+              label="District"
+              error={errors.addresses?.[0]?.district?.message}
+            >
+              <Input
+                placeholder="District"
+                {...register("addresses.0.district")}
+              />
+            </FormField>
+
+            <FormField
+              label="State"
+              error={errors.addresses?.[0]?.state?.message}
+            >
+              <Input
+                placeholder="State"
+                {...register("addresses.0.state")}
+              />
+            </FormField>
+
+            <FormField
+              label="Pincode"
+              error={errors.addresses?.[0]?.pincode?.message}
+            >
+              <Input
+                placeholder="751024"
+                {...register("addresses.0.pincode")}
+              />
+            </FormField>
+          </div>
+
+          {/* Country + Default Address */}
+          <div className="grid gap-5 md:grid-cols-2">
+            <FormField
+              label="Country"
+              error={errors.addresses?.[0]?.country?.message}
+            >
+              <Input
+                placeholder="India"
+                {...register("addresses.0.country")}
+              />
+            </FormField>
+
+            <FormField label="Default Address">
+              <div className="flex h-10 items-center gap-6">
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="defaultAddress"
+                    value="YES"
+                    checked={watch("addresses.0.isDefault") === true}
+                    onChange={() =>
+                      setValue("addresses.0.isDefault", true, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                    className="h-4 w-4 accent-primary"
+                  />
+                  Yes
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="defaultAddress"
+                    value="NO"
+                    checked={watch("addresses.0.isDefault") === false}
+                    onChange={() =>
+                      setValue("addresses.0.isDefault", false, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                    className="h-4 w-4 accent-primary"
+                  />
+                  No
+                </label>
+              </div>
+            </FormField>
+          </div>
+        
         </CardContent>
       </Card>
 

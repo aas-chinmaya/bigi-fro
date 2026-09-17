@@ -173,6 +173,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
   const moduleMap = new Map<string, any>();
   const submoduleMap = new Map<string, any>();
   const featureMap = new Map<string, any>();
+  const apiItems = apis.items;
 
   const addModule = (moduleLike: any) => {
     if (!moduleLike?.id) return;
@@ -269,7 +270,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
   submodules.forEach(addSubmodule);
   features.forEach(addFeature);
 
-  apis.forEach((api: any) => {
+  apiItems.forEach((api: any) => {
     const moduleId = api.moduleId ?? api.module?.id ?? api.feature?.module?.id ?? api.feature?.moduleId;
     if (moduleId != null && moduleId !== '') {
       addModule({
@@ -321,7 +322,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
         expanded: false,
         explicitlySelected: false,
         selectedByAncestor: false,
-        apis: apis
+        apis: apiItems
           .filter((api: any) => {
             const featureId = api.featureId ?? api.feature?.id;
             return String(featureId) === String(feature.id);
@@ -332,7 +333,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
           })),
       }));
 
-    const moduleApis = apis
+    const moduleApis = apiItems
       .filter((api: any) => {
         const normalizedModuleId = api.moduleId ?? api.module?.id ?? api.feature?.module?.id ?? api.feature?.moduleId;
         const normalizedFeatureId = api.featureId ?? api.feature?.id;
@@ -364,7 +365,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
             expanded: false,
             explicitlySelected: false,
             selectedByAncestor: false,
-            apis: apis
+            apis: apiItems
               .filter((api: any) => {
                 const featureId = api.featureId ?? api.feature?.id;
                 return String(featureId) === String(feature.id);
@@ -374,7 +375,7 @@ const buildPermissionTree = async (): Promise<ModuleNode[]> => {
                 checked: false,
               })),
           })),
-        apis: apis
+        apis: apiItems
           .filter((api: any) => {
             const normalizedSubModuleId = api.subModuleId ?? api.subModule?.id ?? api.feature?.subModule?.id;
             const normalizedFeatureId = api.featureId ?? api.feature?.id;

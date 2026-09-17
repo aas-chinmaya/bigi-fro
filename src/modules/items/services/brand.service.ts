@@ -21,7 +21,7 @@ export const brandservice = {
     return brandApi.delete(id);
   },
 
-  restoreBrand(id: string) {
-    return brandApi.restore(id);
-  },
+  // restoreBrand(id: string) {
+  //   return brandApi.restore(id);
+  // },
 };

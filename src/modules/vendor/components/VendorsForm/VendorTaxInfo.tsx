@@ -1,5 +1,4 @@
 "use client";
-
 import { UseFormReturn } from "react-hook-form";
 import { FileCheck } from "lucide-react";
 
@@ -45,7 +44,11 @@ export default function VendorTaxInfo({ form }: Props) {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <FormField label="GST Type" error={((errors as any).gstType?.message as string | undefined)}>
+          <FormField
+            label="GST Type"
+            required
+            error={((errors as any).gstType?.message as string | undefined)}
+          >
             <Select
               value={watch("gstType") ?? "REGISTERED"}
               onValueChange={(value) => setValue("gstType", value)}
@@ -67,7 +70,9 @@ export default function VendorTaxInfo({ form }: Props) {
             <Input
               placeholder="22AAAAA0000A1Z5"
               className="rounded-xl uppercase"
-              {...register("gstin")}
+              {...register("gstin", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
@@ -75,7 +80,9 @@ export default function VendorTaxInfo({ form }: Props) {
             <Input
               placeholder="ABCDE1234F"
               className="rounded-xl uppercase"
-              {...register("pan")}
+              {...register("pan", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
@@ -83,15 +90,19 @@ export default function VendorTaxInfo({ form }: Props) {
             <Input
               placeholder="MUMA12345A"
               className="rounded-xl uppercase"
-              {...register("tan")}
+              {...register("tan", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
           <FormField label="MSME" error={((errors as any).msme?.message as string | undefined)}>
             <Input
               placeholder="UDYAM-XX-00-0000000"
-              className="rounded-xl"
-              {...register("msme")}
+              className="rounded-xl uppercase"
+              {...register("msme", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
@@ -99,7 +110,9 @@ export default function VendorTaxInfo({ form }: Props) {
             <Input
               placeholder="U74999DL2020PTC123456"
               className="rounded-xl uppercase"
-              {...register("cin")}
+              {...register("cin", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
@@ -107,7 +120,9 @@ export default function VendorTaxInfo({ form }: Props) {
             <Input
               placeholder="1234 5678 9012"
               className="rounded-xl"
-              {...register("aadhaar")}
+              {...register("aadhaar", {
+                setValueAs: (value: string) => value?.replace(/\s+/g, "") ?? "",
+              })}
             />
           </FormField>
 
@@ -137,7 +152,9 @@ export default function VendorTaxInfo({ form }: Props) {
               <Input
                 placeholder="Section 194Q"
                 className="rounded-xl bg-white"
-                {...register("tdsSection")}
+                {...register("tdsSection", {
+                  setValueAs: (value: string) => value?.trim() ?? "",
+                })}
               />
             </FormField>
           </div>

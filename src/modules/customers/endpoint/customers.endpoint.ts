@@ -12,6 +12,15 @@ export const CUSTOMER_ENDPOINTS = {
   // Fetch customer dashboard by ID
   DASHBOARD: (id: string) => `/customers/${id}/dashboard`,
 
+  // Fetch complete customer ledger by ID
+  LEDGER: (id: string) => `/customers/${id}/ledger`,
+
+  // Fetch customer statement by ID
+  STATEMENT: (id: string) => `/customers/${id}/statement`,
+
+  // Fetch complete customer purchase history by ID
+  PURCHASES: (id: string) => `/customers/${id}/purchases`,
+
   // Update customer
   UPDATE: (id: string) => `/customers/update/${id}`,
 

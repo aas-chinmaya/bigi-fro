@@ -54,6 +54,45 @@ export const customersService = {
     }
   },
 
+    /**
+   * Fetch complete customer ledger
+   */
+  async getCustomerLedger(id: string) {
+    try {
+      const response = await customerApi.getLedger(id);
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching customer ledger:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch customer statement for a date range
+   */
+  async getCustomerStatement(id: string, fromDate?: string, toDate?: string) {
+    try {
+      const response = await customerApi.getStatement(id, fromDate, toDate);
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching customer statement:", error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Fetch complete customer purchase history
+   */
+  async getCustomerPurchaseHistory(id: string) {
+    try {
+      const response = await customerApi.getPurchaseHistory(id);
+      return response.data || response;
+    } catch (error) {
+      console.error("Error fetching customer purchase history:", error);
+      throw error;
+    }
+  },
+
   /**
    * Create new customer
    */

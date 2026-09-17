@@ -17,7 +17,7 @@
 
 
 
-   /* Generic Semantic  Colors */
+    /* Generic Semantic  Colors */
   --success: #059669;
   --info: #2563eb;
   --warning: #ea580c;
@@ -37,17 +37,15 @@
   --color-text: var(--text);
   --color-muted: var(--muted);
 
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 
-  
-   --color-success: var(--success);
+  --color-success: var(--success);
   --color-info: var(--info);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-violet: var(--violet);
   --color-neutral: var(--neutral);
-
-  --font-heading: var(--font-heading);
-  --font-body: var(--font-body);
 }
 
 html,
@@ -101,4 +99,8 @@ h6 {
 * {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
+}
+
+.pi-cust-gap{
+  gap: 18px !important;
 }

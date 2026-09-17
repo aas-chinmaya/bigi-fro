@@ -59,6 +59,11 @@ export default function AddCustomers() {
       rewardPoints: 0,
       isActive: true,
       notes: "",
+      addresses: [{
+        type: "BILLING", label: "", contactPerson: "", contactNumber: "",
+        addressLine1: "", addressLine2: "", landmark: "", city: "", district: "",
+        state: "", stateCode: "", country: "", pincode: "", isDefault: true, isActive: true,
+      }],
     },
   });
 
@@ -69,6 +74,10 @@ export default function AddCustomers() {
         businessId: data.businessId,
         branchId: data.branchId,
         createdBy: user?.id || "",
+        addresses: data.addresses.map((address) => ({
+          businessId: data.businessId,
+          ...address,
+        })),
       };
 
       if (!payload.createdBy) {
@@ -103,6 +112,146 @@ export default function AddCustomers() {
           </FormField>
         </CardContent>
       </Card>
+
+     <Card>
+  <CardHeader>
+    <h3 className="text-lg font-semibold">Address</h3>
+    <p className="text-sm text-muted">
+      Add the customer&apos;s contact and location details.
+    </p>
+  </CardHeader>
+
+  <CardContent className="grid gap-5 ">
+    {/* Address Line 1 */}
+    <FormField
+      label="Address Line 1"
+      error={errors.addresses?.[0]?.addressLine1?.message}
+    >
+      <Input
+        placeholder="Street / building"
+        {...register("addresses.0.addressLine1")}
+      />
+    </FormField>
+
+    {/* Address Line 2 */}
+    <FormField
+      label="Address Line 2"
+      error={errors.addresses?.[0]?.addressLine2?.message}
+    >
+      <Input
+        placeholder="Area / locality"
+        {...register("addresses.0.addressLine2")}
+      />
+    </FormField>
+
+    {/* Landmark + City */}
+    <div className="grid gap-5 md:grid-cols-2">
+      <FormField
+        label="Landmark"
+        error={errors.addresses?.[0]?.landmark?.message}
+      >
+        <Input
+          placeholder="Nearby landmark"
+          {...register("addresses.0.landmark")}
+        />
+      </FormField>
+
+      <FormField
+        label="City"
+        error={errors.addresses?.[0]?.city?.message}
+      >
+        <Input
+          placeholder="City"
+          {...register("addresses.0.city")}
+        />
+      </FormField>
+    </div>
+
+    {/* District + State + Pincode */}
+    <div className="grid gap-5 md:grid-cols-3">
+      <FormField
+        label="District"
+        error={errors.addresses?.[0]?.district?.message}
+      >
+        <Input
+          placeholder="District"
+          {...register("addresses.0.district")}
+        />
+      </FormField>
+
+      <FormField
+        label="State"
+        error={errors.addresses?.[0]?.state?.message}
+      >
+        <Input
+          placeholder="State"
+          {...register("addresses.0.state")}
+        />
+      </FormField>
+
+      <FormField
+        label="Pincode"
+        error={errors.addresses?.[0]?.pincode?.message}
+      >
+        <Input
+          placeholder="751024"
+          {...register("addresses.0.pincode")}
+        />
+      </FormField>
+    </div>
+
+    {/* Country + Default Address */}
+    <div className="grid gap-5 md:grid-cols-2">
+      <FormField
+        label="Country"
+        error={errors.addresses?.[0]?.country?.message}
+      >
+        <Input
+          placeholder="India"
+          {...register("addresses.0.country")}
+        />
+      </FormField>
+
+      <FormField label="Default Address">
+        <div className="flex h-10 items-center gap-6">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="defaultAddress"
+              value="YES"
+              checked={watch("addresses.0.isDefault") === true}
+              onChange={() =>
+                setValue("addresses.0.isDefault", true, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }
+              className="h-4 w-4 accent-primary"
+            />
+            Yes
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="defaultAddress"
+              value="NO"
+              checked={watch("addresses.0.isDefault") === false}
+              onChange={() =>
+                setValue("addresses.0.isDefault", false, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }
+              className="h-4 w-4 accent-primary"
+            />
+            No
+          </label>
+        </div>
+      </FormField>
+    </div>
+  </CardContent>
+</Card>
 
       <Card>
         <CardHeader>

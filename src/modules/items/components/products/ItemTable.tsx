@@ -74,7 +74,7 @@ export default function ProductTable({
           {
             id: "tax",
             header: "Tax",
-            cell: ({ row }) => <span>{row.original.tax?.hsnCode ?? "-"}</span>,
+            cell: ({ row }) => <span>{row.original.tax?.gstRate ?? "-"}%</span>,
           },
           { accessorKey: "minimumStock", header: "Min Stock" },
           { accessorKey: "maximumStock", header: "Max Stock" },

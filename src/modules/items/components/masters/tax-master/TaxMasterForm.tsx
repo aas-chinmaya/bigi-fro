@@ -30,8 +30,7 @@ export default function TaxMasterForm({ taxMasterId }: TaxMasterFormProps) {
   } = useForm<TaxMasterFormData>({
     resolver: zodResolver(taxMasterSchema),
     defaultValues: {
-      hsnCode: "",
-      sacCode: "",
+     
       gstRate: 0,
       cgst: 0,
       sgst: 0,
@@ -57,8 +56,7 @@ export default function TaxMasterForm({ taxMasterId }: TaxMasterFormProps) {
         const taxMaster = response?.data?.data;
 
         reset({
-          hsnCode: taxMaster?.hsnCode ?? "",
-          sacCode: taxMaster?.sacCode ?? "",
+        
           gstRate: Number(taxMaster?.gstRate ?? 0),
           cgst: Number(taxMaster?.cgst ?? 0),
           sgst: Number(taxMaster?.sgst ?? 0),
@@ -84,8 +82,7 @@ export default function TaxMasterForm({ taxMasterId }: TaxMasterFormProps) {
       setIsSubmittingAction(true);
 
       const payload = {
-        hsnCode: data.hsnCode.trim(),
-        sacCode: data.sacCode.trim(),
+       
         gstRate: Number(data.gstRate),
         cgst: Number(data.cgst),
         sgst: Number(data.sgst),
@@ -124,27 +121,7 @@ export default function TaxMasterForm({ taxMasterId }: TaxMasterFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card className="p-6">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{isEdit ? "Edit Tax Master" : "Add Tax Master"}</h1>
-            <p className="mt-1 text-gray-500">{isEdit ? "Update the tax master details." : "Create a new GST tax master entry."}</p>
-          </div>
-          {isEdit && <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600">Editing</span>}
-        </div>
-
         <div className="grid gap-5 md:grid-cols-2">
-          <FormField>
-            <Label htmlFor="hsnCode">HSN Code</Label>
-            <Input id="hsnCode" placeholder="Enter HSN code" {...register("hsnCode")} />
-            <FormError message={errors.hsnCode?.message} />
-          </FormField>
-
-          <FormField>
-            <Label htmlFor="sacCode">SAC Code</Label>
-            <Input id="sacCode" placeholder="Enter SAC code" {...register("sacCode")} />
-            <FormError message={errors.sacCode?.message} />
-          </FormField>
-
           <FormField>
             <Label htmlFor="gstRate">GST Rate (%)</Label>
             <Input id="gstRate" type="number" step="0.01" placeholder="Enter GST rate" {...register("gstRate", { valueAsNumber: true })} />

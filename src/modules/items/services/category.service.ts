@@ -21,7 +21,7 @@ export const categoryservice = {
     return categoryApi.delete(id);
   },
 
-  restoreCategory(id: string) {
-    return categoryApi.restore(id);
-  },
+  // restoreCategory(id: string) {
+  //   return categoryApi.restore(id);
+  // },
 };

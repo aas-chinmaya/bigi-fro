@@ -14,7 +14,7 @@ import VendorDocuments from "./VendorDocuments";
 import VendorPaymentInfo from "./VendorPaymentInfo";
 import VendorTaxInfo from "./VendorTaxInfo";
 import { vendorFormSchema } from "@/modules/vendor/validation";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 
 import {
   createBasicInformation,
@@ -24,6 +24,7 @@ import {
   saveBanking,
   saveGSTTax,
   markSectionSaved,
+  resetProgress,
 } from "@/modules/vendor/store/vendorSlice";
 import { vendorApi } from "@/modules/vendor/api/vendor.api";
 
@@ -99,7 +100,6 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
     upiId: "",
     accountType: "",
     cancelledCheque: "",
-    isPrimary: true,
   };
 
   const baseDocument = {
@@ -253,7 +253,6 @@ const buildDefaultValues = (defaults?: Record<string, any>): Record<string, any>
     accountType: defaults?.banks?.[0]?.accountType ?? bankSource.accountType ?? "",
     cancelledCheque:
       defaults?.banks?.[0]?.cancelledCheque ?? bankSource.cancelledCheque ?? "",
-    isPrimary: defaults?.banks?.[0]?.isPrimary ?? true,
   };
 
   const normalizedDocuments =
@@ -360,20 +359,18 @@ export default function VendorForm({
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
   const [savingStep, setSavingStep] = useState(false);
-  const isEditMode = mode === "edit" || Boolean(defaultValues);
+  const [completedSteps, setCompletedSteps] = useState<boolean[]>(
+    () => steps.map(() => false)
+  );
+  const isEditMode = mode === "edit";
   const [vendorId, setVendorId] = useState<string | null>(
     (defaultValues && (defaultValues.id || defaultValues._id || defaultValues.vendorId)) || null
   );
 
+  const currentStep = steps[activeStep] ?? steps[0];
+  const isLastStep = activeStep === steps.length - 1;
+
   const dispatch = useAppDispatch();
-
-  const progress = useAppSelector(
-    (state) => state.vendors.progress
-  );
-
-  useEffect(() => {
-    console.log("VendorForm isEditMode:", isEditMode, "defaultValues:", defaultValues);
-  }, [isEditMode, defaultValues]);
 
   const resolvedDefaultValues = useMemo(
     () => buildDefaultValues(defaultValues),
@@ -388,12 +385,9 @@ export default function VendorForm({
     defaultValues: resolvedDefaultValues,
   });
 
-  useEffect(() => {
-    form.reset(resolvedDefaultValues);
-  }, [resolvedDefaultValues, form]);
-
-  const currentStep = steps[activeStep];
-  const isLastStep = activeStep === steps.length - 1;
+  const getNestedValue = (source: Record<string, any>, fieldPath: string) => {
+    return fieldPath.split(".").reduce<any>((acc, segment) => acc?.[segment], source);
+  };
 
   // Fields to validate per step
   const stepValidationFields: string[][] = [
@@ -465,8 +459,25 @@ export default function VendorForm({
     ["documents"],
   ];
 
+  const progress = useMemo(() => {
+    const completedCount = completedSteps.filter(Boolean).length;
+    return Math.round((completedCount / steps.length) * 100);
+  }, [completedSteps]);
+
+  useEffect(() => {
+    console.log("VendorForm isEditMode:", isEditMode, "defaultValues:", defaultValues);
+  }, [isEditMode, defaultValues]);
+
+  useEffect(() => {
+    form.reset(resolvedDefaultValues);
+  }, [resolvedDefaultValues, form]);
+
   const handleNext = async () => {
     const fields = stepValidationFields[activeStep] || [];
+
+    if (!currentStep) {
+      return;
+    }
 
     // debug: log invocation and current step
     // eslint-disable-next-line no-console
@@ -635,7 +646,7 @@ export default function VendorForm({
 
           case "bank": {
             const b = values.banks?.[0] ?? values.bank ?? {};
-            const bankPayload = {
+            const bankPayload: any = {
               accountHolder: b.accountHolder ?? "",
               bankName: b.bankName ?? "",
               accountNumber: b.accountNumber ?? "",
@@ -645,6 +656,8 @@ export default function VendorForm({
               accountType: b.accountType ?? undefined,
               cancelledCheque: b.cancelledCheque ?? undefined,
             };
+
+            delete bankPayload.isPrimary;
 
             await dispatch(saveBanking({ vendorId: vendorId ?? undefined, data: { bank: bankPayload } })).unwrap();
             dispatch(markSectionSaved("bank"));
@@ -710,6 +723,12 @@ export default function VendorForm({
         }
 
         // proceed to next step when API succeeds
+        setCompletedSteps((previous) =>
+          previous.map((completed, index) =>
+            index === activeStep ? true : completed
+          )
+        );
+
         if (!isLastStep) {
           setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
         } else {

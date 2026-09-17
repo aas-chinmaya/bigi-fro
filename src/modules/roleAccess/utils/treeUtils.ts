@@ -78,6 +78,11 @@ export const findNodeChecked = (tree: ModuleNode[], type: NodeType, ids: ToggleI
   return feature?.checked ?? null;
 };
 
+const getExplicitAllowed = (node: object): boolean | undefined => {
+  if (!Object.prototype.hasOwnProperty.call(node, 'isAllowed')) return undefined;
+  return Boolean((node as { isAllowed?: boolean }).isAllowed);
+};
+
 export const recalculateTree = (tree: ModuleNode[]): ModuleNode[] =>
   tree.map((module) => {
     const moduleFeatures = module.features.map((feature) => {
@@ -98,13 +103,34 @@ export const recalculateTree = (tree: ModuleNode[]): ModuleNode[] =>
       });
       const hasAnyFeatureSelected = features.some((feature) => feature.checked || feature.indeterminate);
       const hasAnySubmoduleApiSelected = submodule.apis.some((api) => api.checked);
-      const submoduleChecked = Boolean(submodule.explicitlySelected || submodule.selectedByAncestor);
-      const submoduleIndeterminate = !submoduleChecked && (hasAnyFeatureSelected || hasAnySubmoduleApiSelected);
+      const explicitSubmoduleAllowed = getExplicitAllowed(submodule);
+      const hasExplicitSubmoduleAccess = explicitSubmoduleAllowed !== undefined;
+      const hasDeniedChild = hasExplicitSubmoduleAccess && (
+        features.some((feature) => !feature.checked || feature.indeterminate) ||
+        submodule.apis.some((api) => !api.checked)
+      );
+      const submoduleChecked = hasExplicitSubmoduleAccess
+        ? explicitSubmoduleAllowed === true && !hasDeniedChild
+        : Boolean(submodule.explicitlySelected || submodule.selectedByAncestor);
+      const submoduleIndeterminate = hasExplicitSubmoduleAccess
+        ? (explicitSubmoduleAllowed === true || hasAnyFeatureSelected || hasAnySubmoduleApiSelected) && hasDeniedChild
+        : !submoduleChecked && (hasAnyFeatureSelected || hasAnySubmoduleApiSelected);
       return { ...submodule, features, checked: submoduleChecked, indeterminate: submoduleIndeterminate };
     });
     const hasAnySubmoduleSelected = submodules.some((submodule) => submodule.checked || submodule.indeterminate);
-    const moduleChecked = Boolean(module.explicitlySelected || module.selectedByAncestor);
-    const moduleIndeterminate = !moduleChecked && (hasAnySubmoduleSelected || hasAnyModuleFeatureSelected || hasAnyModuleApiSelected);
+    const explicitModuleAllowed = getExplicitAllowed(module);
+    const hasExplicitModuleAccess = explicitModuleAllowed !== undefined;
+    const hasDeniedChild = hasExplicitModuleAccess && (
+      submodules.some((submodule) => !submodule.checked || submodule.indeterminate) ||
+      moduleFeatures.some((feature) => !feature.checked || feature.indeterminate) ||
+      module.apis.some((api) => !api.checked)
+    );
+    const moduleChecked = hasExplicitModuleAccess
+      ? explicitModuleAllowed === true && !hasDeniedChild
+      : Boolean(module.explicitlySelected || module.selectedByAncestor);
+    const moduleIndeterminate = hasExplicitModuleAccess
+      ? (explicitModuleAllowed === true || hasAnySubmoduleSelected || hasAnyModuleFeatureSelected || hasAnyModuleApiSelected) && hasDeniedChild
+      : !moduleChecked && (hasAnySubmoduleSelected || hasAnyModuleFeatureSelected || hasAnyModuleApiSelected);
     return { ...module, features: moduleFeatures, submodules, checked: moduleChecked, indeterminate: moduleIndeterminate };
   });
 
@@ -116,8 +142,15 @@ export const applyPermissionsToTree = (tree: ModuleNode[], permissions: Permissi
     module: new Set(permissions.moduleIds.map(String)),
   };
 
+  const hasExplicitAccess = (node: object) => Object.prototype.hasOwnProperty.call(node, 'isAllowed');
+  const getCheckedState = (node: object, id: string | number | undefined, allowedIds: Set<string>, inherited: boolean) => {
+    if (hasExplicitAccess(node)) return Boolean((node as { isAllowed?: boolean }).isAllowed);
+    return (id != null && allowedIds.has(String(id))) || inherited;
+  };
+
   const updatedTree = tree.map((module) => {
-    const moduleChecked = ids.module.has(String(module.id));
+    const moduleChecked = getCheckedState(module, module.id, ids.module, false);
+    const moduleHasExplicitAccess = hasExplicitAccess(module);
     return {
       ...module,
       checked: moduleChecked,
@@ -126,40 +159,68 @@ export const applyPermissionsToTree = (tree: ModuleNode[], permissions: Permissi
       indeterminate: false,
       expanded: false,
       features: module.features.map((feature) => {
-        const featureChecked = ids.feature.has(String(feature.id));
+        const featureChecked = getCheckedState(feature, feature.id, ids.feature, moduleChecked && !moduleHasExplicitAccess);
         return {
           ...feature,
           checked: featureChecked,
-          explicitlySelected: featureChecked,
-          selectedByAncestor: moduleChecked,
+          explicitlySelected: hasExplicitAccess(feature) ? featureChecked : featureChecked && !moduleHasExplicitAccess,
+          selectedByAncestor: featureChecked && !hasExplicitAccess(feature) && !moduleHasExplicitAccess,
           indeterminate: false,
           expanded: false,
-          apis: feature.apis.map((api) => ({ ...api, checked: ids.api.has(String(api.id)) || featureChecked || moduleChecked })),
+          apis: feature.apis.map((api) => ({
+            ...api,
+            checked: getCheckedState(api, api.id, ids.api, featureChecked && !hasExplicitAccess(feature) && !moduleHasExplicitAccess),
+          })),
         };
       }),
-      apis: module.apis.map((api) => ({ ...api, checked: ids.api.has(String(api.id)) || moduleChecked })),
+      apis: module.apis.map((api) => ({
+        ...api,
+        checked: getCheckedState(api, api.id, ids.api, moduleChecked && !moduleHasExplicitAccess),
+      })),
       submodules: module.submodules.map((submodule) => {
-        const submoduleChecked = ids.subModule.has(String(submodule.id));
+        const submoduleChecked = getCheckedState(submodule, submodule.id, ids.subModule, moduleChecked && !moduleHasExplicitAccess);
+        const submoduleHasExplicitAccess = hasExplicitAccess(submodule);
         return {
           ...submodule,
           checked: submoduleChecked,
           explicitlySelected: submoduleChecked,
-          selectedByAncestor: moduleChecked,
+          selectedByAncestor: false,
           indeterminate: false,
           expanded: false,
           features: submodule.features.map((feature) => {
-            const featureChecked = ids.feature.has(String(feature.id));
+            const featureChecked = getCheckedState(
+              feature,
+              feature.id,
+              ids.feature,
+              submoduleChecked && !submoduleHasExplicitAccess && !moduleHasExplicitAccess,
+            );
             return {
               ...feature,
               checked: featureChecked,
-              explicitlySelected: featureChecked,
-              selectedByAncestor: submoduleChecked || moduleChecked,
+              explicitlySelected: hasExplicitAccess(feature) ? featureChecked : featureChecked && !submoduleHasExplicitAccess && !moduleHasExplicitAccess,
+              selectedByAncestor: featureChecked && !hasExplicitAccess(feature) && !submoduleHasExplicitAccess && !moduleHasExplicitAccess,
               indeterminate: false,
               expanded: false,
-              apis: feature.apis.map((api) => ({ ...api, checked: ids.api.has(String(api.id)) || featureChecked || submoduleChecked || moduleChecked })),
+              apis: feature.apis.map((api) => ({
+                ...api,
+                checked: getCheckedState(
+                  api,
+                  api.id,
+                  ids.api,
+                  featureChecked && !hasExplicitAccess(feature) && !submoduleHasExplicitAccess && !moduleHasExplicitAccess,
+                ),
+              })),
             };
           }),
-          apis: submodule.apis.map((api) => ({ ...api, checked: ids.api.has(String(api.id)) || submoduleChecked || moduleChecked })),
+          apis: submodule.apis.map((api) => ({
+            ...api,
+            checked: getCheckedState(
+              api,
+              api.id,
+              ids.api,
+              submoduleChecked && !submoduleHasExplicitAccess && !moduleHasExplicitAccess,
+            ),
+          })),
         };
       }),
     };

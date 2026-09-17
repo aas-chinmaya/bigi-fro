@@ -1,7 +1,7 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { MapPin, Truck } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import {
   Checkbox,
@@ -29,9 +29,40 @@ const countries = [
 
 const statesByCountry: Record<string, { id: string; name: string }[]> = {
   "country-india": [
-    { id: "state-india-odisha", name: "Odisha" },
-    { id: "state-india-maharashtra", name: "Maharashtra" },
+    { id: "state-india-andhra-pradesh", name: "Andhra Pradesh" },
+    { id: "state-india-arunachal-pradesh", name: "Arunachal Pradesh" },
+    { id: "state-india-assam", name: "Assam" },
+    { id: "state-india-bihar", name: "Bihar" },
+    { id: "state-india-chhattisgarh", name: "Chhattisgarh" },
+    { id: "state-india-goa", name: "Goa" },
+    { id: "state-india-gujarat", name: "Gujarat" },
+    { id: "state-india-haryana", name: "Haryana" },
+    { id: "state-india-himachal-pradesh", name: "Himachal Pradesh" },
+    { id: "state-india-jharkhand", name: "Jharkhand" },
     { id: "state-india-karnataka", name: "Karnataka" },
+    { id: "state-india-kerala", name: "Kerala" },
+    { id: "state-india-madhya-pradesh", name: "Madhya Pradesh" },
+    { id: "state-india-maharashtra", name: "Maharashtra" },
+    { id: "state-india-manipur", name: "Manipur" },
+    { id: "state-india-meghalaya", name: "Meghalaya" },
+    { id: "state-india-mizoram", name: "Mizoram" },
+    { id: "state-india-nagaland", name: "Nagaland" },
+    { id: "state-india-odisha", name: "Odisha" },
+    { id: "state-india-punjab", name: "Punjab" },
+    { id: "state-india-rajasthan", name: "Rajasthan" },
+    { id: "state-india-sikkim", name: "Sikkim" },
+    { id: "state-india-tamil-nadu", name: "Tamil Nadu" },
+    { id: "state-india-telangana", name: "Telangana" },
+    { id: "state-india-tripura", name: "Tripura" },
+    { id: "state-india-uttar-pradesh", name: "Uttar Pradesh" },
+    { id: "state-india-uttarakhand", name: "Uttarakhand" },
+    { id: "state-india-west-bengal", name: "West Bengal" },
+    { id: "state-india-andaman-nicobar", name: "Andaman and Nicobar Islands" },
+    { id: "state-india-chandigarh", name: "Chandigarh" },
+    { id: "state-india-dadra-nagar", name: "Dadra and Nagar Haveli and Daman and Diu" },
+    { id: "state-india-lakshadweep", name: "Lakshadweep" },
+    { id: "state-india-delhi", name: "Delhi" },
+    { id: "state-india-puducherry", name: "Puducherry" },
   ],
   "country-uae": [
     { id: "state-uae-dubai", name: "Dubai" },
@@ -237,15 +268,10 @@ export default function VendorAddress({ form }: Props) {
         </div>
 
         {!sameAsBilling && (
-          <div className="mt-4 rounded-2xl bg-amber-50/70 p-4">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white">
-                <Truck size={16} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">Shipping address</h3>
-                <p className="text-sm text-slate-500">Used when delivering goods to a different location.</p>
-              </div>
+          <div className="mt-6 border-t border-primary/30 pt-6">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-slate-900">Shipping address</h3>
+              <p className="text-sm text-slate-500">Used when delivering goods to a different location.</p>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">

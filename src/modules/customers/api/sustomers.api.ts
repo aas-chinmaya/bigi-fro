@@ -29,6 +29,23 @@ export const customerApi = {
     return api.get(CUSTOMER_ENDPOINTS.DASHBOARD(id));
   },
 
+  // Fetch complete ledger data for a customer
+  getLedger(id: string) {
+    return api.get(CUSTOMER_ENDPOINTS.LEDGER(id));
+  },
+
+  // Fetch customer statement for a date range
+  getStatement(id: string, fromDate?: string, toDate?: string) {
+    return api.get(CUSTOMER_ENDPOINTS.STATEMENT(id), {
+      params: { fromDate, toDate },
+    });
+  },
+
+  // Fetch complete purchase history for a customer
+  getPurchaseHistory(id: string) {
+    return api.get(CUSTOMER_ENDPOINTS.PURCHASES(id));
+  },
+
   // Update customer
   update(id: string, data: any) {
     return api.patch(CUSTOMER_ENDPOINTS.UPDATE(id), data);

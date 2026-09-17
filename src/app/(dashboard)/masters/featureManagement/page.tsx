@@ -1,6 +1,6 @@
 "use client";
 
-import FeatureMasterPage from "@/modules/masters/components/feature";
+import FeatureMasterPage from "@/modules/masters/components/features/allFeature";
 
 export default function Page() {
   return (

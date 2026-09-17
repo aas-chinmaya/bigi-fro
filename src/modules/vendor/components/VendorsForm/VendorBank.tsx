@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { Landmark } from "lucide-react";
+import { Eye, EyeOff, Landmark } from "lucide-react";
 
 import {
   Input,
-  Checkbox,
   Select,
   SelectTrigger,
   SelectValue,
@@ -19,6 +19,8 @@ interface Props {
 }
 
 export default function VendorBank({ form }: Props) {
+  const [showAccountNumber, setShowAccountNumber] = useState(false);
+
   const {
     register,
     watch,
@@ -75,15 +77,29 @@ export default function VendorBank({ form }: Props) {
             required
             error={bankErrors?.[0]?.accountNumber?.message}
           >
-            <Input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]+"
-              maxLength={20}
-              placeholder="123456789012"
-              className="rounded-xl"
-              {...register("banks.0.accountNumber")}
-            />
+            <div className="relative">
+              <Input
+                type={showAccountNumber ? "text" : "password"}
+                inputMode="numeric"
+                pattern="[0-9]+"
+                maxLength={18}
+                placeholder="123456789012"
+                className="rounded-xl pr-12"
+                {...register("banks.0.accountNumber")}
+              />
+              <button
+                type="button"
+                aria-label={
+                  showAccountNumber
+                    ? "Hide account number"
+                    : "Show account number"
+                }
+                onClick={() => setShowAccountNumber((previous) => !previous)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-primary/30"
+              >
+                {showAccountNumber ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </FormField>
 
           <FormField
@@ -94,7 +110,9 @@ export default function VendorBank({ form }: Props) {
             <Input
               placeholder="SBIN0001234"
               className="rounded-xl uppercase"
-              {...register("banks.0.ifscCode")}
+              {...register("banks.0.ifscCode", {
+                setValueAs: (value: string) => value?.trim().toUpperCase() ?? "",
+              })}
             />
           </FormField>
 
@@ -110,11 +128,17 @@ export default function VendorBank({ form }: Props) {
             <Input
               placeholder="vendor@upi"
               className="rounded-xl"
-              {...register("banks.0.upiId")}
+              {...register("banks.0.upiId", {
+                setValueAs: (value: string) => value?.trim() ?? "",
+              })}
             />
           </FormField>
 
-          <FormField label="Account Type" error={bankErrors?.[0]?.accountType?.message}>
+          <FormField
+            label="Account Type"
+            required
+            error={bankErrors?.[0]?.accountType?.message}
+          >
             <Select
               value={watch("banks.0.accountType") ?? ""}
               onValueChange={(value) => setValue("banks.0.accountType", value)}
@@ -138,24 +162,6 @@ export default function VendorBank({ form }: Props) {
             />
           </FormField>
 
-          <div className="md:col-span-2">
-            <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-indigo-50/80 px-4 py-3.5 transition hover:bg-indigo-50">
-              <Checkbox
-                checked={watch("banks.0.isPrimary")}
-                onCheckedChange={(checked) =>
-                  setValue("banks.0.isPrimary", Boolean(checked))
-                }
-              />
-              <div>
-                <p className="text-sm font-medium text-slate-800">
-                  Primary bank account
-                </p>
-                <p className="text-xs text-slate-500">
-                  Default account for payments
-                </p>
-              </div>
-            </label>
-          </div>
         </div>
       </div>
     </section>

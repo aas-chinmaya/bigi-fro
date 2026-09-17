@@ -1,4 +1,5 @@
 import api from "@/services/api";
+import { validateVendorBankPayload, validateVendorTaxPayload } from "@/modules/vendor/validation";
 
 const normalizeStatus = (value?: string) => {
   if (!value) return "ACTIVE";
@@ -87,7 +88,7 @@ const appendFormValue = (formData: FormData, key: string, value: unknown) => {
 };
 
 export const vendorApi = {
-  async getAll(params?: { page?: number; limit?: number }) {
+  async getAll(params?: { page?: number; limit?: number; search?: string }) {
     return api.get("/vendor/getall", {
       params,
     });
@@ -308,15 +309,31 @@ export const vendorApi = {
   },
 
   async saveBanking(id: string, data: Record<string, any>) {
-    // backend expects JSON in req.body for bank
     const payload = data.bank ?? data;
-    return api.post(`/vendor/savebank/${id}`, payload, { headers: { Accept: "application/json" } });
+    const ifsc = payload.ifsc ?? payload.ifscCode ?? "";
+    const normalizedPayload = {
+      ...payload,
+      ifsc,
+    };
+    const validated = validateVendorBankPayload({
+      ...normalizedPayload,
+      ifscCode: ifsc,
+    });
+
+    const { ifscCode: _ignoredIfscCode, isPrimary: _ignoredIsPrimary, ...validatedBank } = validated as Record<string, any>;
+
+    return api.post(
+      `/vendor/savebank/${id}`,
+      { ...validatedBank, ifsc: ifsc || validatedBank.ifsc || "" },
+      { headers: { Accept: "application/json" } }
+    );
   },
 
   async saveGSTTax(id: string, data: Record<string, any>) {
-    // backend expects JSON in req.body for tax
     const payload = data.tax ?? data;
-    return api.post(`/vendor/savegst/${id}`, payload, { headers: { Accept: "application/json" } });
+    const validated = validateVendorTaxPayload(payload);
+
+    return api.post(`/vendor/savegst/${id}`, validated, { headers: { Accept: "application/json" } });
   },
 
   async savePurchase(id: string, data: Record<string, any>) {
@@ -343,18 +360,6 @@ export const vendorApi = {
 
   async downloadDocument(vendorId: string, documentId: string) {
     return api.get(`/vendor/${vendorId}/documents/${documentId}/download`, {
-      responseType: "blob",
-    });
-  },
-
-  async viewLogo(vendorId: string) {
-    return api.get(`/vendor/${vendorId}/logo/view`, {
-      responseType: "blob",
-    });
-  },
-
-  async downloadLogo(vendorId: string) {
-    return api.get(`/vendor/${vendorId}/logo/download`, {
       responseType: "blob",
     });
   },

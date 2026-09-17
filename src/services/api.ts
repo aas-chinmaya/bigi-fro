@@ -102,6 +102,12 @@ api.interceptors.request.use(
   ) => {
     const url = config.url || "";
 
+    // Let the browser add the multipart boundary for file uploads.
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+      delete config.headers["content-type"];
+    }
+
     const isPublic =
       isPublicAuthRoute(url);
 

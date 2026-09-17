@@ -30,19 +30,17 @@ export default function SubCategoryMasterTable({
   const filteredSubCategories = useMemo(() => {
     return subCategories.filter((subCategory) => {
       const searchTerm = search.toLowerCase();
-    const matchesSearch =
-  subCategory.subCategoryName.toLowerCase().includes(searchTerm) ||
-  subCategory.description.toLowerCase().includes(searchTerm) ||
-  subCategory.category?.categoryName.toLowerCase().includes(searchTerm) ||
-  String(subCategory.id).toLowerCase().includes(searchTerm);
+      const matchesSearch =
+        subCategory.subCategoryName.toLowerCase().includes(searchTerm) ||
+        subCategory.description.toLowerCase().includes(searchTerm) ||
+        subCategory.category?.categoryName.toLowerCase().includes(searchTerm) ||
+        String(subCategory.id).toLowerCase().includes(searchTerm);
 
       const matchesStatus =
         statusFilter === "all"
           ? true
-          : statusFilter === "active"
-            ? subCategory.status
-            : !subCategory.status;
-
+          : statusFilter === "active";
+          
       return matchesSearch && matchesStatus;
     });
   }, [subCategories, search, statusFilter]);
@@ -67,7 +65,8 @@ export default function SubCategoryMasterTable({
         </div>
       </TableToolbar>
 
-      <DataTable columns={SubCategoryMasterColumns(onRefresh)} data={filteredSubCategories} loading={loading} emptyMessage="No sub-category records found." />
+      <DataTable columns={SubCategoryMasterColumns(onRefresh)} data={filteredSubCategories} loading={loading} emptyMessage="No sub-category records found." page={page}
+        pageSize={10} />
 
       <Pagination page={page} totalPages={totalPages} totalRecords={totalRecords} onPageChange={(nextPage) => onPageChange?.(nextPage)} />
     </div>

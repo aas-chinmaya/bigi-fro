@@ -122,9 +122,6 @@ export default function CategoryMaster() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter]);
 
-
-
-
   useEffect(() => {
     fetchRows();
   }, [fetchRows]);

@@ -4,9 +4,6 @@ export const productservice = {
   getProducts(page = 1, limit = 10) {
     return productApi.getAll(page, limit);
   },
-  getAllProducts() {
-    return productApi.getAllProducts();
-  },
 
   getProductById(id: string) {
     return productApi.getById(id);

@@ -1,8 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Module, Submodule, Feature, API, Role } from '@/modules/masters/types';
+import type { ApiListResponse, MasterListResponse } from '@/modules/masters/api/master.api';
 import { notify } from '@/lib/toast';
 import {
   getModules as getModulesAPI,
+  getModulesPaginated as getModulesPaginatedAPI,
   createModule as createModuleAPI,
   updateModule as updateModuleAPI,
   deleteModule as deleteModuleAPI,
@@ -11,6 +13,7 @@ import {
   updateSubmodule as updateSubmoduleAPI,
   deleteSubmodule as deleteSubmoduleAPI,
   getFeatures as getFeaturesAPI,
+  getFeaturesPaginated as getFeaturesPaginatedAPI,
   getFeaturesByModule as getFeaturesByModuleAPI,
   getFeaturesBySubModule as getFeaturesBySubModuleAPI,
   createFeature as createFeatureAPI,
@@ -24,6 +27,7 @@ import {
   updateApi as updateApiAPI,
   deleteApi as deleteApiAPI,
   getRoles as getRolesAPI,
+  getRolesPaginated as getRolesPaginatedAPI,
   createRole as createRoleAPI,
   updateRole as updateRoleAPI,
   deleteRole as deleteRoleAPI,
@@ -32,6 +36,7 @@ import {
 export interface MastersState {
   // Modules
   modules: Module[];
+  modulesPagination: MasterListResponse<Module>['pagination'];
   modulesLoading: boolean;
   modulesError: string | null;
   
@@ -42,16 +47,19 @@ export interface MastersState {
   
   // Features
   features: Feature[];
+  featuresPagination: MasterListResponse<Feature>['pagination'];
   featuresLoading: boolean;
   featuresError: string | null;
   
   // APIs
   apis: API[];
+  apisPagination: ApiListResponse['pagination'];
   apisLoading: boolean;
   apisError: string | null;
   
   // Roles
   roles: Role[];
+  rolesPagination: MasterListResponse<Role>['pagination'];
   rolesLoading: boolean;
   rolesError: string | null;
   
@@ -68,6 +76,7 @@ export interface MastersState {
 
 const initialState: MastersState = {
   modules: [],
+  modulesPagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
   modulesLoading: false,
   modulesError: null,
   
@@ -76,14 +85,17 @@ const initialState: MastersState = {
   submodulesError: null,
   
   features: [],
+  featuresPagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
   featuresLoading: false,
   featuresError: null,
   
   apis: [],
+  apisPagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
   apisLoading: false,
   apisError: null,
   
   roles: [],
+  rolesPagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
   rolesLoading: false,
   rolesError: null,
   
@@ -114,6 +126,15 @@ export const fetchModules = createAsyncThunk<
     }
   }
 );
+
+export const fetchModulesPaginated = createAsyncThunk<
+  MasterListResponse<Module>,
+  { search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>('masters/fetchModulesPaginated', async ({ search = '', page = 1, limit = 10 }, { rejectWithValue }) => {
+  try { return await getModulesPaginatedAPI(search, page, limit); }
+  catch (error) { return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch modules'); }
+});
 
 export const createModule = createAsyncThunk<
   Module,
@@ -269,6 +290,15 @@ export const fetchFeatures = createAsyncThunk<
   }
 );
 
+export const fetchFeaturesPaginated = createAsyncThunk<
+  MasterListResponse<Feature>,
+  { search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>('masters/fetchFeaturesPaginated', async ({ search = '', page = 1, limit = 10 }, { rejectWithValue }) => {
+  try { return await getFeaturesPaginatedAPI(search, page, limit); }
+  catch (error) { return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch features'); }
+});
+
 export const fetchFeaturesByModule = createAsyncThunk<
   Feature[],
   string | number,
@@ -367,14 +397,14 @@ export const deleteFeature = createAsyncThunk<
 
 // API thunks
 export const fetchApis = createAsyncThunk<
-  API[],
-  { search?: string },
+  ApiListResponse,
+  { search?: string; page?: number; limit?: number },
   { rejectValue: string }
 >(
   'masters/fetchApis',
-  async ({ search }, { rejectWithValue }) => {
+  async ({ search, page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
-      const data = await getApisAPI(search);
+      const data = await getApisAPI(search, page, limit);
       return data;
     } catch (error) {
       if (error instanceof Error) {
@@ -519,6 +549,15 @@ export const fetchRoles = createAsyncThunk<
   }
 );
 
+export const fetchRolesPaginated = createAsyncThunk<
+  MasterListResponse<Role>,
+  { search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>('masters/fetchRolesPaginated', async ({ search = '', page = 1, limit = 10 }, { rejectWithValue }) => {
+  try { return await getRolesPaginatedAPI(search, page, limit); }
+  catch (error) { return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch roles'); }
+});
+
 export const createRole = createAsyncThunk<
   Role,
   Role,
@@ -616,6 +655,10 @@ const mastersSlice = createSlice({
       .addCase(fetchModules.rejected, (state, action) => {
         state.modulesLoading = false;
         state.modulesError = action.payload || 'Failed to fetch modules';
+      })
+      .addCase(fetchModulesPaginated.fulfilled, (state, action) => {
+        state.modules = action.payload.items;
+        state.modulesPagination = action.payload.pagination;
       });
 
     // Create module
@@ -770,6 +813,10 @@ const mastersSlice = createSlice({
       .addCase(fetchFeatures.rejected, (state, action) => {
         state.featuresLoading = false;
         state.featuresError = action.payload || 'Failed to fetch features';
+      })
+      .addCase(fetchFeaturesPaginated.fulfilled, (state, action) => {
+        state.features = action.payload.items;
+        state.featuresPagination = action.payload.pagination;
       });
 
     // Fetch features by module
@@ -872,7 +919,8 @@ const mastersSlice = createSlice({
       })
       .addCase(fetchApis.fulfilled, (state, action) => {
         state.apisLoading = false;
-        state.apis = action.payload;
+        state.apis = action.payload.items;
+        state.apisPagination = action.payload.pagination;
         state.apisError = null;
       })
       .addCase(fetchApis.rejected, (state, action) => {
@@ -1002,6 +1050,10 @@ const mastersSlice = createSlice({
       .addCase(fetchRoles.rejected, (state, action) => {
         state.rolesLoading = false;
         state.rolesError = action.payload || 'Failed to fetch roles';
+      })
+      .addCase(fetchRolesPaginated.fulfilled, (state, action) => {
+        state.roles = action.payload.items;
+        state.rolesPagination = action.payload.pagination;
       });
 
     // Create role

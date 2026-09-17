@@ -1,11 +1,11 @@
 "use client";
 
-import ModuleAndSubmodule from "@/modules/masters/components/moduleAndSubmodule";
+import AllModule from "@/modules/masters/components/module/allModule";
 
 export default function Page() {
   return (
       <div className="w-full bg-black">
-        <ModuleAndSubmodule />
+        <AllModule />
       </div>
   );
 }

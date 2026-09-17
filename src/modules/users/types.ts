@@ -81,6 +81,8 @@ export interface CreateUserPayload {
 
   roleId?: string;
 
+  role: string;
+
   password?: string;
 }
 
@@ -96,6 +98,8 @@ export interface UpdateUserPayload {
   contact?: string;
 
   roleId?: string;
+
+  role?: string;
 
   password?: string;
 }

@@ -6,114 +6,122 @@ import type {
   QuotationResponse,
   QuotationCreatePayload,
   QuotationUpdatePayload,
-  QuotationStatusPayload,
-  QuotationCancelPayload,
-  QuotationSendPayload,
-  QuotationDuplicatePayload,
-  QuotationConvertToInvoicePayload,
+  QuotationStatusChangePayload,
   QuotationStatus,
+  Quotation,
 } from "../types/quotation.types";
 
-const QUOTATION_ENDPOINT = "/quotation";
+const QUOTATION_ENDPOINT = "/quotations";
+
+function unwrapList(response: unknown): QuotationListResponse {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    Array.isArray((response as QuotationListResponse).data)
+  ) {
+    return response as QuotationListResponse;
+  }
+  if (Array.isArray(response)) {
+    return { success: true, message: "OK", data: response as Quotation[] };
+  }
+  const inner = (response as { data?: unknown })?.data;
+  if (inner && typeof inner === "object" && "data" in (inner as object)) {
+    return inner as QuotationListResponse;
+  }
+  return { success: true, message: "OK", data: [] };
+}
+
+function unwrapOne(response: unknown): QuotationResponse {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    (response as QuotationResponse).data &&
+    typeof (response as QuotationResponse).data === "object" &&
+    "id" in ((response as QuotationResponse).data as object)
+  ) {
+    return response as QuotationResponse;
+  }
+  if (response && typeof response === "object" && "id" in response) {
+    return {
+      success: true,
+      message: "OK",
+      data: response as Quotation,
+    };
+  }
+  const inner = (response as { data?: unknown })?.data;
+  if (inner && typeof inner === "object" && "data" in (inner as object)) {
+    return inner as QuotationResponse;
+  }
+  if (inner && typeof inner === "object" && "id" in (inner as object)) {
+    return {
+      success: true,
+      message: "OK",
+      data: inner as Quotation,
+    };
+  }
+  return {
+    success: false,
+    message: "Invalid quotation response",
+    data: null as unknown as Quotation,
+  };
+}
 
 export const quotationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // ========================================================
-    // GET ALL QUOTATIONS
-    // GET /quotation/all
-    // ========================================================
-
     getQuotations: builder.query<
       QuotationListResponse,
       QuotationListParams | undefined
     >({
       query: (params) => ({
-        url: `${QUOTATION_ENDPOINT}/all`,
+        url: `${QUOTATION_ENDPOINT}/`,
         method: "GET",
         params,
       }),
-
+      transformResponse: (response: unknown) => unwrapList(response),
       providesTags: (result) =>
-        result
+        result?.data?.length
           ? [
               ...result.data.map(({ id }) => ({
                 type: "Quotation" as const,
                 id,
               })),
-              {
-                type: "Quotation" as const,
-                id: "LIST",
-              },
+              { type: "Quotation" as const, id: "LIST" },
             ]
-          : [
-              {
-                type: "Quotation" as const,
-                id: "LIST",
-              },
-            ],
+          : [{ type: "Quotation" as const, id: "LIST" }],
     }),
-
-    // ========================================================
-    // GET QUOTATION BY ID
-    // GET /quotation/:id
-    // ========================================================
 
     getQuotationById: builder.query<QuotationResponse, string>({
       query: (id) => ({
         url: `${QUOTATION_ENDPOINT}/${id}`,
         method: "GET",
       }),
-
-      providesTags: (_result, _error, id) => [
-        {
-          type: "Quotation",
-          id,
-        },
-      ],
+      transformResponse: (response: unknown) => unwrapOne(response),
+      providesTags: (_r, _e, id) => [{ type: "Quotation", id }],
     }),
-
-    // ========================================================
-    // GET QUOTATIONS BY STATUS
-    // GET /quotation/status/:status
-    // ========================================================
 
     getQuotationsByStatus: builder.query<
       QuotationListResponse,
-      {
-        status: QuotationStatus;
-        params?: QuotationListParams;
-      }
+      { status: QuotationStatus; params?: QuotationListParams }
     >({
       query: ({ status, params }) => ({
         url: `${QUOTATION_ENDPOINT}/status/${status}`,
         method: "GET",
         params,
       }),
-
+      transformResponse: (response: unknown) => unwrapList(response),
       providesTags: (result) =>
-        result
+        result?.data?.length
           ? [
               ...result.data.map(({ id }) => ({
                 type: "Quotation" as const,
                 id,
               })),
-              {
-                type: "Quotation" as const,
-                id: "LIST",
-              },
+              { type: "Quotation" as const, id: "LIST" },
             ]
-          : [
-              {
-                type: "Quotation" as const,
-                id: "LIST",
-              },
-            ],
+          : [{ type: "Quotation" as const, id: "LIST" }],
     }),
-
-    // ========================================================
-    // CREATE QUOTATION
-    // POST /quotation
-    // ========================================================
 
     createQuotation: builder.mutation<
       QuotationResponse,
@@ -124,236 +132,62 @@ export const quotationApi = baseApi.injectEndpoints({
         method: "POST",
         data,
       }),
-
-      invalidatesTags: [
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
-      ],
+      transformResponse: (response: unknown) => unwrapOne(response),
+      invalidatesTags: [{ type: "Quotation", id: "LIST" }],
     }),
-
-    // ========================================================
-    // UPDATE QUOTATION
-    // PATCH /quotation/:id
-    // ========================================================
 
     updateQuotation: builder.mutation<
       QuotationResponse,
-      {
-        id: string;
-        data: QuotationUpdatePayload;
-      }
+      { id: string; data: QuotationUpdatePayload }
     >({
       query: ({ id, data }) => ({
         url: `${QUOTATION_ENDPOINT}/${id}`,
         method: "PATCH",
         data,
       }),
-
-      invalidatesTags: (_result, _error, { id }) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
+      transformResponse: (response: unknown) => unwrapOne(response),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Quotation", id },
+        { type: "Quotation", id: "LIST" },
       ],
     }),
 
-    // ========================================================
-    // DELETE QUOTATION
-    // DELETE /quotation/:id
-    // ========================================================
-
-    deleteQuotation: builder.mutation<
-      QuotationResponse,
-      string
-    >({
+    deleteQuotation: builder.mutation<QuotationResponse, string>({
       query: (id) => ({
         url: `${QUOTATION_ENDPOINT}/${id}`,
         method: "DELETE",
       }),
-
-      invalidatesTags: (_result, _error, id) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
+      transformResponse: (response: unknown) => unwrapOne(response),
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Quotation", id },
+        { type: "Quotation", id: "LIST" },
       ],
     }),
 
-    // ========================================================
-    // UPDATE QUOTATION STATUS
-    // PATCH /quotation/:id/status
-    // ========================================================
-
     updateQuotationStatus: builder.mutation<
       QuotationResponse,
-      {
-        id: string;
-        data: QuotationStatusPayload;
-      }
+      { id: string; data: QuotationStatusChangePayload }
     >({
       query: ({ id, data }) => ({
         url: `${QUOTATION_ENDPOINT}/${id}/status`,
         method: "PATCH",
         data,
       }),
-
-      invalidatesTags: (_result, _error, { id }) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
-      ],
-    }),
-
-    // ========================================================
-    // CANCEL QUOTATION
-    // PATCH /quotation/:id/cancel
-    // ========================================================
-
-    cancelQuotation: builder.mutation<
-      QuotationResponse,
-      {
-        id: string;
-        data?: QuotationCancelPayload;
-      }
-    >({
-      query: ({ id, data }) => ({
-        url: `${QUOTATION_ENDPOINT}/${id}/cancel`,
-        method: "PATCH",
-        data,
-      }),
-
-      invalidatesTags: (_result, _error, { id }) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
-      ],
-    }),
-
-    // ========================================================
-    // SEND QUOTATION
-    // POST /quotation/:id/send
-    // ========================================================
-
-    sendQuotation: builder.mutation<
-      QuotationResponse,
-      {
-        id: string;
-        data?: QuotationSendPayload;
-      }
-    >({
-      query: ({ id, data }) => ({
-        url: `${QUOTATION_ENDPOINT}/${id}/send`,
-        method: "POST",
-        data,
-      }),
-
-      invalidatesTags: (_result, _error, { id }) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
-      ],
-    }),
-
-    // ========================================================
-    // DUPLICATE QUOTATION
-    // POST /quotation/:id/duplicate
-    // ========================================================
-
-    duplicateQuotation: builder.mutation<
-      QuotationResponse,
-      {
-        id: string;
-        data?: QuotationDuplicatePayload;
-      }
-    >({
-      query: ({ id, data }) => ({
-        url: `${QUOTATION_ENDPOINT}/${id}/duplicate`,
-        method: "POST",
-        data,
-      }),
-
-      invalidatesTags: [
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
-      ],
-    }),
-
-    // ========================================================
-    // CONVERT QUOTATION TO INVOICE
-    // POST /quotation/:id/convert-to-invoice
-    // ========================================================
-
-    convertQuotationToInvoice: builder.mutation<
-      QuotationResponse,
-      {
-        id: string;
-        data?: QuotationConvertToInvoicePayload;
-      }
-    >({
-      query: ({ id, data }) => ({
-        url: `${QUOTATION_ENDPOINT}/${id}/convert-to-invoice`,
-        method: "POST",
-        data,
-      }),
-
-      invalidatesTags: (_result, _error, { id }) => [
-        {
-          type: "Quotation",
-          id,
-        },
-        {
-          type: "Quotation",
-          id: "LIST",
-        },
+      transformResponse: (response: unknown) => unwrapOne(response),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Quotation", id },
+        { type: "Quotation", id: "LIST" },
       ],
     }),
   }),
 });
 
-// ============================================================
-// GENERATED HOOKS
-// ============================================================
-
 export const {
-  // Queries
   useGetQuotationsQuery,
   useGetQuotationByIdQuery,
   useGetQuotationsByStatusQuery,
-
-  // Mutations
   useCreateQuotationMutation,
   useUpdateQuotationMutation,
   useDeleteQuotationMutation,
   useUpdateQuotationStatusMutation,
-  useCancelQuotationMutation,
-  useSendQuotationMutation,
-  useDuplicateQuotationMutation,
-  useConvertQuotationToInvoiceMutation,
 } = quotationApi;

@@ -43,9 +43,7 @@ export default function VariantTypeMasterTable({
     const matchesStatus =
       statusFilter === "all"
         ? true
-        : statusFilter === "active"
-          ? variantType.status
-          : !variantType.status;
+        : statusFilter === "active";
 
     return matchesSearch && matchesStatus;
   });
@@ -71,7 +69,8 @@ export default function VariantTypeMasterTable({
         </div>
       </TableToolbar>
 
-      <DataTable columns={VariantTypeMasterColumns(onRefresh)} data={filteredVariantTypes} loading={loading} emptyMessage="No variant type records found." />
+      <DataTable columns={VariantTypeMasterColumns(onRefresh)} data={filteredVariantTypes} loading={loading} emptyMessage="No variant type records found." page={page}
+        pageSize={10}/>
 
       <Pagination page={page} totalPages={totalPages} totalRecords={totalRecords} onPageChange={(nextPage) => onPageChange?.(nextPage)} />
     </div>

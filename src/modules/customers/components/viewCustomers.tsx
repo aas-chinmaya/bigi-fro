@@ -13,6 +13,7 @@ import {
   Pencil,
   Phone,
   User,
+  FileText,
 } from "lucide-react";
 
 import { customersService } from "../services/customers.service";
@@ -240,17 +241,17 @@ export default function CustomerDashboard() {
       opacity: "bg-primary",
     },
     {
-      label: "1-30 Days",
+      label: "1–30 Days",
       value: aging.days1To30 || 0,
       opacity: "bg-primary/80",
     },
     {
-      label: "31-60 Days",
+      label: "31–60 Days",
       value: aging.days31To60 || 0,
       opacity: "bg-primary/65",
     },
     {
-      label: "61-90 Days",
+      label: "61–90 Days",
       value: aging.days61To90 || 0,
       opacity: "bg-primary/50",
     },
@@ -383,8 +384,25 @@ export default function CustomerDashboard() {
 
               <div
                 ref={profileRef}
-                className="relative shrink-0"
+                className="relative flex shrink-0 items-center gap-2"
               >
+                 {/* =================================================
+                          STATEMENT BUTTON
+                      ================================================= */}
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(`/customers/${customer.id}/statement`);
+                }}
+                className="flex h-10 items-center gap-2 rounded-lg border border-[#eee] bg-primary px-3 text-xs font-semibold text-text transition-all duration-200 hover:border-primary/25 hover:bg-secondary"
+              >
+                <FileText
+                  size={15}
+                  className="text-surface"
+                />
+
+                <span className="text-surface">Statement</span>
+              </button>
 
                 <button
                   type="button"
@@ -891,8 +909,18 @@ export default function CustomerDashboard() {
             <p className="mt-1 text-sm text-muted">Latest invoices and outstanding amounts</p>
           </div>
 
-          <div className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-primary">
-            {recentPurchases?.length || 0} records
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-primary">
+              {recentPurchases?.length || 0} records
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(`/customers/${customer.id}/purchases`)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-text px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+            >
+              View more
+              <ArrowUpRight size={13} />
+            </button>
           </div>
         </div>
 
@@ -1121,7 +1149,17 @@ export default function CustomerDashboard() {
               <div className="mt-1 flex items-center gap-3"><h2 className="text-xl font-bold text-text">Recent ledger</h2>{recentTransactions?.length > 0 && <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold text-muted">{recentTransactions.length} {recentTransactions.length === 1 ? "transaction" : "transactions"}</span>}</div>
               <p className="mt-1 text-xs text-muted">A summary of the latest account transactions</p>
             </div>
-            <span className="inline-flex items-center gap-2 self-start rounded-full border border-[#eee] bg-background px-3 py-1.5 text-xs font-medium text-muted sm:self-auto"><span className="h-1.5 w-1.5 rounded-full bg-green-500" />Latest transactions</span>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#eee] bg-background px-3 py-1.5 text-xs font-medium text-muted"><span className="h-1.5 w-1.5 rounded-full bg-green-500" />Latest transactions</span>
+              <button
+                type="button"
+                onClick={() => router.push(`/customers/${customer.id}/ledger`)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-text px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+              >
+                View more
+                <ArrowUpRight size={13} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1358,7 +1396,7 @@ function EmptyState({
     <div className="rounded-2xl bg-background px-5 py-10 text-center">
 
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
-        -
+        —
       </div>
 
       <p className="mt-3 text-sm text-muted">

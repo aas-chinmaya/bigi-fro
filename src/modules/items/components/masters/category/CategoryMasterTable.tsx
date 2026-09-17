@@ -1,9 +1,6 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-
 import {
   DataTable,
   Pagination,
@@ -43,8 +40,8 @@ export default function CategoryMasterTable({
       const matchesSearch =
         category.categoryName.toLowerCase().includes(searchTerm) ||
         category.description.toLowerCase().includes(searchTerm) ||
-        category.categoryType.toLowerCase().includes(searchTerm) 
-        // String(category.id).toLowerCase().includes(searchTerm);
+        category.categoryType.toLowerCase().includes(searchTerm)
+      // String(category.id).toLowerCase().includes(searchTerm);
 
       const matchesStatus =
         statusFilter === "all"
@@ -67,12 +64,9 @@ export default function CategoryMasterTable({
             value={search}
             onChange={setSearch}
           />
-
-
         </div>
 
         <div className="flex gap-2">
-
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -91,6 +85,8 @@ export default function CategoryMasterTable({
         data={filteredCategories}
         loading={loading}
         emptyMessage="No category records found."
+        page={page}
+        pageSize={10}
       />
 
       <Pagination

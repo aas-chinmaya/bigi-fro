@@ -293,7 +293,7 @@ export default function VendorDocumentTypes() {
           <ModalBody>
             <form
               id="vendor-document-type-form"
-              className="space-y-4"
+              className="space-y-4" 
               onSubmit={submit}
             >
               <label className="block space-y-1.5 text-sm font-medium text-gray-700">
@@ -318,7 +318,7 @@ export default function VendorDocumentTypes() {
                   placeholder="GST Certificate"
                 />
               </label>
-              <label className="block space-y-1.5 text-sm font-medium text-gray-700">
+              <label className="block space-y-1.5 text-sm font-medium text-gray-700">   
                 Description
                 <textarea
                   value={form.description ?? ""}

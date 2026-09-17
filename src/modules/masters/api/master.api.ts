@@ -22,6 +22,30 @@ const extractData = <T>(response: any): T[] => {
   return [];
 };
 
+export interface MasterListResponse<T> {
+  items: T[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+const getPaginated = async <T>(endpoint: string, search: string, page: number, limit: number) => {
+  const response = await api.get<any>(endpoint, { params: { search, page, limit, pageSize: limit } });
+  const payload = response.data?.data ?? response.data;
+  const items = extractData<T>(response.data);
+  const pagination = payload?.pagination ?? payload?.meta ?? response.data?.pagination ?? response.data?.meta ?? payload;
+  const total = Number(pagination?.total ?? pagination?.totalRecords ?? pagination?.totalCount ?? pagination?.totalItems ?? items.length);
+  const resolvedLimit = Number(pagination?.limit ?? pagination?.pageSize ?? pagination?.itemsPerPage ?? limit);
+
+  return {
+    items,
+    pagination: {
+      page: Number(pagination?.page ?? pagination?.currentPage ?? page),
+      limit: resolvedLimit,
+      total,
+      totalPages: Number(pagination?.totalPages ?? pagination?.pages ?? Math.max(1, Math.ceil(total / resolvedLimit))),
+    },
+  } as MasterListResponse<T>;
+};
+
 // Module API functions
 export const getModules = async (search?: string): Promise<Module[]> => {
   try {
@@ -35,6 +59,9 @@ export const getModules = async (search?: string): Promise<Module[]> => {
     throw error;
   }
 };
+
+export const getModulesPaginated = (search = '', page = 1, limit = 10) =>
+  getPaginated<Module>(MASTERS_ENDPOINTS.GET_MODULES, search, page, limit);
 
 export const createModule = async (moduleData: Module): Promise<Module> => {
   try {
@@ -157,6 +184,9 @@ export const getFeatures = async (search?: string): Promise<Feature[]> => {
   }
 };
 
+export const getFeaturesPaginated = (search = '', page = 1, limit = 10) =>
+  getPaginated<Feature>(MASTERS_ENDPOINTS.GET_FEATURES, search, page, limit);
+
 export const getFeaturesByModule = async (moduleId: string | number): Promise<Feature[]> => {
   try {
     const response = await api.get<any>(`${MASTERS_ENDPOINTS.GET_FEATURES_BY_MODULE}/${moduleId}`);
@@ -222,12 +252,53 @@ export const deleteFeature = async (id: string | number): Promise<void> => {
   }
 };
 
+export interface ApiListResponse {
+  items: API[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 // API API functions
-export const getApis = async (search?: string): Promise<API[]> => {
+export const getApis = async (search = '', page = 1, limit = 10): Promise<ApiListResponse> => {
   try {
-    const params = search ? { search } : {};
+    const params = { search, page, limit, pageSize: limit };
     const response = await api.get<any>(MASTERS_ENDPOINTS.GET_APIS, { params });
-    return extractData<API>(response.data);
+    const payload = response.data?.data ?? response.data;
+    const items = extractData<API>(response.data);
+        const pagination =
+          payload?.pagination ??
+          payload?.meta ??
+          response.data?.pagination ??
+          response.data?.meta ??
+          payload;
+        const total = Number(
+          pagination?.total ??
+            pagination?.totalRecords ??
+            pagination?.totalCount ??
+            pagination?.totalItems ??
+            items.length,
+        );
+        const resolvedLimit = Number(
+          pagination?.limit ?? pagination?.pageSize ?? pagination?.itemsPerPage ?? limit,
+        );
+
+    return {
+      items,
+      pagination: {
+                page: Number(pagination?.page ?? pagination?.currentPage ?? page),
+        limit: resolvedLimit,
+        total,
+                totalPages: Number(
+                  pagination?.totalPages ??
+                    pagination?.pages ??
+                    Math.max(1, Math.ceil(total / resolvedLimit)),
+                ),
+      },
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || 'Failed to fetch APIs');
@@ -326,6 +397,9 @@ export const getRoles = async (search?: string): Promise<Role[]> => {
     throw error;
   }
 };
+
+export const getRolesPaginated = (search = '', page = 1, limit = 10) =>
+  getPaginated<Role>(MASTERS_ENDPOINTS.GET_ROLES, search, page, limit);
 
 export const createRole = async (roleData: Role): Promise<Role> => {
   try {

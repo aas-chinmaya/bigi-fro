@@ -13,7 +13,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  fetchRoles,
+  fetchRolesPaginated,
   createRole,
   updateRole,
   deleteRole,
@@ -30,6 +30,9 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { Pagination } from "@/components/data-table";
+
+const PAGE_SIZE = 10;
 
 export default function RoleMasterPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,6 +45,7 @@ export default function RoleMasterPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null);
   const [pendingDeleteName, setPendingDeleteName] = useState<string>("");
+  const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState<Role>({
     name: "",
@@ -50,15 +54,21 @@ export default function RoleMasterPage() {
 
   // Fetch roles
   useEffect(() => {
-    dispatch(fetchRoles({ search }));
-  }, [search, dispatch]);
+    dispatch(fetchRolesPaginated({ search, page, limit: PAGE_SIZE }));
+  }, [search, dispatch, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const { rolesPagination } = useSelector((state: RootState) => state.masters);
 
   useEffect(() => {
     if (success) {
       dispatch(clearSuccess());
       setShowModal(false);
       resetFormData();
-      dispatch(fetchRoles({ search }));
+      dispatch(fetchRolesPaginated({ search, page, limit: PAGE_SIZE }));
     }
   }, [success, dispatch, search]);
 
@@ -191,6 +201,16 @@ export default function RoleMasterPage() {
               </tbody>
             </table>
           </div>
+
+          {roles.length > 0 && (
+            <Pagination
+              page={page}
+              totalPages={rolesPagination.totalPages}
+              totalRecords={rolesPagination.total}
+              pageSize={rolesPagination.limit}
+              onPageChange={setPage}
+            />
+          )}
         </div>
       </div>
 

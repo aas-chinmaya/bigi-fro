@@ -54,6 +54,7 @@ export const CategoryMasterColumns = (
     //     <span>{new Date(row.original.updatedAt).toLocaleDateString("en-IN")}</span>
     //   ),
     // },
+    
     {
       id: "actions",
       header: () => <div className="text-right">Actions</div>,

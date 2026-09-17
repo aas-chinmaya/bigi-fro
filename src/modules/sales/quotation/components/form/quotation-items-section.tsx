@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useFieldArray, useFormContext } from "react-hook-form";
@@ -67,7 +65,6 @@ export function QuotationItemsSection() {
           <p className="text-xs text-destructive">{errors.items.message}</p>
         )}
 
-        {/* Desktop column headers */}
         <div className="hidden md:grid grid-cols-12 gap-3 px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           <div className="col-span-4">Item</div>
           <div className="col-span-2">Qty</div>

@@ -1,4 +1,4 @@
-import ApiMasterPage from "@/modules/masters/components/api";
+import ApiMasterPage from "@/modules/masters/components/apis/Allapi";
 
 export default function Page() {
   return (

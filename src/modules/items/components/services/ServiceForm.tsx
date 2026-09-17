@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui";
-import { FormError, FormField } from "@/components/form";
+import { FormError, FormField, PaginatedHsnSacSelect } from "@/components/form";
 import { RichTextEditor } from "@/components/editor";
 import { notify } from "@/lib/toast";
 import { serviceSchema, ServiceFormData } from "@/modules/items/validation";
@@ -58,7 +58,6 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
       sacCode: "",
       description: "",
       serviceCharge: 0,
-      gstRate: 0,
     },
   });
 
@@ -130,7 +129,6 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
           sacCode: service?.sacCode ?? "",
           description: service?.description ?? "",
           serviceCharge: Number(service?.serviceCharge ?? 0),
-          gstRate: Number(service?.gstRate ?? 0),
         });
       } catch {
         notify.error("Unable to load service details.");
@@ -155,7 +153,6 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
         sacCode: data.sacCode?.trim() || null,
         description: data.description?.trim() || "",
         serviceCharge: Number(data.serviceCharge),
-        gstRate: Number(data.gstRate),
         status: true,
       };
 
@@ -168,8 +165,8 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
       }
 
       router.push("/items/services");
-    } catch (error: any) {
-      notify.error(error?.response?.data?.message || "Something went wrong.");
+    } catch {
+      notify.error("Something went wrong.");
     } finally {
       setIsSubmittingAction(false);
     }
@@ -250,7 +247,19 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
 
               <FormField>
                 <Label htmlFor="sacCode">SAC Code</Label>
-                <Input id="sacCode" placeholder="Enter SAC code" {...register("sacCode")} />
+                <Controller
+                  name="sacCode"
+                  control={control}
+                  render={({ field }) => (
+                    <PaginatedHsnSacSelect
+                      id="sacCode"
+                      type="SAC"
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                      placeholder="Select SAC code"
+                    />
+                  )}
+                />
                 <FormError message={errors.sacCode?.message} />
               </FormField>
 
@@ -258,12 +267,6 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
                 <Label htmlFor="serviceCharge">Service Charge</Label>
                 <Input id="serviceCharge" type="number" step="0.01" placeholder="0.00" {...register("serviceCharge", { valueAsNumber: true })} />
                 <FormError message={errors.serviceCharge?.message} />
-              </FormField>
-
-              <FormField>
-                <Label htmlFor="gstRate">GST Rate</Label>
-                <Input id="gstRate" type="number" step="0.01" placeholder="0" {...register("gstRate", { valueAsNumber: true })} />
-                <FormError message={errors.gstRate?.message} />
               </FormField>
 
               <FormField className="sm:col-span-2">
@@ -296,7 +299,7 @@ export default function ServiceForm({ serviceId }: ServiceFormProps) {
                       <SelectContent>
                         {taxes.map((tax) => (
                           <SelectItem key={tax.id} value={String(tax.id)}>
-                            {tax.hsnCode}
+                            GST {tax.gstRate}% | CGST {tax.cgst}% | SGST {tax.sgst}% | IGST {tax.igst}% | UGST {tax.ugst}% | CESS {tax.cess}%
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -101,23 +101,12 @@ export default function BrandForm({ brandId }: BrandFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card className="p-6">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{isEdit ? "Edit Brand" : "Add Brand"}</h1>
-            <p className="mt-1 text-gray-500">{isEdit ? "Update the brand details." : "Create a new master brand."}</p>
-          </div>
-
-          {isEdit && <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600">Editing</span>}
-        </div>
-
         <div className="grid gap-5 md:grid-cols-2">
           <FormField>
             <Label htmlFor="brandName">Brand Name</Label>
             <Input id="brandName" placeholder="Enter brand name" {...register("brandName")} />
             <FormError message={errors.brandName?.message} />
           </FormField>
-
-        
 
           <FormField className="md:col-span-2">
             <Label htmlFor="description">Description</Label>

@@ -1,20 +1,8 @@
 "use client";
 
-
-import {
-    useEffect,
-    useState
-} from "react";
-
-
-import {
-    itemservice
-} from "../services/item.service";
-
-
-import {
-    item
-} from "../types";
+import { useEffect,useState } from "react";
+import { productservice } from "../services/product.service";
+import { item } from "../types";
 
 
 export function useitems() {
@@ -23,12 +11,9 @@ export function useitems() {
         =
         useState<item[]>([]);
 
-
     const [loading, setLoading]
         =
         useState(false);
-
-
 
     async function fetchitems() {
 
@@ -37,7 +22,7 @@ export function useitems() {
             setLoading(true);
 
             const res =
-                await itemservice.getitems();
+                await productservice.getProducts();
 
             setitems(
                 res.data

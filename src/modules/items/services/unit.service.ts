@@ -21,7 +21,7 @@ export const unitservice = {
     return unitApi.delete(id);
   },
 
-  restoreUnit(id: string) {
-    return unitApi.restore(id);
-  },
+  // restoreUnit(id: string) {
+  //   return unitApi.restore(id);
+  // },
 };

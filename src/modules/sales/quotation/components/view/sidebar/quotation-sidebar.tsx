@@ -55,17 +55,7 @@ export function QuotationSidebar({ quotation }: QuotationSidebarProps) {
         </div>
       ),
     },
-    {
-      id: "settings",
-      title: "Settings",
-      icon: Settings,
-      color: "blue",
-      content: (
-        <div className="py-2 text-sm text-muted-foreground">
-          Settings — coming soon
-        </div>
-      ),
-    },
+ 
     {
       id: "design",
       title: "Design",
@@ -77,17 +67,7 @@ export function QuotationSidebar({ quotation }: QuotationSidebarProps) {
         </div>
       ),
     },
-    {
-      id: "payment",
-      title: "Payment",
-      icon: CreditCard,
-      color: "emerald",
-      content: (
-        <div className="py-2 text-sm text-muted-foreground">
-          Payment — coming soon
-        </div>
-      ),
-    },
+   
     {
       id: "acceptance",
       title: "Acceptance",

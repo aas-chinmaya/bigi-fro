@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import { useFormContext } from "react-hook-form";
@@ -20,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { QuotationFormValues } from "../../types/quotation-form.types";
-import { STATE_CODE_MAP } from "../../utils/state-code";
+import { STATE_CODE_MAP } from "@/modules/sales/shared/utils/state-code";
 
 const STATES = Object.keys(STATE_CODE_MAP).map((state) => ({
   value: state,
@@ -120,7 +117,9 @@ export function QuotationPartiesSection() {
           <section className="space-y-4 lg:border-l lg:pl-8">
             <div>
               <h3 className="text-sm font-semibold">Quotation For</h3>
-              <p className="text-xs text-muted-foreground">Client&apos;s Details</p>
+              <p className="text-xs text-muted-foreground">
+                Client&apos;s Details
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -218,7 +217,12 @@ export function QuotationPartiesSection() {
                 <Select
                   value={prospectState || ""}
                   onValueChange={(value) => {
+                    const code = STATE_CODE_MAP[value] || "";
                     setValue("prospectState", value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                    setValue("prospectStateCode", code || null, {
                       shouldValidate: true,
                       shouldDirty: true,
                     });
@@ -226,14 +230,10 @@ export function QuotationPartiesSection() {
                       shouldValidate: true,
                       shouldDirty: true,
                     });
-                    setValue(
-                      "placeOfSupplyCode",
-                      STATE_CODE_MAP[value] || "",
-                      {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      },
-                    );
+                    setValue("placeOfSupplyCode", code || null, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
                   }}
                 >
                   <SelectTrigger className="h-9">

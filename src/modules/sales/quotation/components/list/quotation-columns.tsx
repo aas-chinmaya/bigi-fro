@@ -67,7 +67,7 @@ export const QuotationColumns: ColumnDef<Quotation>[] =
             </p>
 
             <p className="text-xs text-muted-foreground">
-              {quotation.customerName ??
+              {quotation.prospectName ??
                 "No customer"}
             </p>
           </div>
@@ -115,38 +115,7 @@ export const QuotationColumns: ColumnDef<Quotation>[] =
       ),
     },
 
-    // ========================================================
-    // SOURCE
-    // ========================================================
-
-    {
-      accessorKey: "source",
-
-      header: "Source",
-
-      cell: ({ row }) => {
-        const source =
-          row.original.source;
-
-        return (
-          <span className="text-sm">
-            {source
-              ? source
-                  .replace(
-                    "_",
-                    " ",
-                  )
-                  .toLowerCase()
-                  .replace(
-                    /\b\w/g,
-                    (char) =>
-                      char.toUpperCase(),
-                  )
-              : "-"}
-          </span>
-        );
-      },
-    },
+   
 
     // ========================================================
     // TOTAL
@@ -162,7 +131,7 @@ export const QuotationColumns: ColumnDef<Quotation>[] =
         const amount =
           Number(
             row.original
-              .totalAmount ?? 0,
+              .grandTotal ?? 0,
           );
 
         return (
@@ -193,7 +162,7 @@ export const QuotationColumns: ColumnDef<Quotation>[] =
         const status =
           (
             row.original
-              .status ?? ""
+              .quotationStatus ?? ""
           ).toUpperCase();
 
         const variant =
@@ -243,7 +212,7 @@ export const QuotationColumns: ColumnDef<Quotation>[] =
                 quotation.id
               }
               status={
-                quotation.status
+                quotation.quotationStatus
               }
             />
           </div>

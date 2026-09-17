@@ -29,12 +29,12 @@ export default function TaxMasterMasterTable({
 
   const filteredTaxMasters = useMemo(() => {
     return taxMasters.filter((taxMaster) => {
-      const searchTerm = search.toLowerCase();
-      const matchesSearch =
-        taxMaster.hsnCode.toLowerCase().includes(searchTerm) ||
-        taxMaster.sacCode.toLowerCase().includes(searchTerm) ||
-        String(taxMaster.gstRate).toLowerCase().includes(searchTerm) ||
-        String(taxMaster.id).toLowerCase().includes(searchTerm);
+     const searchTerm = search.toLowerCase();
+
+const matchesSearch =
+   
+  String(taxMaster.gstRate ?? "").toLowerCase().includes(searchTerm) ||
+  String(taxMaster.id ?? "").toLowerCase().includes(searchTerm);
 
       const matchesStatus =
         statusFilter === "all" ? true : statusFilter === "active" ? taxMaster.status : !taxMaster.status;

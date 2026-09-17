@@ -5,7 +5,7 @@ import {
   ShoppingCart,
   Receipt,
   Users,
-  PersonStandingIcon,
+  File,
   Truck,
   BarChart3,
   Settings,
@@ -67,6 +67,7 @@ import {
   FileCog,
   DatabaseBackup,
 } from "lucide-react";
+import { Doc } from "zod/v4/core";
 
 export interface SidebarChild {
   title: string;
@@ -98,6 +99,11 @@ export const sidebarItems: SidebarItem[] = [
         title: "Registration Type",
         href: "/business-setup/masters/registration-type",
         icon: Building2,
+      },
+      {
+        title: "License Type",
+        href: "/business-setup/masters/license",
+        icon: ShieldCheck,
       },
       {
         title: "Category",
@@ -162,8 +168,24 @@ export const sidebarItems: SidebarItem[] = [
 
   {
     title: "Vendors / Suppliers",
-    href: "/vendors",
     icon: Truck,
+    children: [
+      {
+        title: "Manage Vendors",
+        href: "/vendors",
+        icon: List,
+      },
+      {
+        title: "Document Type",
+        href: "/vendors/masters/document-types",
+        icon: File,
+      },
+      {
+        title: "Vendor Category",
+        href: "/vendors/masters/vendor-categories",
+        icon: Tags
+      }
+    ]
   },
 
   {
@@ -206,6 +228,11 @@ export const sidebarItems: SidebarItem[] = [
         icon: List,
       },
       {
+        title: "HSN/SAC Master",
+        href: "/items/hsn-sac-master",
+        icon: FileSpreadsheet,
+      },
+      {
         title: "Tax",
         href: "/items/tax-master",
         icon: Percent,
@@ -245,24 +272,24 @@ export const sidebarItems: SidebarItem[] = [
     icon: ShoppingCart,
     children: [
       {
-        title: "Quotations",
-        href: "/sales/quotation",
-        icon: FileCheck,
-      },
-      {
         title: "Invoices",
         href: "/sales/invoice",
         icon: FileText,
       },
       {
-        title: "Payment Receipts",
-        href: "/sales/payment-receipt",
-        icon: CreditCard,
+        title: "Quotations",
+        href: "/sales/quotation",
+        icon: FileCheck,
       },
       {
         title: "Returns",
         href: "/sales/returns",
         icon: RotateCcw,
+      },
+      {
+        title: "Payments",
+        href: "/sales/payment-receipt",
+        icon: CreditCard,
       },
     ],
   },

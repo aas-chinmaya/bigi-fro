@@ -46,7 +46,7 @@ export interface SubCategoryMasterRow {
   categoryId: string;
   subCategoryName: string;
   description: string;
-  
+  status: string;
   createdAt: string;
   updatedAt: string;
     category: {
@@ -60,7 +60,7 @@ export interface BrandMasterRow {
   id: string;
   brandName: string;
   description: string;
-   
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -71,7 +71,7 @@ export interface UnitMasterRow {
   shortName: string;
   unitType: string;
   description: string;
- 
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,7 +82,7 @@ export interface VariantTypeMasterRow {
   variantTypeCode: string;
   variantTypeName: string;
   description: string;
- 
+  status: string;
   createdAt: string;
   updatedAt: string;
 
@@ -98,7 +98,7 @@ export interface VariantValueMasterRow {
   value: string;
   shortName: string;
   displayOrder: number;
- 
+  status: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -110,8 +110,7 @@ export interface VariantValueMasterRow {
 
 export interface TaxMasterRow {
   id: string;
-  hsnCode: string;
-  sacCode: string;
+  
   gstRate: number;
   cgst: number;
   sgst: number;
@@ -120,7 +119,7 @@ export interface TaxMasterRow {
   cess: number;
   effectiveFrom: string;
   effectiveTo: string;
- 
+  status: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -174,7 +173,7 @@ export interface ProductRow {
 
   tax?: {
     id: string;
-    hsnCode: string;
+    gstRate: number;
   };
 
   variantType?: {
@@ -266,8 +265,7 @@ export interface CreateUnitPayload {
   unitName: string;
   shortName: string;
   unitType: string;
-  description?: string;
-  
+  description?: string; 
 }
 
 export interface UpdateUnitPayload {

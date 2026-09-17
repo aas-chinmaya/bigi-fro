@@ -3,7 +3,7 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 
-import QuotationForm from "@/modules/sales/quotation/components/quotation-form";
+import QuotationForm from "@/modules/sales/quotation/components/form/quotation-form";
 import {
   useGetQuotationByIdQuery,
 } from "@/modules/sales/quotation/api/quotation.api";
@@ -46,15 +46,7 @@ export default function EditQuotationPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Edit Quotation
-        </h1>
-
-        <p className="text-sm text-muted-foreground">
-          Update quotation details and items.
-        </p>
-      </div>
+    
 
       <QuotationForm
         mode="edit"

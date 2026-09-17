@@ -57,8 +57,7 @@ export const variantValueSchema = z.object({
 });
 
 export const taxMasterSchema = z.object({
-  hsnCode: z.string().min(1, "HSN code is required"),
-  sacCode: z.string().min(1, "SAC code is required"),
+   
   gstRate: z.number().min(0, "GST rate must be 0 or greater"),
   cgst: z.number().min(0, "CGST must be 0 or greater"),
   sgst: z.number().min(0, "SGST must be 0 or greater"),
@@ -83,8 +82,6 @@ export const productSchema = z.object({
   hsnCode: z.string().min(1, "HSN code is required"),
   minimumStock: z.number().min(0, "Minimum stock must be 0 or greater"),
   maximumStock: z.number().min(0, "Maximum stock must be 0 or greater"),
-  variantTypeId: z.string().optional().or(z.literal("")),
-  variantValueId: z.string().optional().or(z.literal("")),
   imageFile: z
     .any()
     .nullable()
@@ -125,7 +122,6 @@ export const serviceSchema = z.object({
   sacCode: z.string().trim().optional().or(z.literal("")),
   description: z.string().optional(),
   serviceCharge: z.number().min(0, "Service charge must be 0 or greater"),
-  gstRate: z.number().min(0, "GST rate must be 0 or greater"),
 });
 
 export type itemFormData = z.infer<typeof itemschema>;

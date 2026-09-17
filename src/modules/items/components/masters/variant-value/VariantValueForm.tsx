@@ -123,15 +123,6 @@ export default function VariantValueForm({ variantValueId }: VariantValueFormPro
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card className="p-6">
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{isEdit ? "Edit Variant Value" : "Add Variant Value"}</h1>
-            <p className="mt-1 text-gray-500">{isEdit ? "Update the variant value details." : "Create a new master variant value."}</p>
-          </div>
-
-          {isEdit && <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600">Editing</span>}
-        </div>
-
         <div className="grid gap-5 md:grid-cols-2">
           <FormField>
             <Label htmlFor="variantTypeId">Variant Type</Label>
