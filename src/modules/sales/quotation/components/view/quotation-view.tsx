@@ -66,7 +66,7 @@ export function QuotationView({ id }: QuotationViewProps) {
           {sidebarOpen && (
             <div className="min-w-0 pl-1">
               <h2 className="truncate text-sm font-semibold text-gray-900">
-                Quotation Settings
+                Quotation Activity
               </h2>
             </div>
           )}
@@ -96,7 +96,7 @@ export function QuotationView({ id }: QuotationViewProps) {
             className="flex flex-1 flex-col items-center justify-center gap-3 py-4 text-gray-400 transition hover:text-gray-600"
           >
             <span className="rotate-180 text-xs font-medium tracking-wide [writing-mode:vertical-rl]">
-              Actions
+              Activity
             </span>
           </button>
         )}
@@ -116,7 +116,7 @@ export function QuotationView({ id }: QuotationViewProps) {
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-gray-100 px-4">
           <h2 className="text-sm font-semibold text-gray-900">
-            Quotation Settings
+            Quotation Activity
           </h2>
           <button
             type="button"

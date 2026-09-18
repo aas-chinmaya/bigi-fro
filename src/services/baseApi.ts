@@ -63,6 +63,7 @@ export const baseApi = createApi({
     "Quotation",
     "Invoice",
     "Customer",
+    "PaymentReceipt",
     "Payment",
     "Vendor",
     "Product",

@@ -1,14 +1,13 @@
 import { baseApi } from "@/services/baseApi";
 
 import type {
+  Quotation,
+  QuotationCreatePayload,
   QuotationListParams,
   QuotationListResponse,
   QuotationResponse,
-  QuotationCreatePayload,
-  QuotationUpdatePayload,
   QuotationStatusChangePayload,
-  QuotationStatus,
-  Quotation,
+  QuotationUpdatePayload,
 } from "../types/quotation.types";
 
 const QUOTATION_ENDPOINT = "/quotations";
@@ -22,14 +21,30 @@ function unwrapList(response: unknown): QuotationListResponse {
   ) {
     return response as QuotationListResponse;
   }
+
   if (Array.isArray(response)) {
-    return { success: true, message: "OK", data: response as Quotation[] };
+    return {
+      success: true,
+      message: "OK",
+      data: response as Quotation[],
+    };
   }
+
   const inner = (response as { data?: unknown })?.data;
-  if (inner && typeof inner === "object" && "data" in (inner as object)) {
+
+  if (
+    inner &&
+    typeof inner === "object" &&
+    "data" in (inner as object)
+  ) {
     return inner as QuotationListResponse;
   }
-  return { success: true, message: "OK", data: [] };
+
+  return {
+    success: true,
+    message: "OK",
+    data: [],
+  };
 }
 
 function unwrapOne(response: unknown): QuotationResponse {
@@ -43,24 +58,41 @@ function unwrapOne(response: unknown): QuotationResponse {
   ) {
     return response as QuotationResponse;
   }
-  if (response && typeof response === "object" && "id" in response) {
+
+  if (
+    response &&
+    typeof response === "object" &&
+    "id" in response
+  ) {
     return {
       success: true,
       message: "OK",
       data: response as Quotation,
     };
   }
+
   const inner = (response as { data?: unknown })?.data;
-  if (inner && typeof inner === "object" && "data" in (inner as object)) {
+
+  if (
+    inner &&
+    typeof inner === "object" &&
+    "data" in (inner as object)
+  ) {
     return inner as QuotationResponse;
   }
-  if (inner && typeof inner === "object" && "id" in (inner as object)) {
+
+  if (
+    inner &&
+    typeof inner === "object" &&
+    "id" in (inner as object)
+  ) {
     return {
       success: true,
       message: "OK",
       data: inner as Quotation,
     };
   }
+
   return {
     success: false,
     message: "Invalid quotation response",
@@ -75,7 +107,7 @@ export const quotationApi = baseApi.injectEndpoints({
       QuotationListParams | undefined
     >({
       query: (params) => ({
-        url: `${QUOTATION_ENDPOINT}/`,
+        url: QUOTATION_ENDPOINT,
         method: "GET",
         params,
       }),
@@ -87,9 +119,17 @@ export const quotationApi = baseApi.injectEndpoints({
                 type: "Quotation" as const,
                 id,
               })),
-              { type: "Quotation" as const, id: "LIST" },
+              {
+                type: "Quotation" as const,
+                id: "LIST",
+              },
             ]
-          : [{ type: "Quotation" as const, id: "LIST" }],
+          : [
+              {
+                type: "Quotation" as const,
+                id: "LIST",
+              },
+            ],
     }),
 
     getQuotationById: builder.query<QuotationResponse, string>({
@@ -98,29 +138,12 @@ export const quotationApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (response: unknown) => unwrapOne(response),
-      providesTags: (_r, _e, id) => [{ type: "Quotation", id }],
-    }),
-
-    getQuotationsByStatus: builder.query<
-      QuotationListResponse,
-      { status: QuotationStatus; params?: QuotationListParams }
-    >({
-      query: ({ status, params }) => ({
-        url: `${QUOTATION_ENDPOINT}/status/${status}`,
-        method: "GET",
-        params,
-      }),
-      transformResponse: (response: unknown) => unwrapList(response),
-      providesTags: (result) =>
-        result?.data?.length
-          ? [
-              ...result.data.map(({ id }) => ({
-                type: "Quotation" as const,
-                id,
-              })),
-              { type: "Quotation" as const, id: "LIST" },
-            ]
-          : [{ type: "Quotation" as const, id: "LIST" }],
+      providesTags: (_result, _error, id) => [
+        {
+          type: "Quotation" as const,
+          id,
+        },
+      ],
     }),
 
     createQuotation: builder.mutation<
@@ -133,22 +156,61 @@ export const quotationApi = baseApi.injectEndpoints({
         data,
       }),
       transformResponse: (response: unknown) => unwrapOne(response),
-      invalidatesTags: [{ type: "Quotation", id: "LIST" }],
+      invalidatesTags: [
+        {
+          type: "Quotation",
+          id: "LIST",
+        },
+      ],
     }),
 
     updateQuotation: builder.mutation<
       QuotationResponse,
-      { id: string; data: QuotationUpdatePayload }
+      {
+        id: string;
+        data: QuotationUpdatePayload;
+      }
     >({
       query: ({ id, data }) => ({
         url: `${QUOTATION_ENDPOINT}/${id}`,
+        method: "PUT",
+        data,
+      }),
+      transformResponse: (response: unknown) => unwrapOne(response),
+      invalidatesTags: (_result, _error, { id }) => [
+        {
+          type: "Quotation",
+          id,
+        },
+        {
+          type: "Quotation",
+          id: "LIST",
+        },
+      ],
+    }),
+
+    updateQuotationStatus: builder.mutation<
+      QuotationResponse,
+      {
+        id: string;
+        data: QuotationStatusChangePayload;
+      }
+    >({
+      query: ({ id, data }) => ({
+        url: `${QUOTATION_ENDPOINT}/${id}/status`,
         method: "PATCH",
         data,
       }),
       transformResponse: (response: unknown) => unwrapOne(response),
-      invalidatesTags: (_r, _e, { id }) => [
-        { type: "Quotation", id },
-        { type: "Quotation", id: "LIST" },
+      invalidatesTags: (_result, _error, { id }) => [
+        {
+          type: "Quotation",
+          id,
+        },
+        {
+          type: "Quotation",
+          id: "LIST",
+        },
       ],
     }),
 
@@ -158,25 +220,15 @@ export const quotationApi = baseApi.injectEndpoints({
         method: "DELETE",
       }),
       transformResponse: (response: unknown) => unwrapOne(response),
-      invalidatesTags: (_r, _e, id) => [
-        { type: "Quotation", id },
-        { type: "Quotation", id: "LIST" },
-      ],
-    }),
-
-    updateQuotationStatus: builder.mutation<
-      QuotationResponse,
-      { id: string; data: QuotationStatusChangePayload }
-    >({
-      query: ({ id, data }) => ({
-        url: `${QUOTATION_ENDPOINT}/${id}/status`,
-        method: "PATCH",
-        data,
-      }),
-      transformResponse: (response: unknown) => unwrapOne(response),
-      invalidatesTags: (_r, _e, { id }) => [
-        { type: "Quotation", id },
-        { type: "Quotation", id: "LIST" },
+      invalidatesTags: (_result, _error, id) => [
+        {
+          type: "Quotation",
+          id,
+        },
+        {
+          type: "Quotation",
+          id: "LIST",
+        },
       ],
     }),
   }),
@@ -185,9 +237,8 @@ export const quotationApi = baseApi.injectEndpoints({
 export const {
   useGetQuotationsQuery,
   useGetQuotationByIdQuery,
-  useGetQuotationsByStatusQuery,
   useCreateQuotationMutation,
   useUpdateQuotationMutation,
-  useDeleteQuotationMutation,
   useUpdateQuotationStatusMutation,
+  useDeleteQuotationMutation,
 } = quotationApi;
