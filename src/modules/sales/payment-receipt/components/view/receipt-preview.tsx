@@ -22,7 +22,6 @@ export default function ReceiptPreview({
   });
   const customer = (paymentReceipt as any).customer;
   const payment = paymentReceipt.payment;
-  const remarks = (paymentReceipt as any).remarks;
   const notes = (paymentReceipt as any).notes;
 
   return (
@@ -118,6 +117,10 @@ export default function ReceiptPreview({
                   label="Payment Method"
                   value={formatLabel(payment?.paymentMethod || "CASH")}
                 />
+                <Row
+                  label="Transaction Reference"
+                  value={payment?.transactionReference}
+                />
                 {payment?.paymentNumber && (
                   <Row label="Payment No." value={payment.paymentNumber} />
                 )}
@@ -154,8 +157,8 @@ export default function ReceiptPreview({
           </div>
         </div>
 
-        {/* Remarks & Notes */}
-        {(remarks || notes) && (
+        {/* Notes */}
+        {notes && (
           <div className="border-b border-gray-200">
             <div className=" px-5 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
@@ -163,26 +166,14 @@ export default function ReceiptPreview({
               </p>
             </div>
             <div className="space-y-3 px-5 py-4 text-sm">
-              {remarks && (
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
-                    Remarks
-                  </p>
-                  <p className="mt-1 text-gray-800 whitespace-pre-wrap">
-                    {remarks}
-                  </p>
-                </div>
-              )}
-              {notes && (
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
-                    Notes
-                  </p>
-                  <p className="mt-1 text-gray-800 whitespace-pre-wrap">
-                    {notes}
-                  </p>
-                </div>
-              )}
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
+                  Notes
+                </p>
+                <p className="mt-1 text-gray-800 whitespace-pre-wrap">
+                  {notes}
+                </p>
+              </div>
             </div>
           </div>
         )}

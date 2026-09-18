@@ -56,7 +56,6 @@ export interface PaymentReceipt {
     paymentMethod: PaymentMethod;
     paymentStatus: string;
     paymentDate: string;
-    remarks?: string | null;
     documentType?: string | null;
     documentNumber?: string | null;
     paymentGateway?: string | null;
@@ -74,7 +73,6 @@ export interface PaymentReceipt {
 
   amount: number | string;
 
-  remarks?: string | null;
   notes?: string | null;
 
   createdBy: string;
@@ -102,9 +100,11 @@ export interface PaymentReceiptFormValues {
   customerGSTIN?: string;
   invoiceId?: string;
   paymentMethod: PaymentMethod;
+  // Required for every payment method except CASH (enforced in the form
+  // validation schema); optional/empty when paymentMethod is CASH.
+  transactionReference?: string;
   amount: number;
 
-  remarks?: string;
   notes?: string;
   createdBy?: string;
 }
@@ -122,8 +122,8 @@ export const PAYMENT_RECEIPT_FORM_DEFAULTS: PaymentReceiptFormValues = {
   customerGSTIN: "",
   invoiceId: "",
   paymentMethod: "CASH",
+  transactionReference: "",
   amount: 0,
-  remarks: "",
   notes: "",
   createdBy: "Chinmaya Das",
   
@@ -149,9 +149,9 @@ export interface CreatePaymentReceiptPayload {
   customerGSTIN?: string;
   invoiceId?: string;
   paymentMethod: PaymentMethod;
+  transactionReference?: string;
   amount: number;
 
-  remarks?: string;
   notes?: string;
 
   createdBy?: string;

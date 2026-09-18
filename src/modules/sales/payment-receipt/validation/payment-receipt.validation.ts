@@ -166,16 +166,27 @@ export const paymentReceiptFormSchema = z
     paymentMethod: z.enum(["CASH", "UPI", "CARD", "NET_BANKING"], {
       message: "Payment method is required",
     }).default("CASH"),
+    // Required for every payment method except CASH — cash receipts have
+    // no UTR / cheque no. / gateway txn id to reference.
+    transactionReference: sanitizedOptionalString,
     amount: z
       .number({
         message: "Amount is required",
       })
       .positive("Amount must be greater than 0"),
 
-    remarks: sanitizedOptionalString,
     notes: sanitizedOptionalString,
 
     createdBy: z.string().trim().min(1, "Created by is required").optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMethod !== "CASH" && !data.transactionReference) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Transaction reference is required",
+        path: ["transactionReference"],
+      });
+    }
   });
 
 // ==========================================================

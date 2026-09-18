@@ -62,11 +62,10 @@ export const baseApi = createApi({
   tagTypes: [
     "Quotation",
     "Invoice",
-    "Customer",
+    
     "PaymentReceipt",
-    "Payment",
-    "Vendor",
-    "Product",
+    "PaymentAdjustment",
+    
   ],
 
   endpoints: () => ({}),

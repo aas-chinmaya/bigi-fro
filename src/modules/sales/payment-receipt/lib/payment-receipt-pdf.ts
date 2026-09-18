@@ -228,6 +228,10 @@ export function buildPaymentReceiptPdf(receipt: PaymentReceipt): jsPDF {
       label: "Payment Method",
       value: formatLabel(payment?.paymentMethod || "CASH"),
     },
+    {
+      label: "Transaction Reference",
+      value: payment?.transactionReference,
+    },
     { label: "Payment No.", value: payment?.paymentNumber },
     {
       label: "Payment Status",

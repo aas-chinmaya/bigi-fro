@@ -1,100 +1,148 @@
 
-import api from "@/services/api";
+import { baseApi } from "@/services/baseApi";
 
 import type {
   PaymentReceipt,
   PaymentReceiptListResponse,
   PaymentReceiptQueryParams,
+  PaymentReceiptResponse,
   CreatePaymentReceiptPayload,
   UpdatePaymentReceiptPayload,
-PaymentReceiptResponse,
-  PaymentAdjustmentPayload,
   PaymentAdjustment,
+  PaymentAdjustmentPayload,
 } from "../types/payment-receipt.types";
 
-export const paymentReceiptApi = {
-  getPaymentReceipts: async (
-    params?: PaymentReceiptQueryParams,
-  ): Promise<PaymentReceiptListResponse> => {
-    const response = await api.get<PaymentReceiptListResponse>(
-      "/payment-receipts",
-      { params },
-    );
+const PAYMENT_RECEIPT_ENDPOINT = "/payment-receipts";
+const PAYMENT_ADJUSTMENT_ENDPOINT = "/payment-adjustments";
 
-    return response.data;
+export const paymentReceiptApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    // ==========================================================
+    // LIST
+    // ==========================================================
 
+    getPaymentReceipts: builder.query<
+      PaymentReceiptListResponse,
+      PaymentReceiptQueryParams | undefined
+    >({
+      query: (params) => ({
+        url: PAYMENT_RECEIPT_ENDPOINT,
+        method: "GET",
+        params,
+      }),
+      providesTags: (result) =>
+        result?.data?.length
+          ? [
+              ...result.data.map(({ id }) => ({
+                type: "PaymentReceipt" as const,
+                id,
+              })),
+              { type: "PaymentReceipt" as const, id: "LIST" },
+            ]
+          : [{ type: "PaymentReceipt" as const, id: "LIST" }],
+    }),
 
-  },
+    // ==========================================================
+    // GET BY ID
+    // ==========================================================
+    // Backend wraps the single receipt as { success, message, data }.
 
-getPaymentReceiptById: async (
-  id: string,
-  businessId?: string,
-): Promise<PaymentReceipt> => {
-  const response = await api.get<PaymentReceiptResponse>(
-    `/payment-receipts/${id}`,
-    {
-      params: businessId ? { businessId } : undefined,
-    },
-  );
-  return response?.data?.data;
-},
-
-  createPaymentReceipt: async (
-    payload: CreatePaymentReceiptPayload,
-  ): Promise<PaymentReceipt> => {
-    const response = await api.post<PaymentReceipt>(
-      "/payment-receipts",
-      payload,
-    );
-
-    return response.data;
-  },
-
-  updatePaymentReceipt: async (
-    id: string,
-    payload: UpdatePaymentReceiptPayload,
-  ): Promise<PaymentReceipt> => {
-    const response = await api.patch<PaymentReceipt>(
-      `/payment-receipts/${id}`,
-      payload,
-    );
-
-    return response.data;
-  },
-  // ==========================================================
-  // PAYMENT ADJUSTMENT
-  // ==========================================================
-
-  createPaymentAdjustment: async (
-    payload: PaymentAdjustmentPayload,
-  ): Promise<PaymentAdjustment> => {
-    const response = await api.post<PaymentAdjustment>(
-      "/payment-adjustments/adjust",
-      payload,
-    );
-
-    return response.data;
-  },
-
-  getPaymentAdjustmentById: async (
-    id: string,
-    businessId?: string,
-  ): Promise<PaymentAdjustment> => {
-    const response = await api.get<PaymentAdjustment>(
-      `/payment-adjustments/${id}`,
-      {
+    getPaymentReceiptById: builder.query<
+      PaymentReceipt,
+      { id: string; businessId?: string }
+    >({
+      query: ({ id, businessId }) => ({
+        url: `${PAYMENT_RECEIPT_ENDPOINT}/${id}`,
+        method: "GET",
         params: businessId ? { businessId } : undefined,
-      },
-    );
+      }),
+      transformResponse: (response: PaymentReceiptResponse) =>
+        response.data,
+      providesTags: (_result, _error, { id }) => [
+        { type: "PaymentReceipt" as const, id },
+      ],
+    }),
 
-    return response?.data;
-  },
-};
+    // ==========================================================
+    // CREATE
+    // ==========================================================
+    // Backend returns the created receipt directly (no envelope).
 
+    createPaymentReceipt: builder.mutation<
+      PaymentReceipt,
+      CreatePaymentReceiptPayload
+    >({
+      query: (data) => ({
+        url: PAYMENT_RECEIPT_ENDPOINT,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: [{ type: "PaymentReceipt", id: "LIST" }],
+    }),
 
+    // ==========================================================
+    // UPDATE
+    // ==========================================================
+    // Backend returns the updated receipt directly (no envelope).
 
+    updatePaymentReceipt: builder.mutation<
+      PaymentReceipt,
+      { id: string; data: UpdatePaymentReceiptPayload }
+    >({
+      query: ({ id, data }) => ({
+        url: `${PAYMENT_RECEIPT_ENDPOINT}/${id}`,
+        method: "PATCH",
+        data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "PaymentReceipt", id },
+        { type: "PaymentReceipt", id: "LIST" },
+      ],
+    }),
 
+    // ==========================================================
+    // PAYMENT ADJUSTMENT
+    // ==========================================================
+    // Backend returns the adjustment directly (no envelope) for both
+    // create and get-by-id, matching the original service.
 
+    createPaymentAdjustment: builder.mutation<
+      PaymentAdjustment,
+      PaymentAdjustmentPayload
+    >({
+      query: (data) => ({
+        url: `${PAYMENT_ADJUSTMENT_ENDPOINT}/adjust`,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: (_result, _error, payload) => [
+        { type: "PaymentReceipt", id: payload.paymentId },
+        { type: "PaymentAdjustment", id: "LIST" },
+      ],
+    }),
 
+    getPaymentAdjustmentById: builder.query<
+      PaymentAdjustment,
+      { id: string; businessId?: string }
+    >({
+      query: ({ id, businessId }) => ({
+        url: `${PAYMENT_ADJUSTMENT_ENDPOINT}/${id}`,
+        method: "GET",
+        params: businessId ? { businessId } : undefined,
+      }),
+      providesTags: (_result, _error, { id }) => [
+        { type: "PaymentAdjustment" as const, id },
+      ],
+    }),
+  }),
+});
 
-
+export const {
+  useGetPaymentReceiptsQuery,
+  useGetPaymentReceiptByIdQuery,
+  useCreatePaymentReceiptMutation,
+  useUpdatePaymentReceiptMutation,
+  useCreatePaymentAdjustmentMutation,
+  useGetPaymentAdjustmentByIdQuery,
+  useLazyGetPaymentAdjustmentByIdQuery,
+} = paymentReceiptApi;

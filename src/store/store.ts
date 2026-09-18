@@ -8,7 +8,6 @@ import businessReducer from "@/modules/business/store/businessSlice";
 import { masterReducer as businessSetupMasterReducer } from "@/modules/business/setup";
 import globalDocumentTypeReducer from "@/modules/vendor/masters/store/globalDocumentTypeSlice";
 import vendorCategoryReducer from "@/modules/vendor/masters/store/vendorCategorySlice";
-import paymentReceiptReducer  from "@/modules/sales/payment-receipt/store/payment-receipt.slice";
 
 //sales modules
 import invoiceReducer from "@/modules/sales/invoice/store/invoice.slice";
@@ -30,7 +29,6 @@ const store = configureStore({
     businessSetupMasters: businessSetupMasterReducer,
     vendorDocumentTypes: globalDocumentTypeReducer,
     vendorCategories: vendorCategoryReducer,
-    paymentReceipt: paymentReceiptReducer ,
 
 
     // RTK Query

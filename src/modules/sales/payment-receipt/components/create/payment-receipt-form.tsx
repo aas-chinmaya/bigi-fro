@@ -16,10 +16,10 @@ import {
   Check,
   ChevronDown,
   FileText,
+  Hash,
   IndianRupee,
   Loader2,
   Mail,
-  MessageSquareText,
   NotebookText,
   Phone,
   Receipt,
@@ -49,7 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { usePaymentReceiptActions } from "../../hooks/use-payment-receipt-actions";
+import { useCreatePaymentReceiptMutation } from "../../api/payment-receipt.api";
 import { useCustomers } from "@/modules/customers/hooks/use-customers";
 import { useInvoiceQuery } from "@/modules/sales/invoice/hooks/use-invoice-query";
 
@@ -109,8 +109,8 @@ const DEFAULT_VALUES: PaymentReceiptFormValues = {
   customerPhone: "",
   customerGSTIN: "",
   paymentMethod: "CASH",
+  transactionReference: "",
   amount: 0,
-  remarks: "",
   notes: "",
   createdBy: currentUser.createdBy,
   
@@ -119,7 +119,8 @@ const DEFAULT_VALUES: PaymentReceiptFormValues = {
 export default function PaymentReceiptCreateForm() {
   const router = useRouter();
 
-  const { createPaymentReceipt } = usePaymentReceiptActions();
+  const [createPaymentReceipt, { isLoading: isCreating }] =
+    useCreatePaymentReceiptMutation();
 
   const { customers, loading: customersLoading } = useCustomers();
 
@@ -131,6 +132,7 @@ export default function PaymentReceiptCreateForm() {
     setValue,
     watch,
     reset,
+    trigger,
     formState: {
       errors,
       isSubmitting,
@@ -150,6 +152,8 @@ export default function PaymentReceiptCreateForm() {
   }, []);
 
   const customerId = watch("customerId");
+  const paymentMethod = watch("paymentMethod");
+  const isCashPayment = paymentMethod === "CASH";
 
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [invoiceFocused, setInvoiceFocused] = useState(false);
@@ -287,7 +291,7 @@ export default function PaymentReceiptCreateForm() {
     event: ClipboardEvent<
       HTMLInputElement | HTMLTextAreaElement
     >,
-    field: "remarks" | "notes",
+    field: "notes",
   ) => {
     event.preventDefault();
 
@@ -340,40 +344,22 @@ export default function PaymentReceiptCreateForm() {
       customerGSTIN: values.customerGSTIN?.trim() || (selectedCustomer as any)?.gstin || undefined,
       invoiceId: values.invoiceId?.trim() || undefined,
       paymentMethod: values.paymentMethod || "CASH",
+      transactionReference: values.transactionReference?.trim() || "",
       amount: Number(values.amount || 0),
-      remarks: values.remarks?.trim() || undefined,
       notes: values.notes?.trim() || undefined,
       createdBy: values.createdBy?.trim() || "system",
     };
 
     try {
-      const result =
-        await createPaymentReceipt(
-          payload,
-        );
+      await createPaymentReceipt(payload).unwrap();
 
-      if (
-        result.meta.requestStatus ===
-        "fulfilled"
-      ) {
-        notify.success(
-          "Payment receipt created successfully",
-        );
+      notify.success("Payment receipt created successfully");
 
-        router.push(
-          "/sales/payment-receipt",
-        );
-
-        return;
-      }
-
+      router.push("/sales/payment-receipt");
+    } catch (error: any) {
       notify.error(
-        (result.payload as string) ||
-          "Failed to create payment receipt",
-      );
-    } catch {
-      notify.error(
-        "Unable to create payment receipt. Please try again.",
+        error?.data?.message ||
+          "Unable to create payment receipt. Please try again.",
       );
     }
   };
@@ -534,12 +520,15 @@ export default function PaymentReceiptCreateForm() {
                 </Label>
                 <Select
                   value={watch("paymentMethod")}
-                  onValueChange={(value) =>
+                  onValueChange={(value) => {
                     setValue("paymentMethod", value as PaymentReceiptFormValues["paymentMethod"], {
                       shouldValidate: true,
                       shouldDirty: true,
-                    })
-                  }
+                    });
+                    // Re-validate transactionReference since its requirement
+                    // depends on the selected payment method.
+                    void trigger("transactionReference");
+                  }}
                 >
                   <SelectTrigger className="h-10 border-slate-200 bg-slate-50">
                     <SelectValue placeholder="Select payment method" />
@@ -551,6 +540,29 @@ export default function PaymentReceiptCreateForm() {
                     <SelectItem value="NET_BANKING">Net Banking</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transactionReference" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
+                  <Hash className="size-4 text-slate-400" />
+                  Transaction Reference
+                  {isCashPayment ? (
+                    <span className="normal-case font-normal text-slate-400">(optional)</span>
+                  ) : (
+                    <span className="text-red-500">*</span>
+                  )}
+                </Label>
+                <Input
+                  id="transactionReference"
+                  placeholder={
+                    isCashPayment
+                      ? "Not required for cash"
+                      : "e.g. UTR / Cheque no. / Txn ID"
+                  }
+                  {...register("transactionReference")}
+                  aria-invalid={Boolean(errors.transactionReference)}
+                  className="h-10 border-slate-200 bg-slate-50"
+                />
               </div>
 
               <div className="space-y-2">
@@ -642,21 +654,6 @@ export default function PaymentReceiptCreateForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="remarks" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
-                  <MessageSquareText className="size-4 text-slate-400" />
-                  Remarks
-                </Label>
-                <Textarea
-                  id="remarks"
-                  placeholder="Optional remarks..."
-                  rows={3}
-                  className="min-h-[90px] resize-y border-slate-200 bg-slate-50"
-                  {...register("remarks")}
-                  onPaste={(event) => handleSanitizePaste(event, "remarks")}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="notes" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">
                   <NotebookText className="size-4 text-slate-400" />
                   Notes
@@ -674,11 +671,11 @@ export default function PaymentReceiptCreateForm() {
           </div>
 
           <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
-            <Button type="button" variant="secondary" onClick={() => reset(DEFAULT_VALUES)} disabled={isSubmitting}>
+            <Button type="button" variant="secondary" onClick={() => reset(DEFAULT_VALUES)} disabled={isSubmitting || isCreating}>
               Reset
             </Button>
-            <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isValid}>
-              {isSubmitting ? "Saving..." : "Save"}
+            <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || isCreating || !isValid}>
+              {isSubmitting || isCreating ? "Saving..." : "Save"}
             </Button>
           </div>
         </CardContent>

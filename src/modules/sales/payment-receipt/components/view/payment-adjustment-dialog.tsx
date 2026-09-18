@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { notify } from "@/lib/toast";
 
 import { useInvoiceQuery } from "@/modules/sales/invoice/hooks/use-invoice-query";
-import { usePaymentAdjustment } from "@/modules/sales/payment-receipt/hooks/use-payment-adjustment";
+import { useCreatePaymentAdjustmentMutation } from "@/modules/sales/payment-receipt/api/payment-receipt.api";
 
 import type {
   PaymentReceipt,
@@ -63,10 +63,8 @@ export default function PaymentAdjustmentDialog({
     loading: invoicesLoading,
   } = useInvoiceQuery();
 
-  const {
-    createAdjustment,
-    loading: adjustmentLoading,
-  } = usePaymentAdjustment();
+  const [createAdjustment, { isLoading: adjustmentLoading }] =
+    useCreatePaymentAdjustmentMutation();
 
   const resetForm = () => {
     setInvoiceQuery("");
@@ -145,14 +143,14 @@ export default function PaymentAdjustmentDialog({
         createdBy: paymentReceipt.createdBy,
       };
 
-      await createAdjustment(payload);
+      await createAdjustment(payload).unwrap();
 
       notify.success("Payment adjustment created successfully");
 
       onOpenChange(false);
     } catch (err: any) {
       notify.error(
-        err?.message || err || "Failed to create adjustment",
+        err?.data?.message || "Failed to create adjustment",
       );
     }
   };

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { notify } from "@/lib/toast";
-import { usePaymentReceiptQuery } from "../../hooks/use-payment-receipt-query";
+import { useGetPaymentReceiptByIdQuery } from "../../api/payment-receipt.api";
 import ReceiptActionsSidebar from "./receipt-actions-sidebar";
 import ReceiptPreview from "./receipt-preview";
 import type { PaymentReceipt } from "../../types/payment-receipt.types";
@@ -33,11 +33,17 @@ export default function ReceiptDetailsWrapper({
   // Keep last successful receipt so actions never blank the page
   const stableReceipt = useRef<PaymentReceipt | null>(null);
 
-  const { paymentReceipt, loading, error } = usePaymentReceiptQuery(
-    undefined,
-    id,
-    businessId,
-  );
+  const {
+    data: paymentReceipt,
+    isLoading,
+    isFetching,
+    error: queryError,
+  } = useGetPaymentReceiptByIdQuery({ id, businessId });
+
+  const loading = isLoading || isFetching;
+  const error = queryError
+    ? (queryError as any)?.data?.message || "Failed to fetch payment receipt"
+    : null;
 
   // Lock in data once we have it — never drop it because of later query noise
   if (paymentReceipt) {
