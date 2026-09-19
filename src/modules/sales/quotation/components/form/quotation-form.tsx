@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { notify } from "@/lib/toast";
 
@@ -27,20 +27,16 @@ import {
 
 import { useCurrentSession } from "@/modules/sales/shared/hooks/use-current-session";
 
-import { QuotationDetailsSection } from "./quotation-details-section";
-import { QuotationPartiesSection } from "./quotation-parties-section";
+import { QuotationCustomerFields } from "./quotation-customer-fields";
+import { QuotationIssuerFields } from "./quotation-issuer-fields";
 import { QuotationItemsSection } from "./quotation-items-section";
-import { QuotationSummarySection } from "./quotation-summary-section";
-import { QuotationAdditionalsSection } from "./quotation-additionals-section";
-import { QuotationPaymentSection } from "./quotation-payment-section";
-import { QuotationSignatureSection } from "./quotation-signature-section";
+import { QuotationFooterSection } from "./quotation-footer-section";
 import { QuotationFormActions } from "./quotation-form-actions";
 
 export function QuotationForm({
   mode,
   quotation,
   onSuccess,
-  onCancel,
 }: QuotationFormProps) {
   const [createQuotation, { isLoading: isCreating }] =
     useCreateQuotationMutation();
@@ -71,20 +67,24 @@ export function QuotationForm({
             ),
             ...sessionDefaults,
           },
-    mode: "onBlur",
+    mode: "onChange",
   });
 
-  const { handleSubmit, reset, watch, setValue } = form;
+  const { handleSubmit, reset, setValue, control } = form;
 
-  const businessStateCode = watch("businessStateCode");
-  const placeOfSupplyCode = watch("placeOfSupplyCode");
-  const items = watch("items");
+  const businessStateCode = useWatch({ control, name: "businessStateCode" });
+  const placeOfSupplyCode = useWatch({ control, name: "placeOfSupplyCode" });
+  const items = useWatch({ control, name: "items" });
+
+  // Deep snapshot so nested qty/price/discount always trigger
+  const itemsKey = useMemo(() => JSON.stringify(items ?? []), [items]);
 
   useEffect(() => {
     const taxType = resolveTaxType(businessStateCode, placeOfSupplyCode);
     setValue("taxType", taxType, { shouldDirty: false });
   }, [businessStateCode, placeOfSupplyCode, setValue]);
 
+  // Instant totals — any line change / tax type change
   useEffect(() => {
     const current = form.getValues();
     const withTotals = applyTotalsToValues(current);
@@ -107,9 +107,22 @@ export function QuotationForm({
     withTotals.items.forEach((line, i) => {
       setValue(`items.${i}.taxAmount`, line.taxAmount, { shouldDirty: false });
       setValue(`items.${i}.amount`, line.amount, { shouldDirty: false });
+      setValue(`items.${i}.total`, line.total, { shouldDirty: false });
+      setValue(`items.${i}.cgstRate`, line.cgstRate, { shouldDirty: false });
+      setValue(`items.${i}.cgstAmount`, line.cgstAmount, {
+        shouldDirty: false,
+      });
+      setValue(`items.${i}.sgstRate`, line.sgstRate, { shouldDirty: false });
+      setValue(`items.${i}.sgstAmount`, line.sgstAmount, {
+        shouldDirty: false,
+      });
+      setValue(`items.${i}.igstRate`, line.igstRate, { shouldDirty: false });
+      setValue(`items.${i}.igstAmount`, line.igstAmount, {
+        shouldDirty: false,
+      });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, businessStateCode, placeOfSupplyCode, setValue]);
+  }, [itemsKey, businessStateCode, placeOfSupplyCode, setValue]);
 
   useEffect(() => {
     if (mode === "edit" && quotation) {
@@ -125,15 +138,18 @@ export function QuotationForm({
 
   useEffect(() => {
     if (mode !== "create" || !session) return;
-
-    reset({
-      ...getDefaultQuotationValues(
-        session.business?.id ?? "",
-        session.user?.id ?? "",
-      ),
-      ...getSessionFormDefaults(session),
-    });
-  }, [mode, session, reset]);
+    const current = form.getValues();
+    if (!current.businessName && session.business?.name) {
+      reset({
+        ...getDefaultQuotationValues(
+          session.business?.id ?? "",
+          session.user?.id ?? "",
+        ),
+        ...getSessionFormDefaults(session),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, session?.business?.id, session?.user?.id]);
 
   const onSubmit = async (values: QuotationFormValues) => {
     try {
@@ -145,19 +161,16 @@ export function QuotationForm({
           businessId: values.businessId || session?.business?.id || "",
           createdBy: values.createdBy || currentUserId,
         });
-
         const res = await createQuotation(payload).unwrap();
-        notify.success(res.message || "Quotation created successfully");
+        notify.success(res.message || "Quotation created");
         onSuccess?.(res.data);
       } else if (mode === "edit" && quotation?.id) {
         const payload = sanitizeUpdatePayload(values, currentUserId);
-
         const res = await updateQuotation({
           id: quotation.id,
           data: payload,
         }).unwrap();
-
-        notify.success(res.message || "Quotation updated successfully");
+        notify.success(res.message || "Quotation updated");
         onSuccess?.(res.data);
       }
     } catch (err: any) {
@@ -167,7 +180,6 @@ export function QuotationForm({
         (typeof err?.data === "string" ? err.data : null) ||
         err?.message ||
         "Something went wrong";
-
       notify.error(
         typeof apiMessage === "string"
           ? apiMessage
@@ -178,30 +190,40 @@ export function QuotationForm({
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-        <QuotationDetailsSection />
-        <QuotationPartiesSection />
-        <QuotationItemsSection />
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full space-y-4 pb-10"
+        noValidate
+      >
+        {/* Same row: Customer | Issuer */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-800">
+              Customer information
+            </h2>
+            <QuotationCustomerFields />
+          </section>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <QuotationPaymentSection />
-          </div>
-          <QuotationSummarySection />
+          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-800">
+              Issuer details
+            </h2>
+            <QuotationIssuerFields />
+          </section>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <QuotationAdditionalsSection />
+        {/* Items + payment + notes + summary + signature */}
+        <section className="space-y-6 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+          <QuotationItemsSection />
+          <div className="border-t border-slate-100 pt-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-800">
+              Payment & notes
+            </h2>
+            <QuotationFooterSection />
           </div>
-          <QuotationSignatureSection />
-        </div>
+        </section>
 
-        <QuotationFormActions
-          mode={mode}
-          isSubmitting={isSubmitting}
-          onCancel={onCancel}
-        />
+        <QuotationFormActions mode={mode} isSubmitting={isSubmitting} />
       </form>
     </FormProvider>
   );

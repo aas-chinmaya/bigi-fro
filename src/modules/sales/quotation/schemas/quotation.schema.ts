@@ -22,19 +22,58 @@ const optionalString = z
   .optional()
   .transform((v) => (v === "" || v === undefined ? null : v));
 
+/** Block obvious script/url injection in free text */
+const SAFE_TEXT_RE = /<script|javascript:|on\w+\s*=|data:text\/html/i;
+
+function noHarmful(val: string, ctx: z.RefinementCtx, path: (string | number)[]) {
+  if (SAFE_TEXT_RE.test(val)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Invalid content",
+      path,
+    });
+  }
+}
+
+const safeOptionalString = z
+  .union([z.string(), z.literal(""), z.null()])
+  .optional()
+  .transform((v) => (v === "" || v === undefined ? null : v))
+  .superRefine((v, ctx) => {
+    if (typeof v === "string") noHarmful(v, ctx, []);
+  });
+
+const safeRequiredString = (msg: string) =>
+  z
+    .string()
+    .min(1, msg)
+    .superRefine((v, ctx) => noHarmful(v, ctx, []));
+
+
+
 export const quotationItemSchema = z.object({
   id: z.string().optional(),
   itemId: z.string().nullable().optional(),
-  itemName: z.string().min(1, "Item name is required"),
+  itemName: z.string().min(1, "Item name is required").max(500),
+  // description sanitized at form level
   description: optionalString,
-  quantity: z.coerce.number().positive("Quantity must be > 0"),
+  hsnSac: optionalString,
+  quantity: z.coerce.number().min(0, "Quantity cannot be negative"),
   unit: optionalString,
-  rate: z.coerce.number().nonnegative("Rate must be ≥ 0"),
+  rate: z.coerce.number().nonnegative("Rate must be ≥ 0").optional().default(0),
+  price: z.coerce.number().nonnegative().optional().default(0),
   discount: z.coerce.number().nonnegative().optional().default(0),
   discountType: discountTypeSchema.optional().default("PERCENTAGE"),
   taxRate: z.coerce.number().nonnegative().optional().default(0),
   taxAmount: z.coerce.number().nonnegative().optional().default(0),
+  cgstRate: z.coerce.number().nonnegative().optional().default(0),
+  cgstAmount: z.coerce.number().nonnegative().optional().default(0),
+  sgstRate: z.coerce.number().nonnegative().optional().default(0),
+  sgstAmount: z.coerce.number().nonnegative().optional().default(0),
+  igstRate: z.coerce.number().nonnegative().optional().default(0),
+  igstAmount: z.coerce.number().nonnegative().optional().default(0),
   amount: z.coerce.number().nonnegative().optional().default(0),
+  total: z.coerce.number().nonnegative().optional().default(0),
 });
 
 /** Base object — no refinements (safe for .partial()) */
@@ -47,7 +86,8 @@ export const quotationBaseSchema = z.object({
   validUntil: z.string().min(1, "Valid until date is required"),
   financialYear: optionalString,
 
-  businessName: z.string().min(1, "Business name is required"),
+  businessName: z.string().min(1, "Business name is required").max(200),
+
   businessLegalName: optionalString,
   businessGSTIN: optionalString,
   businessPAN: optionalString,
@@ -61,7 +101,8 @@ export const quotationBaseSchema = z.object({
   businessPincode: optionalString,
   businessCountry: z.string().default("India"),
 
-  prospectName: z.string().min(1, "Prospect name is required"),
+  prospectName: z.string().min(1, "Customer name is required").max(200),
+
   prospectCompanyName: optionalString,
   prospectGSTIN: optionalString,
   prospectPAN: optionalString,

@@ -28,13 +28,27 @@ export interface QuotationItem {
   itemId?: string | null;
   itemName?: string | null;
   description?: string | null;
-  quantity: number;
+  hsnSac?: string | null;
   unit?: string | null;
-  rate: number;
+  quantity: number;
+  /** Unit price */
+  price?: number;
+  /** Alias of price (API / legacy) */
+  rate?: number;
   discount?: number;
   discountType?: DiscountType;
+  /** Combined GST rate % — split into CGST/SGST or IGST by taxType */
   taxRate?: number;
   taxAmount?: number;
+  cgstRate?: number;
+  cgstAmount?: number;
+  sgstRate?: number;
+  sgstAmount?: number;
+  igstRate?: number;
+  igstAmount?: number;
+  /** Line total after discount + tax */
+  total?: number;
+  /** Alias of total (API / legacy) */
   amount?: number;
 }
 

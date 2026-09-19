@@ -1,229 +1,271 @@
+
+
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+
+import { Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
 import type { QuotationFormValues } from "../../types/quotation-form.types";
+import type { TaxType } from "../../types/quotation.types";
+import { calcLine, formatINR } from "../../utils/quotation-form.utils";
+import ItemSearchSelect, {
+  type SelectedItem,
+} from "@/modules/sales/shared/components/item-search-select";
 
-const DUMMY_ITEMS = [
-  {
-    id: "item-1",
-    name: "Website Development",
-    description: "Custom responsive website",
-    rate: 45000,
-    unit: "NOS",
-    taxRate: 18,
-  },
-  {
-    id: "item-2",
-    name: "UI/UX Design",
-    description: "Figma design system + screens",
-    rate: 28000,
-    unit: "NOS",
-    taxRate: 18,
-  },
-  {
-    id: "item-3",
-    name: "SEO Package (Monthly)",
-    description: "On-page + off-page SEO",
-    rate: 12000,
-    unit: "MOS",
-    taxRate: 18,
-  },
-  {
-    id: "item-4",
-    name: "Cloud Hosting (Annual)",
-    description: "Managed VPS hosting",
-    rate: 18000,
-    unit: "YRS",
-    taxRate: 18,
-  },
-  {
-    id: "item-5",
-    name: "Maintenance Retainer",
-    description: "Monthly support & updates",
-    rate: 8000,
-    unit: "MOS",
-    taxRate: 18,
-  },
-];
-
-interface QuotationItemRowProps {
+interface Props {
   index: number;
   onRemove: () => void;
+  onAdd: () => void;
   canRemove: boolean;
+  taxType: TaxType;
 }
 
 export function QuotationItemRow({
   index,
   onRemove,
+  onAdd,
   canRemove,
-}: QuotationItemRowProps) {
+  taxType,
+}: Props) {
   const {
     register,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useFormContext<QuotationFormValues>();
 
-  const [search, setSearch] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const itemErrors = errors.items?.[index];
-  const currentItemName = watch(`items.${index}.itemName`) || "";
+  const isInter = taxType === "INTER_STATE";
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const quantity = useWatch({ control, name: `items.${index}.quantity` }) ?? 0;
+  const rate = useWatch({ control, name: `items.${index}.rate` }) ?? 0;
+  const price = useWatch({ control, name: `items.${index}.price` });
+  const discount = useWatch({ control, name: `items.${index}.discount` }) ?? 0;
+  const discountType =
+    useWatch({ control, name: `items.${index}.discountType` }) ?? "PERCENTAGE";
+  const taxRate = useWatch({ control, name: `items.${index}.taxRate` }) ?? 0;
+  const itemName = useWatch({ control, name: `items.${index}.itemName` }) ?? "";
+  const unit = useWatch({ control, name: `items.${index}.unit` }) ?? "PCS";
+  const description =
+    useWatch({ control, name: `items.${index}.description` }) ?? "";
 
-  const filteredItems = DUMMY_ITEMS.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()),
+  const unitPrice =
+    price != null && Number(price) > 0 ? Number(price) : Number(rate) || 0;
+
+  const line = useMemo(
+    () =>
+      calcLine(
+        {
+          quantity,
+          rate: unitPrice,
+          price: unitPrice,
+          discount,
+          discountType,
+          taxRate,
+        },
+        taxType,
+      ),
+    [quantity, unitPrice, discount, discountType, taxRate, taxType],
   );
 
-  const handleSelect = (item: (typeof DUMMY_ITEMS)[0]) => {
+  const applyItem = (item: SelectedItem | null) => {
+    if (!item) {
+      setValue(`items.${index}.itemId`, null, { shouldDirty: true });
+      return;
+    }
     setValue(`items.${index}.itemId`, item.id, {
-      shouldValidate: true,
       shouldDirty: true,
+      shouldValidate: true,
     });
     setValue(`items.${index}.itemName`, item.name, {
+      shouldDirty: true,
       shouldValidate: true,
+    });
+    setValue(`items.${index}.description`, item.description ?? null, {
       shouldDirty: true,
     });
-    setValue(`items.${index}.description`, item.description, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setValue(`items.${index}.rate`, item.rate, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setValue(`items.${index}.unit`, item.unit, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setValue(`items.${index}.taxRate`, item.taxRate, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-
-    setSearch(item.name);
-    setIsOpen(false);
+    setValue(`items.${index}.rate`, item.rate, { shouldDirty: true });
+    setValue(`items.${index}.price`, item.rate, { shouldDirty: true });
+    setValue(`items.${index}.unit`, item.unit, { shouldDirty: true });
+    setValue(`items.${index}.taxRate`, item.taxRate, { shouldDirty: true });
+    if (item.hsnSac != null) {
+      setValue(`items.${index}.hsnSac`, item.hsnSac, { shouldDirty: true });
+    }
+    if (!quantity) {
+      setValue(`items.${index}.quantity`, 1, { shouldDirty: true });
+    }
   };
 
   return (
-    <div className="grid grid-cols-12 gap-3 items-start rounded-lg border p-3">
-      <div
-        className="col-span-12 md:col-span-4 space-y-1 relative"
-        ref={containerRef}
-      >
-        <Input
-          placeholder="Search or type item name..."
-          value={search || currentItemName}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setValue(`items.${index}.itemName`, e.target.value, {
-              shouldDirty: true,
-            });
-            setIsOpen(true);
-          }}
-          onFocus={() => setIsOpen(true)}
-          className="h-10"
-        />
+    <tr className="group border-b border-slate-100 align-top hover:bg-slate-50/40">
+      <td className="px-2 py-2 text-center text-xs text-slate-400">
+        {index + 1}
+      </td>
 
-        <input type="hidden" {...register(`items.${index}.itemId`)} />
-        <input type="hidden" {...register(`items.${index}.itemName`)} />
+      <td className="relative z-10 overflow-visible px-2 py-2">
+        <div className="relative z-10 min-w-[260px] space-y-1.5">
+          <ItemSearchSelect
+            label=""
+            value={itemName}
+            onSelect={applyItem}
+            onQueryChange={(q) =>
+              setValue(`items.${index}.itemName`, q, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            placeholder="Search inventory item"
+          />
 
-        {itemErrors?.itemName && (
-          <p className="text-xs text-destructive">
-            {itemErrors.itemName.message}
-          </p>
-        )}
+          <textarea
+            placeholder="Description / note"
+            rows={2}
+            value={description || ""}
+            onChange={(e) =>
+              setValue(`items.${index}.description`, e.target.value || null, {
+                shouldDirty: true,
+              })
+            }
+            className="w-full resize-none rounded-md border border-amber-100 bg-amber-50/80 px-2 py-1.5 text-xs leading-snug text-slate-600 placeholder:text-slate-400 focus:border-amber-200 focus:outline-none"
+          />
 
-        {isOpen && filteredItems.length > 0 && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow-md max-h-56 overflow-auto">
-            {filteredItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors flex flex-col"
-                onClick={() => handleSelect(item)}
-              >
-                <span className="font-medium">{item.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  ₹{item.rate.toLocaleString()} · {item.unit}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          {itemErrors?.itemName && (
+            <p className="text-[11px] text-red-500">
+              {itemErrors.itemName.message}
+            </p>
+          )}
+        </div>
+      </td>
 
-      <div className="col-span-4 md:col-span-2">
+      <td className="px-2 py-2">
         <Input
           type="number"
           step="any"
           min={0}
-          placeholder="Qty"
-          className="h-10"
+          className="h-9 text-center tabular-nums"
           {...register(`items.${index}.quantity`, { valueAsNumber: true })}
         />
-      </div>
+      </td>
 
-      <div className="col-span-4 md:col-span-2">
+      <td className="px-2 py-2">
+        <Input
+          readOnly
+          value={unit || "PCS"}
+          className="h-9 cursor-default bg-slate-50 text-center text-xs uppercase text-slate-600"
+          tabIndex={-1}
+        />
+      </td>
+
+      <td className="px-2 py-2">
         <Input
           type="number"
           step="any"
           min={0}
-          placeholder="Rate"
-          className="h-10"
-          {...register(`items.${index}.rate`, { valueAsNumber: true })}
+          className="h-9 text-right tabular-nums"
+          value={unitPrice || ""}
+          onChange={(e) => {
+            const v = e.target.value === "" ? 0 : Number(e.target.value);
+            setValue(`items.${index}.rate`, v, { shouldDirty: true });
+            setValue(`items.${index}.price`, v, { shouldDirty: true });
+          }}
         />
-      </div>
+      </td>
 
-      <div className="col-span-4 md:col-span-2">
-        <Input
-          type="number"
-          step="any"
-          min={0}
-          placeholder="Tax %"
-          className="h-10"
-          {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
-        />
-      </div>
-
-      <div className="col-span-4 md:col-span-1">
-        <Input
-          placeholder="Unit"
-          className="h-10"
-          {...register(`items.${index}.unit`)}
-        />
-      </div>
-
-      <div className="col-span-4 md:col-span-1 flex justify-end">
-        {canRemove && (
-          <Button
+      <td className="px-2 py-2">
+        <div className="flex items-center gap-1">
+          <Input
+            type="number"
+            step="any"
+            min={0}
+            className="h-9 min-w-0 flex-1 text-center tabular-nums"
+            {...register(`items.${index}.discount`, { valueAsNumber: true })}
+          />
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onRemove}
-            className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+            title="Toggle % / ₹"
+            onClick={() =>
+              setValue(
+                `items.${index}.discountType`,
+                discountType === "PERCENTAGE" ? "FIXED" : "PERCENTAGE",
+                { shouldDirty: true },
+              )
+            }
+            className="h-9 w-8 shrink-0 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </div>
+            {discountType === "PERCENTAGE" ? "%" : "₹"}
+          </button>
+        </div>
+      </td>
+
+      {isInter ? (
+        <td className="px-2 py-2">
+          <Input
+            type="number"
+            step="any"
+            min={0}
+            className="h-9 text-center tabular-nums"
+            {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
+          />
+          <p className="mt-0.5 text-center text-[10px] tabular-nums text-slate-400">
+            {formatINR(line.igstAmount)}
+          </p>
+        </td>
+      ) : (
+        <>
+          <td className="px-2 py-2 text-center">
+            <span className="text-xs tabular-nums text-slate-600">
+              {line.cgstRate}%
+            </span>
+            <p className="text-[10px] tabular-nums text-slate-400">
+              {formatINR(line.cgstAmount)}
+            </p>
+          </td>
+          <td className="px-2 py-2 text-center">
+            <span className="text-xs tabular-nums text-slate-600">
+              {line.sgstRate}%
+            </span>
+            <p className="text-[10px] tabular-nums text-slate-400">
+              {formatINR(line.sgstAmount)}
+            </p>
+          </td>
+        </>
+      )}
+
+      <td className="px-2 py-2 text-right">
+        <span className="text-sm font-medium tabular-nums text-slate-900">
+          {formatINR(line.total)}
+        </span>
+      </td>
+
+      <td className="px-1 py-2">
+        <div className="flex items-center justify-center gap-0.5">
+     
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onAdd}
+                  className="h-8 w-8 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onRemove}
+                  disabled={!canRemove}
+                  className="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+     
+        </div>
+      </td>
+    </tr>
   );
 }

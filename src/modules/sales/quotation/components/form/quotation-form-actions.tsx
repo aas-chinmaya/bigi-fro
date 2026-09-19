@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { QuotationFormMode } from "../../types/quotation-form.types";
+import { useFormContext } from "react-hook-form";
+import type {
+  QuotationFormMode,
+  QuotationFormValues,
+} from "../../types/quotation-form.types";
 
 interface QuotationFormActionsProps {
   mode: QuotationFormMode;
@@ -12,29 +16,28 @@ interface QuotationFormActionsProps {
 export function QuotationFormActions({
   mode,
   isSubmitting,
-  onCancel,
 }: QuotationFormActionsProps) {
-  return (
-    <div className="flex items-center justify-end gap-3 pt-4 border-t">
-      {onCancel && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-      )}
+  const { reset, formState } = useFormContext<QuotationFormValues>();
 
-      <Button type="submit" disabled={isSubmitting}>
+  return (
+    <div className="flex items-center justify-end gap-2 pt-1">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={isSubmitting || !formState.isDirty}
+        onClick={() => reset()}
+      >
+        Reset
+      </Button>
+      <Button type="submit" size="sm" disabled={isSubmitting}>
         {isSubmitting
           ? mode === "create"
-            ? "Creating..."
-            : "Updating..."
+            ? "Saving…"
+            : "Updating…"
           : mode === "create"
-            ? "Create Quotation"
-            : "Update Quotation"}
+            ? "Create quotation"
+            : "Update quotation"}
       </Button>
     </div>
   );

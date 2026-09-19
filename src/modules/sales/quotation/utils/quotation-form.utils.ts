@@ -4,47 +4,126 @@ import type {
   QuotationUpdatePayload,
   TaxType,
   DiscountType,
+  QuotationItem,
 } from "../types/quotation.types";
 import type { QuotationFormValues } from "../types/quotation-form.types";
-import { getStateCode }  from "@/modules/sales/shared/utils/state-code";
-
+import { getStateCode } from "@/modules/sales/shared/utils/state-code";
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-function calcLine(item: {
-  quantity: number;
-  rate: number;
-  discount?: number;
-  discountType?: DiscountType;
-  taxRate?: number;
+function toNum(v: unknown, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/** Prefer price, fall back to rate */
+export function getUnitPrice(item: {
+  price?: number | null;
+  rate?: number | null;
 }) {
-  const qty = Number(item.quantity) || 0;
-  const rate = Number(item.rate) || 0;
-  const discountVal = Number(item.discount) || 0;
-  const discountType = item.discountType ?? "PERCENTAGE";
-  const taxRate = Number(item.taxRate) || 0;
+  if (item.price != null && item.price !== undefined) return toNum(item.price);
+  return toNum(item.rate);
+}
 
-  const gross = qty * rate;
+export interface LineCalcResult {
+  gross: number;
+  discountAmount: number;
+  taxable: number;
+  taxAmount: number;
+  cgstRate: number;
+  cgstAmount: number;
+  sgstRate: number;
+  sgstAmount: number;
+  igstRate: number;
+  igstAmount: number;
+  total: number;
+}
+
+/**
+ * Real-time line calculation.
+ * - discountType PERCENTAGE → % of gross
+ * - discountType FIXED → absolute ₹ (capped at gross)
+ * - taxType INTER_STATE → full tax as IGST
+ * - taxType INTRA_STATE → split 50/50 CGST + SGST
+ */
+export function calcLine(
+  item: {
+    quantity?: number | null;
+    price?: number | null;
+    rate?: number | null;
+    discount?: number | null;
+    discountType?: DiscountType | null;
+    taxRate?: number | null;
+  },
+  taxType: TaxType = "INTRA_STATE",
+): LineCalcResult {
+  const qty = toNum(item.quantity);
+  const unitPrice = getUnitPrice(item);
+  const discountVal = toNum(item.discount);
+  const discountType: DiscountType = item.discountType ?? "PERCENTAGE";
+  const taxRate = toNum(item.taxRate);
+
+  const gross = round2(qty * unitPrice);
+
   let discountAmount =
-    discountType === "PERCENTAGE" ? (gross * discountVal) / 100 : discountVal;
-  discountAmount = Math.min(discountAmount, gross);
+    discountType === "PERCENTAGE"
+      ? (gross * discountVal) / 100
+      : discountVal;
+  discountAmount = round2(Math.min(Math.max(discountAmount, 0), gross));
 
-  const taxable = gross - discountAmount;
-  const taxAmount = (taxable * taxRate) / 100;
-  const amount = taxable + taxAmount;
+  const taxable = round2(gross - discountAmount);
+  const taxAmount = round2((taxable * taxRate) / 100);
+
+  let cgstRate = 0;
+  let cgstAmount = 0;
+  let sgstRate = 0;
+  let sgstAmount = 0;
+  let igstRate = 0;
+  let igstAmount = 0;
+
+  if (taxType === "INTER_STATE") {
+    igstRate = taxRate;
+    igstAmount = taxAmount;
+  } else {
+    cgstRate = round2(taxRate / 2);
+    sgstRate = round2(taxRate - cgstRate);
+    cgstAmount = round2(taxAmount / 2);
+    sgstAmount = round2(taxAmount - cgstAmount);
+  }
+
+  const total = round2(taxable + taxAmount);
 
   return {
-    discountAmount: round2(discountAmount),
-    taxable: round2(taxable),
-    taxAmount: round2(taxAmount),
-    amount: round2(amount),
+    gross,
+    discountAmount,
+    taxable,
+    taxAmount,
+    cgstRate,
+    cgstAmount,
+    sgstRate,
+    sgstAmount,
+    igstRate,
+    igstAmount,
+    total,
   };
 }
 
 export interface CalculatedTotals {
-  items: Array<{ taxAmount: number; amount: number }>;
+  items: Array<{
+    taxAmount: number;
+    amount: number;
+    total: number;
+    cgstRate: number;
+    cgstAmount: number;
+    sgstRate: number;
+    sgstAmount: number;
+    igstRate: number;
+    igstAmount: number;
+    discountAmount: number;
+    taxable: number;
+  }>;
   totalItems: number;
   totalQuantity: number;
   taxableAmount: number;
@@ -68,45 +147,58 @@ export function resolveTaxType(
 }
 
 export function calculateQuotationTotals(
-  items: QuotationFormValues["items"],
+  items: QuotationFormValues["items"] | QuotationItem[] | undefined | null,
   taxType: TaxType | null | undefined = "INTRA_STATE",
 ): CalculatedTotals {
+  const effectiveTaxType: TaxType = taxType ?? "INTRA_STATE";
+
   let totalQuantity = 0;
   let taxableAmount = 0;
   let discountAmount = 0;
-  let totalTax = 0;
-
-  const calculatedItems = (items || []).map((item) => {
-    const line = calcLine(item);
-    totalQuantity += Number(item.quantity) || 0;
-    taxableAmount += line.taxable;
-    discountAmount += line.discountAmount;
-    totalTax += line.taxAmount;
-    return { taxAmount: line.taxAmount, amount: line.amount };
-  });
-
-  taxableAmount = round2(taxableAmount);
-  discountAmount = round2(discountAmount);
-  totalTax = round2(totalTax);
-
   let cgstAmount = 0;
   let sgstAmount = 0;
   let igstAmount = 0;
 
-  if (taxType === "INTER_STATE") {
-    igstAmount = totalTax;
-  } else {
-    cgstAmount = round2(totalTax / 2);
-    sgstAmount = round2(totalTax - cgstAmount);
-  }
+  const list = items ?? [];
 
+  const calculatedItems = list.map((item) => {
+    const line = calcLine(item, effectiveTaxType);
+    totalQuantity += toNum(item.quantity);
+    taxableAmount += line.taxable;
+    discountAmount += line.discountAmount;
+    cgstAmount += line.cgstAmount;
+    sgstAmount += line.sgstAmount;
+    igstAmount += line.igstAmount;
+
+    return {
+      taxAmount: line.taxAmount,
+      amount: line.total,
+      total: line.total,
+      cgstRate: line.cgstRate,
+      cgstAmount: line.cgstAmount,
+      sgstRate: line.sgstRate,
+      sgstAmount: line.sgstAmount,
+      igstRate: line.igstRate,
+      igstAmount: line.igstAmount,
+      discountAmount: line.discountAmount,
+      taxable: line.taxable,
+    };
+  });
+
+  taxableAmount = round2(taxableAmount);
+  discountAmount = round2(discountAmount);
+  cgstAmount = round2(cgstAmount);
+  sgstAmount = round2(sgstAmount);
+  igstAmount = round2(igstAmount);
+
+  const totalTax = round2(cgstAmount + sgstAmount + igstAmount);
   const rawGrand = taxableAmount + totalTax;
   const grandTotal = Math.round(rawGrand);
   const roundOffAmount = round2(grandTotal - rawGrand);
 
   return {
     items: calculatedItems,
-    totalItems: items?.length ?? 0,
+    totalItems: list.length,
     totalQuantity: round2(totalQuantity),
     taxableAmount,
     discountAmount,
@@ -116,6 +208,31 @@ export function calculateQuotationTotals(
     cessAmount: 0,
     roundOffAmount,
     grandTotal,
+  };
+}
+
+export function emptyLineItem(): QuotationFormValues["items"][number] {
+  return {
+    itemId: null,
+    itemName: "",
+    description: null,
+    hsnSac: null,
+    quantity: 0,
+    unit: "PCS",
+    rate: 0,
+    price: 0,
+    discount: 0,
+    discountType: "PERCENTAGE",
+    taxRate: 18,
+    taxAmount: 0,
+    cgstRate: 9,
+    cgstAmount: 0,
+    sgstRate: 9,
+    sgstAmount: 0,
+    igstRate: 0,
+    igstAmount: 0,
+    amount: 0,
+    total: 0,
   };
 }
 
@@ -169,24 +286,10 @@ export function getDefaultQuotationValues(
     currency: "INR",
     exchangeRate: null,
 
-    items: [
-      {
-        itemId: null,
-        itemName: "",
-        description: null,
-        quantity: 1,
-        unit: "NOS",
-        rate: 0,
-        discount: 0,
-        discountType: "PERCENTAGE",
-        taxRate: 18,
-        taxAmount: 0,
-        amount: 0,
-      },
-    ],
+    items: [emptyLineItem()],
 
     totalItems: 1,
-    totalQuantity: 1,
+    totalQuantity: 0,
     taxableAmount: 0,
     discountAmount: 0,
     cgstAmount: 0,
@@ -255,21 +358,33 @@ export function mapQuotationToFormValues(
 
     items:
       q.items?.length > 0
-        ? q.items.map((item) => ({
-            id: item.id,
-            itemId: item.itemId ?? null,
-            itemName: item.itemName ?? "",
-            description: item.description ?? null,
-            quantity: item.quantity ?? 1,
-            unit: item.unit ?? "NOS",
-            rate: item.rate ?? 0,
-            discount: item.discount ?? 0,
-            discountType: item.discountType ?? "PERCENTAGE",
-            taxRate: item.taxRate ?? 0,
-            taxAmount: item.taxAmount ?? 0,
-            amount: item.amount ?? 0,
-          }))
-        : getDefaultQuotationValues().items,
+        ? q.items.map((item) => {
+            const unitPrice = getUnitPrice(item);
+            return {
+              id: item.id,
+              itemId: item.itemId ?? null,
+              itemName: item.itemName ?? "",
+              description: item.description ?? null,
+              hsnSac: item.hsnSac ?? null,
+              quantity: item.quantity ?? 1,
+              unit: item.unit ?? "PCS",
+              rate: unitPrice,
+              price: unitPrice,
+              discount: item.discount ?? 0,
+              discountType: item.discountType ?? "PERCENTAGE",
+              taxRate: item.taxRate ?? 0,
+              taxAmount: item.taxAmount ?? 0,
+              cgstRate: item.cgstRate ?? 0,
+              cgstAmount: item.cgstAmount ?? 0,
+              sgstRate: item.sgstRate ?? 0,
+              sgstAmount: item.sgstAmount ?? 0,
+              igstRate: item.igstRate ?? 0,
+              igstAmount: item.igstAmount ?? 0,
+              amount: item.amount ?? item.total ?? 0,
+              total: item.total ?? item.amount ?? 0,
+            };
+          })
+        : [emptyLineItem()],
 
     totalItems: q.totalItems ?? 0,
     totalQuantity: q.totalQuantity ?? 0,
@@ -334,6 +449,7 @@ export function getSessionFormDefaults(session: {
   };
 }
 
+/** Apply live totals + per-line GST split into form values */
 export function applyTotalsToValues(
   values: QuotationFormValues,
 ): QuotationFormValues {
@@ -343,11 +459,24 @@ export function applyTotalsToValues(
 
   const totals = calculateQuotationTotals(values.items, taxType);
 
-  const items = values.items.map((item, i) => ({
-    ...item,
-    taxAmount: totals.items[i]?.taxAmount ?? 0,
-    amount: totals.items[i]?.amount ?? 0,
-  }));
+  const items = values.items.map((item, i) => {
+    const line = totals.items[i];
+    const unitPrice = getUnitPrice(item);
+    return {
+      ...item,
+      rate: unitPrice,
+      price: unitPrice,
+      taxAmount: line?.taxAmount ?? 0,
+      amount: line?.amount ?? 0,
+      total: line?.total ?? 0,
+      cgstRate: line?.cgstRate ?? 0,
+      cgstAmount: line?.cgstAmount ?? 0,
+      sgstRate: line?.sgstRate ?? 0,
+      sgstAmount: line?.sgstAmount ?? 0,
+      igstRate: line?.igstRate ?? 0,
+      igstAmount: line?.igstAmount ?? 0,
+    };
+  });
 
   return {
     ...values,
@@ -418,20 +547,32 @@ export function sanitizeCreatePayload(
     currency: rest.currency || "INR",
     exchangeRate: rest.exchangeRate ?? null,
 
-    items: rest.items.map((item) => ({
-      id: item.id,
-      itemId: item.itemId || null,
-      itemName: item.itemName || "",
-      description: item.description || null,
-      quantity: Number(item.quantity) || 0,
-      unit: item.unit || null,
-      rate: Number(item.rate) || 0,
-      discount: Number(item.discount) || 0,
-      discountType: item.discountType || "PERCENTAGE",
-      taxRate: Number(item.taxRate) || 0,
-      taxAmount: Number(item.taxAmount) || 0,
-      amount: Number(item.amount) || 0,
-    })),
+    items: rest.items.map((item) => {
+      const unitPrice = getUnitPrice(item);
+      return {
+        id: item.id,
+        itemId: item.itemId || null,
+        itemName: item.itemName || "",
+        description: item.description || null,
+        hsnSac: item.hsnSac || null,
+        quantity: toNum(item.quantity),
+        unit: item.unit || null,
+        rate: unitPrice,
+        price: unitPrice,
+        discount: toNum(item.discount),
+        discountType: item.discountType || "PERCENTAGE",
+        taxRate: toNum(item.taxRate),
+        taxAmount: toNum(item.taxAmount),
+        cgstRate: toNum(item.cgstRate),
+        cgstAmount: toNum(item.cgstAmount),
+        sgstRate: toNum(item.sgstRate),
+        sgstAmount: toNum(item.sgstAmount),
+        igstRate: toNum(item.igstRate),
+        igstAmount: toNum(item.igstAmount),
+        amount: toNum(item.amount ?? item.total),
+        total: toNum(item.total ?? item.amount),
+      };
+    }),
 
     totalItems: rest.totalItems,
     totalQuantity: rest.totalQuantity,
@@ -456,4 +597,57 @@ export function sanitizeUpdatePayload(
   const createPayload = sanitizeCreatePayload(values);
   const { businessId: _b, createdBy: _c, ...rest } = createPayload;
   return { ...rest, updatedBy };
+}
+
+/** Format INR for display */
+export function formatINR(value: number) {
+  return Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+
+/** Indian numbering amount-in-words (Rupees) */
+const ONES = [
+  "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+  "Seventeen", "Eighteen", "Nineteen",
+];
+const TENS = [
+  "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety",
+];
+
+function twoDigits(n: number): string {
+  if (n < 20) return ONES[n];
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  return `${TENS[t]}${o ? ` ${ONES[o]}` : ""}`.trim();
+}
+
+function threeDigits(n: number): string {
+  if (n === 0) return "";
+  const h = Math.floor(n / 100);
+  const r = n % 100;
+  const head = h ? `${ONES[h]} Hundred` : "";
+  const tail = r ? twoDigits(r) : "";
+  return [head, tail].filter(Boolean).join(" ");
+}
+
+export function amountInWords(amount: number): string {
+  const n = Math.round(Math.abs(Number(amount) || 0));
+  if (n === 0) return "Zero Rupees Only";
+
+  const crore = Math.floor(n / 10000000);
+  const lakh = Math.floor((n % 10000000) / 100000);
+  const thousand = Math.floor((n % 100000) / 1000);
+  const hundred = n % 1000;
+
+  const parts: string[] = [];
+  if (crore) parts.push(`${threeDigits(crore)} Crore`);
+  if (lakh) parts.push(`${threeDigits(lakh)} Lakh`);
+  if (thousand) parts.push(`${threeDigits(thousand)} Thousand`);
+  if (hundred) parts.push(threeDigits(hundred));
+
+  return `${parts.join(" ")} Rupees Only`;
 }
