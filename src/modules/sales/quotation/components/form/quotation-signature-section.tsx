@@ -1,3 +1,6 @@
+
+
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,10 +17,10 @@ export function QuotationSignatureSection() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const drewRef = useRef(false);
 
   const [mode, setMode] = useState<Mode>("draw");
   const [isDrawing, setIsDrawing] = useState(false);
-  const [hasDrawing, setHasDrawing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,9 +42,9 @@ export function QuotationSignatureSection() {
 
   const clearAll = () => {
     clearCanvas();
-    setHasDrawing(false);
+    drewRef.current = false;
     setPreview(null);
-    setValue("signature", undefined, { shouldDirty: true });
+    setValue("signature", null, { shouldDirty: true });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -49,6 +52,14 @@ export function QuotationSignatureSection() {
     if (next === mode) return;
     clearAll();
     setMode(next);
+  };
+
+  const commitCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !drewRef.current) return;
+    const data = canvas.toDataURL("image/png");
+    setPreview(data);
+    setValue("signature", data, { shouldDirty: true });
   };
 
   const getPosition = (
@@ -90,31 +101,26 @@ export function QuotationSignatureSection() {
     const { x, y } = getPosition(e);
     ctx.lineTo(x, y);
     ctx.stroke();
-    setHasDrawing(true);
+    drewRef.current = true;
   };
 
   const endDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (!canvas || !hasDrawing) return;
-    const data = canvas.toDataURL("image/png");
-    setPreview(data);
-    setValue("signature", data, { shouldDirty: true });
+    commitCanvas();
   };
 
   const onUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     clearCanvas();
-    setHasDrawing(false);
+    drewRef.current = false;
     setMode("upload");
 
     const reader = new FileReader();
     reader.onload = () => {
       const data = String(reader.result || "");
       setPreview(data);
-      setHasDrawing(true);
       setValue("signature", data, { shouldDirty: true });
     };
     reader.readAsDataURL(file);

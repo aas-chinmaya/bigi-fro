@@ -17,6 +17,30 @@ function toNum(v: unknown, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
+/** Ensure API gets full ISO datetime (date-only inputs → start/end of day) */
+export function toIsoDateTime(
+  value: string | null | undefined,
+  endOfDay = false,
+): string {
+  if (!value) return new Date().toISOString();
+  const raw = String(value).trim();
+
+  if (/T\d{2}:\d{2}/.test(raw)) {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, day] = raw.split("-").map(Number);
+    const d = endOfDay
+      ? new Date(y, m - 1, day, 23, 59, 59, 999)
+      : new Date(y, m - 1, day, 0, 0, 0, 0);
+    return d.toISOString();
+  }
+
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
 
 /** Prefer price, fall back to rate */
 export function getUnitPrice(item: {
@@ -505,8 +529,8 @@ export function sanitizeCreatePayload(
     businessId: rest.businessId,
     createdBy: rest.createdBy,
     branchId: rest.branchId || null,
-    quotationDate: rest.quotationDate,
-    validUntil: rest.validUntil,
+    quotationDate: toIsoDateTime(rest.quotationDate, false), // e.g. 2026-09-19T00:00:00.000Z
+validUntil: toIsoDateTime(rest.validUntil, true),       // e.g. 2026-09-20T18:29:59.999Z (end of day)
     financialYear: rest.financialYear || null,
 
     businessName: rest.businessName,
