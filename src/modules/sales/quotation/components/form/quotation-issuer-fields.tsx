@@ -115,6 +115,15 @@ export function QuotationIssuerFields() {
     name: "businessBankIFSC",
   });
 
+  const financialYear = useWatch({
+    control,
+    name: "financialYear",
+  });
+  const quotationDate = useWatch({
+    control,
+    name: "quotationDate",
+  });
+
   const upiId = useWatch({
     control,
     name: "businessUPIId",
@@ -122,6 +131,21 @@ export function QuotationIssuerFields() {
 
   return (
     <div className="space-y-4 text-sm">
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <Calendar className="size-3" />
+          Quotation date
+        </div>
+        <p className="text-sm font-medium text-slate-900">
+          {quotationDate
+            ? new Date(quotationDate + (quotationDate.includes("T") ? "" : "T12:00:00")).toLocaleDateString(
+                "en-IN",
+                { day: "2-digit", month: "short", year: "numeric" },
+              )
+            : "—"}
+        </p>
+      </div>
+
       {/* Due Date */}
       <div className="space-y-1">
         <Label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
@@ -141,6 +165,15 @@ export function QuotationIssuerFields() {
             {errors.validUntil.message}
           </p>
         )}
+      </div>
+
+      <div className="space-y-0.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          Financial year
+        </div>
+        <p className="text-sm font-medium text-slate-900">
+          {financialYear || "—"}
+        </p>
       </div>
 
       {/* Business */}

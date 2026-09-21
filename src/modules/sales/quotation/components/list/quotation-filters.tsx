@@ -57,6 +57,10 @@ export default function QuotationFilters({
             Draft
           </SelectItem>
 
+          <SelectItem value="FINALIZED">
+            Finalized
+          </SelectItem>
+
           <SelectItem value="SENT">
             Sent
           </SelectItem>

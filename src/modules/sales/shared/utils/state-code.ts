@@ -37,16 +37,22 @@ export const STATE_CODE_MAP: Record<string, string> = {
   puducherry: "34",
 };
 
-export const getStateCode = (state?: string): string => {
-  if (!state) return "";
-  return STATE_CODE_MAP[state.trim().toLowerCase()] ?? "";
-};
+export function normalizeStateKey(state: string): string {
+  return state.trim().toLowerCase();
+}
 
-export const getStateName = (code?: string): string => {
-  if (!code) return "";
-  return (
-    Object.entries(STATE_CODE_MAP).find(
-      ([, stateCode]) => stateCode === code,
-    )?.[0] ?? ""
-  );
-};
+export function getStateCode(state: string | null | undefined): string {
+  if (!state) return "";
+  return STATE_CODE_MAP[normalizeStateKey(state)] || "";
+}
+
+export function getStateOptions(): Array<{ value: string; label: string; code: string }> {
+  return Object.keys(STATE_CODE_MAP).map((state) => ({
+    value: state,
+    code: STATE_CODE_MAP[state],
+    label: state
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" "),
+  }));
+}

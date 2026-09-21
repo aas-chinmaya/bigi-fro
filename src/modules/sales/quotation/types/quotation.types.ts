@@ -4,6 +4,7 @@
 
 export type QuotationStatus =
   | "DRAFT"
+  | "FINALIZED"
   | "SENT"
   | "ACCEPTED"
   | "REJECTED"
@@ -50,6 +51,7 @@ export interface QuotationItem {
   total?: number;
   /** Alias of total (API / legacy) */
   amount?: number;
+  stockAvailable?: number | null;
 }
 
 export interface Quotation {
@@ -131,6 +133,7 @@ showUPIDetails: boolean;
 
   notes?: string | null;
   termsAndConditions?: string | null;
+  signature?: string | null;
   printCount: number;
   items: QuotationItem[];
 
@@ -245,6 +248,8 @@ showUPIDetails?: boolean;
 
   notes?: string | null;
   termsAndConditions?: string | null;
+  signature?: string | null;
+  status?: QuotationStatus;
   createdBy: string;
 }
 

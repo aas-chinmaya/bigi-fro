@@ -23,6 +23,11 @@ export interface SessionUser {
   avatar?: string | null;
 }
 
+export interface SessionData {
+  user: SessionUser | null;
+  business: SessionBusiness | null;
+}
+
 export interface SessionBusiness {
   id: string;
   name: string;

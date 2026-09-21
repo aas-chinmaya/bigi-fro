@@ -1,3 +1,19 @@
+
+/** Keep amounts within production limits before API */
+function clampMoney(n: number, max = 10_00_00_000) {
+  const v = toNum(n);
+  if (v < 0) return 0;
+  if (v > max) return max;
+  return round2(v);
+}
+
+function clampQty(n: number) {
+  const v = toNum(n);
+  if (v < 0) return 0;
+  if (v > 1_00_000) return 1_00_000;
+  return v;
+}
+
 import type {
   Quotation,
   QuotationCreatePayload,
@@ -260,6 +276,34 @@ export function emptyLineItem(): QuotationFormValues["items"][number] {
   };
 }
 
+export function resolveFinancialYear(dateStr?: string | null): string {
+  // Prefer YYYY-MM-DD parts so timezone does not shift the calendar day
+  let y: number;
+  let m: number; // 1–12
+  const raw = (dateStr || "").trim();
+  const mDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (mDate) {
+    y = Number(mDate[1]);
+    m = Number(mDate[2]);
+  } else {
+    const d = raw ? new Date(raw) : new Date();
+    if (Number.isNaN(d.getTime())) {
+      const now = new Date();
+      y = now.getFullYear();
+      m = now.getMonth() + 1;
+    } else {
+      y = d.getFullYear();
+      m = d.getMonth() + 1;
+    }
+  }
+  // Indian FY: Apr (04) – Mar (03)
+  // e.g. 2025-04-01 → 2025-26 | 2026-03-31 → 2025-26 | 2026-04-01 → 2026-27
+  if (m >= 4) {
+    return `${y}-${String(y + 1).slice(-2)}`;
+  }
+  return `${y - 1}-${String(y).slice(-2)}`;
+}
+
 export function getDefaultQuotationValues(
   businessId = "",
   createdBy = "",
@@ -270,7 +314,7 @@ export function getDefaultQuotationValues(
     branchId: null,
     quotationDate: new Date().toISOString().slice(0, 10),
     validUntil: "",
-    financialYear: null,
+    financialYear: resolveFinancialYear(new Date().toISOString()),
 
     businessName: "",
     businessLegalName: null,
@@ -348,7 +392,7 @@ export function mapQuotationToFormValues(
     branchId: q.branchId ?? null,
     quotationDate: q.quotationDate?.slice(0, 10) ?? "",
     validUntil: q.validUntil?.slice(0, 10) ?? "",
-    financialYear: q.financialYear ?? null,
+    financialYear: resolveFinancialYear(q.quotationDate),
 
     businessName: q.businessName,
     businessLegalName: q.businessLegalName ?? null,
@@ -423,6 +467,7 @@ showUPIDetails: q.showUPIDetails ?? false,
               igstAmount: item.igstAmount ?? 0,
               amount: item.amount ?? item.total ?? 0,
               total: item.total ?? item.amount ?? 0,
+              stockAvailable: (item as { stockAvailable?: number | null }).stockAvailable ?? null,
             };
           })
         : [emptyLineItem()],
@@ -440,7 +485,7 @@ showUPIDetails: q.showUPIDetails ?? false,
 
     notes: q.notes ?? null,
     termsAndConditions: q.termsAndConditions ?? null,
-    signature: undefined,
+    signature: q.signature ?? null,
   };
 }
 
@@ -552,11 +597,13 @@ export function applyTotalsToValues(
   };
 }
 
+
+/** Indian FY: Apr–Mar → "2025-26" */
 export function sanitizeCreatePayload(
   values: QuotationFormValues,
 ): QuotationCreatePayload {
   const withTotals = applyTotalsToValues(values);
-  const { signature: _sig, ...rest } = withTotals;
+  const rest = withTotals;
 
 
 return {
@@ -574,7 +621,7 @@ return {
     true,
   ),
 
-  financialYear: rest.financialYear || null,
+  financialYear: resolveFinancialYear(rest.quotationDate),
 
   businessName: rest.businessName,
   businessLegalName: rest.businessLegalName || null,
@@ -672,11 +719,12 @@ return {
       itemName: item.itemName || "",
       description: item.description || null,
       hsnSac: item.hsnSac || null,
-      quantity: toNum(item.quantity),
+      quantity: clampQty(item.quantity),
       unit: item.unit || null,
-      rate: unitPrice,
-      price: unitPrice,
-      discount: toNum(item.discount),
+      rate: clampMoney(unitPrice),
+      price: clampMoney(unitPrice),
+      discount: clampMoney(item.discount),
+
       discountType:
         item.discountType || "PERCENTAGE",
       taxRate: toNum(item.taxRate),
@@ -710,6 +758,8 @@ return {
   notes: rest.notes || null,
   termsAndConditions:
     rest.termsAndConditions || null,
+  signature: rest.signature || null,
+  status: (rest as { status?: string }).status || "DRAFT",
 };
 }
 

@@ -28,14 +28,23 @@ interface QuotationViewHeaderProps {
   onEmail?: () => void;
   onWhatsApp?: () => void;
   onStatusChange?: (
-    status: "ACCEPTED" | "REJECTED" | "CANCELLED",
+    status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "SENT" | "FINALIZED" | "DRAFT",
+    remarks?: string,
   ) => void;
+  statusLoading?: boolean;
 }
 
 const STATUS_CHANGEABLE: QuotationStatus[] = [
   "DRAFT",
+  "FINALIZED",
   "SENT",
 ];
+
+const NEXT_STATUSES: Record<string, Array<"SENT" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "FINALIZED">> = {
+  DRAFT: ["FINALIZED", "SENT", "CANCELLED"],
+  FINALIZED: ["SENT", "ACCEPTED", "REJECTED", "CANCELLED"],
+  SENT: ["ACCEPTED", "REJECTED", "CANCELLED"],
+};
 
 export function QuotationViewHeader({
   quotation,
@@ -55,15 +64,23 @@ export function QuotationViewHeader({
   );
 
   const handleEdit = () => {
+    if (!canEdit) return;
     router.push(`/sales/quotation/${quotation.id}/edit`);
   };
 
   const handleStatusChange = (
-    status: "ACCEPTED" | "REJECTED" | "CANCELLED",
+    status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "SENT" | "FINALIZED" | "DRAFT",
   ) => {
     setStatusOpen(false);
     onStatusChange?.(status);
   };
+
+  const nextStatuses =
+    NEXT_STATUSES[quotation.quotationStatus] ?? [];
+
+  const canEdit =
+    quotation.quotationStatus === "DRAFT";
+
 
   return (
     <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-surface px-3 sm:px-5">
@@ -84,7 +101,10 @@ export function QuotationViewHeader({
 
       <div className="flex shrink-0 items-center gap-1.5">
         {canChangeStatus && (
-          <div className="relative">
+          <div
+            className="relative"
+            onMouseLeave={() => setStatusOpen(false)}
+          >
             <button
               type="button"
               onClick={() => {
@@ -103,39 +123,26 @@ export function QuotationViewHeader({
             </button>
 
             {statusOpen && (
-              <div className="absolute right-0 top-full z-50 mt-1.5 w-40 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+            <div className="absolute right-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+              {nextStatuses.map((st) => (
                 <button
+                  key={st}
                   type="button"
-                  onClick={() => handleStatusChange("ACCEPTED")}
+                  onClick={() => handleStatusChange(st)}
                   className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                  Accepted
+                  {st.charAt(0) + st.slice(1).toLowerCase()}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange("REJECTED")}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                >
-                  <XCircle className="h-3.5 w-3.5 text-danger" />
-                  Rejected
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange("CANCELLED")}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                >
-                  <XCircle className="h-3.5 w-3.5 text-danger" />
-                  Cancelled
-                </button>
-              </div>
-            )}
+              ))}
+            </div>
+          )}
           </div>
         )}
 
-        <div className="relative">
+        <div
+          className="relative"
+          onMouseLeave={() => setSendOpen(false)}
+        >
           <button
             type="button"
             onClick={() => {
@@ -189,15 +196,17 @@ export function QuotationViewHeader({
           <span className="hidden sm:inline">Download</span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleEdit}
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-medium text-white transition hover:bg-primary/90"
-          title="Edit quotation"
-        >
-          <Edit className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Edit</span>
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-medium text-white transition hover:bg-primary/90"
+            title="Edit quotation"
+          >
+            <Edit className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Edit</span>
+          </button>
+        )}
 
         <div className="mx-0.5 h-5 w-px bg-gray-200" />
 

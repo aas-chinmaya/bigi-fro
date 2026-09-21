@@ -23,6 +23,7 @@ import {
   sanitizeUpdatePayload,
   applyTotalsToValues,
   resolveTaxType,
+  resolveFinancialYear,
 } from "../../utils/quotation-form.utils";
 
 import { useCurrentSession } from "@/modules/sales/shared/hooks/use-current-session";
@@ -45,6 +46,13 @@ export function QuotationForm({
 
   const { data: session } = useCurrentSession();
   const isSubmitting = isCreating || isUpdating;
+
+  const isFinalized =
+    mode === "edit" &&
+    (quotation?.quotationStatus === "FINALIZED" ||
+      quotation?.quotationStatus === "ACCEPTED" ||
+      quotation?.quotationStatus === "CANCELLED");
+
 
   const sessionDefaults = useMemo(
     () => getSessionFormDefaults(session),
@@ -70,11 +78,12 @@ export function QuotationForm({
     mode: "onChange",
   });
 
-  const { handleSubmit, reset, setValue, control } = form;
+  const { reset, setValue, control } = form;
 
   const businessStateCode = useWatch({ control, name: "businessStateCode" });
   const placeOfSupplyCode = useWatch({ control, name: "placeOfSupplyCode" });
   const items = useWatch({ control, name: "items" });
+  const quotationDate = useWatch({ control, name: "quotationDate" });
 
   // Deep snapshot so nested qty/price/discount always trigger
   const itemsKey = useMemo(() => JSON.stringify(items ?? []), [items]);
@@ -83,6 +92,14 @@ export function QuotationForm({
     const taxType = resolveTaxType(businessStateCode, placeOfSupplyCode);
     setValue("taxType", taxType, { shouldDirty: false });
   }, [businessStateCode, placeOfSupplyCode, setValue]);
+
+  useEffect(() => {
+    setValue(
+      "financialYear",
+      resolveFinancialYear(quotationDate),
+      { shouldDirty: false },
+    );
+  }, [quotationDate, setValue]);
 
   // Instant totals — any line change / tax type change
   useEffect(() => {
@@ -151,26 +168,66 @@ export function QuotationForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, session?.business?.id, session?.user?.id]);
 
-  const onSubmit = async (values: QuotationFormValues) => {
+  const submitWithStatus = async (status: "DRAFT" | "FINALIZED") => {
+    const values = form.getValues();
+    // validate first
+    const valid = await form.trigger();
+    if (!valid) {
+      notify.error("Please fix the highlighted fields");
+      return;
+    }
+
+    if (status === "FINALIZED") {
+      const terms = (values.termsAndConditions || "").replace(/<[^>]+>/g, "").trim();
+      const sig = values.signature;
+      if (!terms) {
+        notify.error("Terms & conditions are required to finalize");
+        return;
+      }
+      if (!sig) {
+        notify.error("Signature is required to finalize");
+        return;
+      }
+    }
+
     try {
       const currentUserId = session?.user?.id ?? values.createdBy ?? "";
+      const withStatus = {
+        ...values,
+        status,
+        financialYear: resolveFinancialYear(values.quotationDate),
+      };
 
       if (mode === "create") {
         const payload = sanitizeCreatePayload({
-          ...values,
+          ...withStatus,
           businessId: values.businessId || session?.business?.id || "",
           createdBy: values.createdBy || currentUserId,
         });
-        const res = await createQuotation(payload).unwrap();
-        notify.success(res.message || "Quotation created");
+        const res = await createQuotation(payload as any).unwrap();
+        notify.success(
+          res.message ||
+            (status === "FINALIZED"
+              ? "Quotation finalized"
+              : "Draft saved"),
+        );
         onSuccess?.(res.data);
       } else if (mode === "edit" && quotation?.id) {
-        const payload = sanitizeUpdatePayload(values, currentUserId);
+        if (isFinalized) {
+          notify.error("Finalized quotations cannot be edited");
+          return;
+        }
+        const payload = sanitizeUpdatePayload(withStatus as any, currentUserId);
         const res = await updateQuotation({
           id: quotation.id,
-          data: payload,
+          data: { ...payload, status } as any,
         }).unwrap();
-        notify.success(res.message || "Quotation updated");
+        notify.success(
+          res.message ||
+            (status === "FINALIZED"
+              ? "Quotation finalized"
+              : "Draft updated"),
+        );
         onSuccess?.(res.data);
       }
     } catch (err: any) {
@@ -191,10 +248,18 @@ export function QuotationForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
         className="w-full space-y-4 pb-10"
         noValidate
       >
+      {isFinalized && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          This quotation is finalized — editing is disabled.
+        </div>
+      )}
+      <fieldset disabled={!!isFinalized} className="min-w-0 space-y-4">
         {/* Same row: Customer | Issuer */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
@@ -223,7 +288,13 @@ export function QuotationForm({
           </div>
         </section>
 
-        <QuotationFormActions mode={mode} isSubmitting={isSubmitting} />
+        </fieldset>
+        <QuotationFormActions
+          mode={mode}
+          isSubmitting={isSubmitting}
+          readOnly={!!isFinalized}
+          onSubmitIntent={submitWithStatus}
+        />
       </form>
     </FormProvider>
   );

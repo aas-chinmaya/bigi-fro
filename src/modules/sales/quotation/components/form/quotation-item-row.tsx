@@ -1,12 +1,15 @@
-
-
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-import { Plus, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Minus, Plus } from "lucide-react";
 import { useMemo } from "react";
 import type { QuotationFormValues } from "../../types/quotation-form.types";
 import type { TaxType } from "../../types/quotation.types";
@@ -52,6 +55,11 @@ export function QuotationItemRow({
   const description =
     useWatch({ control, name: `items.${index}.description` }) ?? "";
 
+  const stockAvailable = useWatch({
+    control,
+    name: `items.${index}.stockAvailable`,
+  }) as number | null | undefined;
+
   const unitPrice =
     price != null && Number(price) > 0 ? Number(price) : Number(rate) || 0;
 
@@ -74,6 +82,7 @@ export function QuotationItemRow({
   const applyItem = (item: SelectedItem | null) => {
     if (!item) {
       setValue(`items.${index}.itemId`, null, { shouldDirty: true });
+      setValue(`items.${index}.stockAvailable`, null, { shouldDirty: true });
       return;
     }
     setValue(`items.${index}.itemId`, item.id, {
@@ -94,19 +103,24 @@ export function QuotationItemRow({
     if (item.hsnSac != null) {
       setValue(`items.${index}.hsnSac`, item.hsnSac, { shouldDirty: true });
     }
+    setValue(
+      `items.${index}.stockAvailable`,
+      item.stock != null ? item.stock : null,
+      { shouldDirty: true },
+    );
     if (!quantity) {
       setValue(`items.${index}.quantity`, 1, { shouldDirty: true });
     }
   };
 
   return (
-    <tr className="group border-b border-slate-100 align-top hover:bg-slate-50/40">
-      <td className="px-2 py-2 text-center text-xs text-slate-400">
+    <tr className="group border-b border-slate-100 align-top">
+      <td className="w-8 px-1 py-2 text-center text-xs text-slate-400">
         {index + 1}
       </td>
 
-      <td className="relative z-10 overflow-visible px-2 py-2">
-        <div className="relative z-10 min-w-[260px] space-y-1.5">
+      <td className="min-w-[180px] px-1.5 py-2 sm:min-w-[220px]">
+        <div className="space-y-1.5">
           <ItemSearchSelect
             label=""
             value={itemName}
@@ -117,11 +131,10 @@ export function QuotationItemRow({
                 shouldValidate: true,
               })
             }
-            placeholder="Search inventory item"
+            placeholder="Search item"
           />
-
           <textarea
-            placeholder="Description / note"
+            placeholder="Note"
             rows={2}
             value={description || ""}
             onChange={(e) =>
@@ -129,9 +142,8 @@ export function QuotationItemRow({
                 shouldDirty: true,
               })
             }
-            className="w-full resize-none rounded-md border border-amber-100 bg-amber-50/80 px-2 py-1.5 text-xs leading-snug text-slate-600 placeholder:text-slate-400 focus:border-amber-200 focus:outline-none"
+            className="w-full resize-none rounded-md border border-amber-100 bg-amber-50/80 px-2 py-1 text-xs leading-snug text-slate-600 placeholder:text-slate-400 focus:border-amber-200 focus:outline-none"
           />
-
           {itemErrors?.itemName && (
             <p className="text-[11px] text-red-500">
               {itemErrors.itemName.message}
@@ -140,48 +152,88 @@ export function QuotationItemRow({
         </div>
       </td>
 
-      <td className="px-2 py-2">
+      <td className="w-16 px-1 py-2 sm:w-20">
         <Input
           type="number"
           step="any"
           min={0}
-          className="h-9 text-center tabular-nums"
-          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+          max={stockAvailable != null ? stockAvailable : 100000}
+          className="h-8 px-1 text-center text-xs tabular-nums sm:h-9 sm:text-sm"
+          {...register(`items.${index}.quantity`, {
+            valueAsNumber: true,
+            onChange: (e) => {
+              let v = Number(e.target.value);
+              if (Number.isNaN(v) || v < 0) v = 0;
+              if (v > 100000) v = 100000;
+              if (stockAvailable != null && v > stockAvailable) {
+                v = stockAvailable;
+              }
+              setValue(`items.${index}.quantity`, v, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            },
+          })}
         />
+        {stockAvailable != null && (
+          <p className="mt-0.5 text-[9px] text-slate-400">
+            Stock {stockAvailable}
+          </p>
+        )}
+        {itemErrors?.quantity && (
+          <p className="text-[10px] text-red-500">
+            {(itemErrors.quantity as { message?: string }).message}
+          </p>
+        )}
       </td>
 
-      <td className="px-2 py-2">
+      <td className="hidden w-14 px-1 py-2 sm:table-cell">
         <Input
           readOnly
           value={unit || "PCS"}
-          className="h-9 cursor-default bg-slate-50 text-center text-xs uppercase text-slate-600"
+          className="h-8 cursor-default bg-slate-50 px-1 text-center text-[10px] uppercase text-slate-600 sm:h-9 sm:text-xs"
           tabIndex={-1}
         />
       </td>
 
-      <td className="px-2 py-2">
+      <td className="w-20 px-1 py-2 sm:w-24">
         <Input
           type="number"
           step="any"
           min={0}
-          className="h-9 text-right tabular-nums"
+          className="h-8 px-1 text-right text-xs tabular-nums sm:h-9 sm:text-sm"
           value={unitPrice || ""}
           onChange={(e) => {
-            const v = e.target.value === "" ? 0 : Number(e.target.value);
+            let v = e.target.value === "" ? 0 : Number(e.target.value);
+            if (Number.isNaN(v) || v < 0) v = 0;
+            if (v > 10_00_00_000) v = 10_00_00_000;
             setValue(`items.${index}.rate`, v, { shouldDirty: true });
             setValue(`items.${index}.price`, v, { shouldDirty: true });
           }}
+          max={100000000}
         />
       </td>
 
-      <td className="px-2 py-2">
-        <div className="flex items-center gap-1">
+      <td className="w-24 px-1 py-2">
+        <div className="flex items-center gap-0.5">
           <Input
             type="number"
             step="any"
             min={0}
-            className="h-9 min-w-0 flex-1 text-center tabular-nums"
-            {...register(`items.${index}.discount`, { valueAsNumber: true })}
+            className="h-8 min-w-0 flex-1 px-1 text-center text-xs tabular-nums sm:h-9"
+            {...register(`items.${index}.discount`, {
+              valueAsNumber: true,
+              onChange: (e) => {
+                let v = Number(e.target.value);
+                if (Number.isNaN(v) || v < 0) v = 0;
+                if (discountType === "PERCENTAGE" && v > 100) v = 100;
+                if (discountType === "FIXED" && v > 10_00_00_000) v = 10_00_00_000;
+                setValue(`items.${index}.discount`, v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              },
+            })}
           />
           <button
             type="button"
@@ -193,78 +245,95 @@ export function QuotationItemRow({
                 { shouldDirty: true },
               )
             }
-            className="h-9 w-8 shrink-0 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+            className="h-8 w-7 shrink-0 rounded border border-slate-200 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 sm:h-9 sm:w-8 sm:text-[11px]"
           >
             {discountType === "PERCENTAGE" ? "%" : "₹"}
           </button>
         </div>
       </td>
 
-      {isInter ? (
-        <td className="px-2 py-2">
-          <Input
-            type="number"
-            step="any"
-            min={0}
-            className="h-9 text-center tabular-nums"
-            {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
-          />
-          <p className="mt-0.5 text-center text-[10px] tabular-nums text-slate-400">
-            {formatINR(line.igstAmount)}
-          </p>
-        </td>
-      ) : (
-        <>
-          <td className="px-2 py-2 text-center">
-            <span className="text-xs tabular-nums text-slate-600">
-              {line.cgstRate}%
-            </span>
-            <p className="text-[10px] tabular-nums text-slate-400">
-              {formatINR(line.cgstAmount)}
+      {/* Single tax column */}
+      <td className="w-20 px-1 py-2 text-center sm:w-24">
+        {isInter ? (
+          <>
+            <Input
+              type="number"
+              step="any"
+              min={0}
+              className="h-8 px-1 text-center text-xs tabular-nums sm:h-9"
+              {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
+            />
+            <p className="mt-0.5 text-[9px] tabular-nums text-slate-400">
+              IGST {formatINR(line.igstAmount)}
             </p>
-          </td>
-          <td className="px-2 py-2 text-center">
-            <span className="text-xs tabular-nums text-slate-600">
-              {line.sgstRate}%
-            </span>
-            <p className="text-[10px] tabular-nums text-slate-400">
-              {formatINR(line.sgstAmount)}
+          </>
+        ) : (
+          <div className="space-y-0.5">
+            <p className="text-[10px] leading-tight text-slate-600">
+              <span className="text-slate-400">C</span>
+              {line.cgstRate}%{" "}
+              <span className="tabular-nums text-slate-500">
+                {formatINR(line.cgstAmount)}
+              </span>
             </p>
-          </td>
-        </>
-      )}
+            <p className="text-[10px] leading-tight text-slate-600">
+              <span className="text-slate-400">S</span>
+              {line.sgstRate}%{" "}
+              <span className="tabular-nums text-slate-500">
+                {formatINR(line.sgstAmount)}
+              </span>
+            </p>
+            <input
+              type="hidden"
+              {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
+            />
+          </div>
+        )}
+      </td>
 
-      <td className="px-2 py-2 text-right">
-        <span className="text-sm font-medium tabular-nums text-slate-900">
+      <td className="w-20 px-1 py-2 text-right sm:w-24">
+        <span className="text-xs font-medium tabular-nums text-slate-900 sm:text-sm">
           {formatINR(line.total)}
         </span>
       </td>
 
-      <td className="px-1 py-2">
-        <div className="flex items-center justify-center gap-0.5">
-     
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={onAdd}
-                  className="h-8 w-8 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
+      <td className="w-16 px-0.5 py-2">
+        <TooltipProvider delay={150}>
+          <div className="flex items-center justify-center gap-0.5">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={onAdd}
+                    className="h-7 w-7 bg-emerald-600 text-white hover:bg-emerald-700 sm:h-8 sm:w-8"
+                  />
+                }
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="top">Add line</TooltipContent>
+            </Tooltip>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={onRemove}
-                  disabled={!canRemove}
-                  className="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-     
-        </div>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={onRemove}
+                    disabled={!canRemove}
+                    className="h-7 w-7 bg-red-500 text-white hover:bg-red-600 disabled:opacity-30 sm:h-8 sm:w-8"
+                  />
+                }
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="top">Remove line</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </td>
     </tr>
   );

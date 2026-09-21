@@ -50,7 +50,7 @@ function InfoRow({
   bold?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[120px_1fr] gap-x-1 text-[10px] leading-[1.55] sm:grid-cols-[130px_1fr] sm:text-[11px]">
+    <div className="mx-auto w-full max-w-4xl grid grid-cols-[120px_1fr] gap-x-1 text-[10px] leading-[1.55] sm:grid-cols-[130px_1fr] sm:text-[11px]">
       <span className="text-slate-700">{label}:</span>
       <span className={bold ? "font-semibold text-slate-800" : "text-slate-700"}>
         {value}

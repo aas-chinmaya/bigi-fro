@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { PanelRightClose, X } from "lucide-react";
-import { useGetQuotationByIdQuery } from "../../api/quotation.api";
+import {
+  useGetQuotationByIdQuery,
+  useUpdateQuotationStatusMutation,
+} from "../../api/quotation.api";
+import { notify } from "@/lib/toast";
+import { downloadQuotationPdf } from "../../utils/generate-quotation-pdf";
 import { QuotationViewHeader } from "./header/quotation-view-header";
 import { QuotationPreview } from "./quotation-preview";
 import { QuotationSidebar } from "./sidebar/quotation-sidebar";
@@ -18,6 +23,36 @@ export function QuotationView({ id }: QuotationViewProps) {
 
   const quotation = response?.data;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [updateStatus, { isLoading: statusLoading }] =
+    useUpdateQuotationStatusMutation();
+
+  const handleDownload = () => {
+    if (!quotation) return;
+    try {
+      downloadQuotationPdf(quotation);
+    } catch (err: any) {
+      notify.error(err?.message || "Could not open PDF");
+    }
+  };
+
+  const handleStatusChange = async (
+    status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "SENT" | "FINALIZED" | "DRAFT",
+    remarks?: string,
+  ) => {
+    if (!quotation?.id) return;
+    try {
+      const res = await updateStatus({
+        id: quotation.id,
+        data: { status, remarks },
+      }).unwrap();
+      notify.success(res.message || `Status updated to ${status}`);
+    } catch (err: any) {
+      notify.error(
+        err?.data?.message || err?.message || "Failed to update status",
+      );
+    }
+  };
+
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 1024px)");
@@ -50,6 +85,9 @@ export function QuotationView({ id }: QuotationViewProps) {
         <QuotationViewHeader
           quotation={quotation}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onStatusChange={handleStatusChange}
+          statusLoading={statusLoading}
+          onDownload={handleDownload}
         />
 
         <main className="min-h-0 flex-1 overflow-y-auto">
@@ -134,3 +172,5 @@ export function QuotationView({ id }: QuotationViewProps) {
     </div>
   );
 }
+
+
