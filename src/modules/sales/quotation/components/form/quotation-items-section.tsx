@@ -59,7 +59,7 @@ export function QuotationItemsSection() {
         <div>
           <h3 className="text-sm font-semibold text-slate-800">Items</h3>
           <p className="text-xs text-slate-500">
-            {isInter ? "IGST" : "CGST + SGST"} · updates live
+            Tax · updates live
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export function QuotationItemsSection() {
               <th className="w-28 px-2 py-2.5 text-right">Price</th>
               <th className="w-28 px-2 py-2.5 text-center">Disc</th>
               <th className="w-20 px-1 py-2 text-center sm:w-24 sm:px-2">
-                {isInter ? "IGST" : "Tax"}
+                Tax
               </th>
               <th className="w-28 px-2 py-2.5 text-right">Total</th>
               <th className="w-16 px-1 py-2.5 text-center" />

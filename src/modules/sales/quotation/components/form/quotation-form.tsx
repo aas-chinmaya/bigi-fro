@@ -281,9 +281,6 @@ export function QuotationForm({
         <section className="space-y-6 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
           <QuotationItemsSection />
           <div className="border-t border-slate-100 pt-5">
-            <h2 className="mb-4 text-sm font-semibold text-slate-800">
-              Payment Summary
-            </h2>
             <QuotationSummary />
           </div>
         </section>

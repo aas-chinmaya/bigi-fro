@@ -131,7 +131,8 @@ export function QuotationIssuerFields() {
 
   return (
     <div className="space-y-4 text-sm">
-      <div className="space-y-0.5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+<div className="space-y-0.5">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
           <Calendar className="size-3" />
           Quotation date
@@ -174,6 +175,8 @@ export function QuotationIssuerFields() {
         <p className="text-sm font-medium text-slate-900">
           {financialYear || "—"}
         </p>
+      </div>
+
       </div>
 
       {/* Business */}

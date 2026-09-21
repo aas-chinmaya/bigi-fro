@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import {
@@ -8,10 +6,10 @@ import {
   ChevronDown,
   Download,
   Edit,
+  Loader2,
   Mail,
   MessageCircle,
   PanelRightOpen,
-  XCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,19 +26,25 @@ interface QuotationViewHeaderProps {
   onEmail?: () => void;
   onWhatsApp?: () => void;
   onStatusChange?: (
-    status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "SENT" | "FINALIZED" | "DRAFT",
+    status:
+      | "ACCEPTED"
+      | "REJECTED"
+      | "CANCELLED"
+      | "SENT"
+      | "FINALIZED"
+      | "DRAFT",
     remarks?: string,
   ) => void;
   statusLoading?: boolean;
+  downloadLoading?: boolean;
 }
 
-const STATUS_CHANGEABLE: QuotationStatus[] = [
-  "DRAFT",
-  "FINALIZED",
-  "SENT",
-];
+const STATUS_CHANGEABLE: QuotationStatus[] = ["DRAFT", "FINALIZED", "SENT"];
 
-const NEXT_STATUSES: Record<string, Array<"SENT" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "FINALIZED">> = {
+const NEXT_STATUSES: Record<
+  string,
+  Array<"SENT" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "FINALIZED">
+> = {
   DRAFT: ["FINALIZED", "SENT", "CANCELLED"],
   FINALIZED: ["SENT", "ACCEPTED", "REJECTED", "CANCELLED"],
   SENT: ["ACCEPTED", "REJECTED", "CANCELLED"],
@@ -53,15 +57,18 @@ export function QuotationViewHeader({
   onEmail,
   onWhatsApp,
   onStatusChange,
+  statusLoading,
+  downloadLoading,
 }: QuotationViewHeaderProps) {
   const router = useRouter();
-
   const [sendOpen, setSendOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
   const canChangeStatus = STATUS_CHANGEABLE.includes(
     quotation.quotationStatus,
   );
+  const canEdit = quotation.quotationStatus === "DRAFT";
+  const nextStatuses = NEXT_STATUSES[quotation.quotationStatus] ?? [];
 
   const handleEdit = () => {
     if (!canEdit) return;
@@ -69,18 +76,18 @@ export function QuotationViewHeader({
   };
 
   const handleStatusChange = (
-    status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "SENT" | "FINALIZED" | "DRAFT",
+    status:
+      | "ACCEPTED"
+      | "REJECTED"
+      | "CANCELLED"
+      | "SENT"
+      | "FINALIZED"
+      | "DRAFT",
   ) => {
+    if (statusLoading) return;
     setStatusOpen(false);
     onStatusChange?.(status);
   };
-
-  const nextStatuses =
-    NEXT_STATUSES[quotation.quotationStatus] ?? [];
-
-  const canEdit =
-    quotation.quotationStatus === "DRAFT";
-
 
   return (
     <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-surface px-3 sm:px-5">
@@ -107,35 +114,38 @@ export function QuotationViewHeader({
           >
             <button
               type="button"
+              disabled={statusLoading}
               onClick={() => {
                 setStatusOpen((open) => !open);
                 setSendOpen(false);
               }}
-              className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
               title="Change quotation status"
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-              <span className="hidden sm:inline">
-                Change Status
-              </span>
+              {statusLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              )}
+              <span className="hidden sm:inline">Change Status</span>
               <span className="sm:hidden">Status</span>
               <ChevronDown className="h-3 w-3 text-gray-400" />
             </button>
 
-            {statusOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
-              {nextStatuses.map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => handleStatusChange(st)}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                >
-                  {st.charAt(0) + st.slice(1).toLowerCase()}
-                </button>
-              ))}
-            </div>
-          )}
+            {statusOpen && !statusLoading && (
+              <div className="absolute right-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                {nextStatuses.map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => handleStatusChange(st)}
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    {st.charAt(0) + st.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -170,7 +180,6 @@ export function QuotationViewHeader({
                 <Mail className="h-3.5 w-3.5 text-info" />
                 Send by Email
               </button>
-
               <button
                 type="button"
                 onClick={() => {
@@ -189,11 +198,18 @@ export function QuotationViewHeader({
         <button
           type="button"
           onClick={onDownload}
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-          title="Download quotation"
+          disabled={downloadLoading}
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+          title="Download PDF"
         >
-          <Download className="h-3.5 w-3.5 text-violet" />
-          <span className="hidden sm:inline">Download</span>
+          {downloadLoading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-violet" />
+          ) : (
+            <Download className="h-3.5 w-3.5 text-violet" />
+          )}
+          <span className="hidden sm:inline">
+            {downloadLoading ? "Downloading…" : "Download"}
+          </span>
         </button>
 
         {canEdit && (
@@ -213,8 +229,8 @@ export function QuotationViewHeader({
         <button
           type="button"
           onClick={onOpenSidebar}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 lg:hidden"
-          title="Open settings"
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+          title="Activity"
         >
           <PanelRightOpen className="h-4 w-4" />
         </button>

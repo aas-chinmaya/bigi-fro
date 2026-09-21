@@ -35,6 +35,7 @@ export function QuotationCustomerFields() {
 
   const reverseCharge = watch("reverseCharge");
   const placeOfSupply = watch("placeOfSupply");
+  const placeOfSupplyCode = watch("placeOfSupplyCode");
   const taxType = watch("taxType");
 
   const applyCustomer = (customer: SelectedCustomer | null) => {
@@ -137,7 +138,7 @@ export function QuotationCustomerFields() {
             <SelectContent>
               {STATES.map((s) => (
                 <SelectItem key={s.code} value={s.value}>
-                  {s.label}
+                  {s.label} ({s.code})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -164,12 +165,15 @@ export function QuotationCustomerFields() {
             <SelectContent>
               {STATES.map((s) => (
                 <SelectItem key={s.code} value={s.value}>
-                  {s.label}
+                  {s.label} ({s.code})
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-500">
+            {placeOfSupply
+              ? `${placeOfSupply}${placeOfSupplyCode ? ` (${placeOfSupplyCode})` : ""} · `
+              : ""}
             {taxType === "INTER_STATE" ? "IGST" : "CGST + SGST"}
           </p>
         </Field>

@@ -252,21 +252,17 @@ export function QuotationItemRow({
         </div>
       </td>
 
-      {/* Single tax column */}
+      {/* Tax — read-only (from inventory / calc) */}
       <td className="w-20 px-1 py-2 text-center sm:w-24">
         {isInter ? (
-          <>
-            <Input
-              type="number"
-              step="any"
-              min={0}
-              className="h-8 px-1 text-center text-xs tabular-nums sm:h-9"
-              {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
-            />
-            <p className="mt-0.5 text-[9px] tabular-nums text-slate-400">
-              IGST {formatINR(line.igstAmount)}
+          <div className="space-y-0.5">
+            <p className="text-[10px] font-medium tabular-nums text-slate-700">
+              {line.igstRate}%
             </p>
-          </>
+            <p className="text-[9px] tabular-nums text-slate-400">
+              {formatINR(line.igstAmount)}
+            </p>
+          </div>
         ) : (
           <div className="space-y-0.5">
             <p className="text-[10px] leading-tight text-slate-600">
@@ -283,12 +279,12 @@ export function QuotationItemRow({
                 {formatINR(line.sgstAmount)}
               </span>
             </p>
-            <input
-              type="hidden"
-              {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
-            />
           </div>
         )}
+        <input
+          type="hidden"
+          {...register(`items.${index}.taxRate`, { valueAsNumber: true })}
+        />
       </td>
 
       <td className="w-20 px-1 py-2 text-right sm:w-24">

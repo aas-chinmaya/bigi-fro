@@ -231,6 +231,15 @@ export const quotationApi = baseApi.injectEndpoints({
         },
       ],
     }),
+
+    /** Backend PDF: GET /quotations/:id/pdf → blob download */
+    downloadQuotationPdf: builder.mutation<Blob, string>({
+      query: (id) => ({
+        url: `${QUOTATION_ENDPOINT}/${id}/pdf`,
+        method: "GET",
+        responseHandler: async (response) => response.blob(),
+      }),
+    }),
   }),
 });
 
@@ -241,4 +250,5 @@ export const {
   useUpdateQuotationMutation,
   useUpdateQuotationStatusMutation,
   useDeleteQuotationMutation,
+  useDownloadQuotationPdfMutation,
 } = quotationApi;

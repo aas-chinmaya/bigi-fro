@@ -58,6 +58,9 @@ export function QuotationSummary() {
       {/* Summary */}
       <div className="flex justify-end">
         <div className="w-full max-w-md">
+          <h3 className="mb-2 text-right text-sm font-semibold text-slate-800">
+            Payment Summary
+          </h3>
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <div className="space-y-2.5 text-sm">
               <SumRow
