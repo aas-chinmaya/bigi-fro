@@ -101,6 +101,15 @@ export const quotationBaseSchema = z.object({
   businessPincode: optionalString,
   businessCountry: z.string().default("India"),
 
+  businessBankName: optionalString,
+businessBankAccountNumber: optionalString,
+businessBankIFSC: optionalString,
+businessBankBranch: optionalString,
+businessUPIId: optionalString,
+
+showBankDetails: z.boolean().default(false),
+showUPIDetails: z.boolean().default(false),
+
   prospectName: z.string().min(1, "Customer name is required").max(200),
 
   prospectCompanyName: optionalString,

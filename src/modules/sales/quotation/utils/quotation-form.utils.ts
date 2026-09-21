@@ -286,6 +286,14 @@ export function getDefaultQuotationValues(
     businessPincode: null,
     businessCountry: "India",
 
+businessBankName: null,
+businessBankAccountNumber: null,
+businessBankIFSC: null,
+businessBankBranch: null,
+businessUPIId: null,
+
+showBankDetails: false,
+showUPIDetails: false,
     prospectName: "",
     prospectCompanyName: null,
     prospectGSTIN: null,
@@ -355,6 +363,15 @@ export function mapQuotationToFormValues(
     businessStateCode: q.businessStateCode ?? null,
     businessPincode: q.businessPincode ?? null,
     businessCountry: q.businessCountry ?? "India",
+
+businessBankName: q.businessBankName ?? null,
+businessBankAccountNumber: q.businessBankAccountNumber ?? null,
+businessBankIFSC: q.businessBankIFSC ?? null,
+businessBankBranch: q.businessBankBranch ?? null,
+businessUPIId: q.businessUPIId ?? null,
+
+showBankDetails: q.showBankDetails ?? false,
+showUPIDetails: q.showUPIDetails ?? false,
 
     prospectName: q.prospectName,
     prospectCompanyName: q.prospectCompanyName ?? null,
@@ -444,6 +461,13 @@ export function getSessionFormDefaults(session: {
     stateCode?: string | null;
     pincode?: string | null;
     country: string;
+
+     bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIFSC?: string | null;
+  bankBranch?: string | null;
+  upiId?: string | null;
+
     branchId?: string | null;
   } | null;
 } | null): Partial<QuotationFormValues> {
@@ -470,6 +494,15 @@ export function getSessionFormDefaults(session: {
     businessStateCode: stateCode,
     businessPincode: business?.pincode ?? null,
     businessCountry: business?.country ?? "India",
+
+    businessBankName: business?.bankName ?? null,
+businessBankAccountNumber: business?.bankAccountNumber ?? null,
+businessBankIFSC: business?.bankIFSC ?? null,
+businessBankBranch: business?.bankBranch ?? null,
+businessUPIId: business?.upiId ?? null,
+
+showBankDetails: false,
+showUPIDetails: false,
   };
 }
 
@@ -525,93 +558,159 @@ export function sanitizeCreatePayload(
   const withTotals = applyTotalsToValues(values);
   const { signature: _sig, ...rest } = withTotals;
 
-  return {
-    businessId: rest.businessId,
-    createdBy: rest.createdBy,
-    branchId: rest.branchId || null,
-    quotationDate: toIsoDateTime(rest.quotationDate, false), // e.g. 2026-09-19T00:00:00.000Z
-validUntil: toIsoDateTime(rest.validUntil, true),       // e.g. 2026-09-20T18:29:59.999Z (end of day)
-    financialYear: rest.financialYear || null,
 
-    businessName: rest.businessName,
-    businessLegalName: rest.businessLegalName || null,
-    businessGSTIN: rest.businessGSTIN || null,
-    businessPAN: rest.businessPAN || null,
-    businessPhone: rest.businessPhone || null,
-    businessEmail: rest.businessEmail || null,
-    businessAddressLine1: rest.businessAddressLine1 || null,
-    businessAddressLine2: rest.businessAddressLine2 || null,
-    businessCity: rest.businessCity || null,
-    businessState: rest.businessState || null,
-    businessStateCode: rest.businessStateCode || null,
-    businessPincode: rest.businessPincode || null,
-    businessCountry: rest.businessCountry || "India",
+return {
+  businessId: rest.businessId,
+  createdBy: rest.createdBy,
+  branchId: rest.branchId || null,
 
-    prospectName: rest.prospectName,
-    prospectCompanyName: rest.prospectCompanyName || null,
-    prospectGSTIN: rest.prospectGSTIN || null,
-    prospectPAN: rest.prospectPAN || null,
-    prospectPhone: rest.prospectPhone || null,
-    prospectEmail: rest.prospectEmail || null,
-    prospectAddressLine1: rest.prospectAddressLine1 || null,
-    prospectAddressLine2: rest.prospectAddressLine2 || null,
-    prospectCity: rest.prospectCity || null,
-    prospectState: rest.prospectState || null,
-    prospectStateCode: rest.prospectStateCode || null,
-    prospectPincode: rest.prospectPincode || null,
-    prospectCountry: rest.prospectCountry || "India",
+  quotationDate: toIsoDateTime(
+    rest.quotationDate,
+    false,
+  ),
 
-    customerId: rest.customerId || null,
-    placeOfSupply: rest.placeOfSupply || null,
-    placeOfSupplyCode: rest.placeOfSupplyCode || null,
-    taxType: rest.taxType || "INTRA_STATE",
-    reverseCharge: rest.reverseCharge ?? false,
-    isExport: rest.isExport ?? false,
-    isSEZ: rest.isSEZ ?? false,
-    currency: rest.currency || "INR",
-    exchangeRate: rest.exchangeRate ?? null,
+  validUntil: toIsoDateTime(
+    rest.validUntil,
+    true,
+  ),
 
-    items: rest.items.map((item) => {
-      const unitPrice = getUnitPrice(item);
-      return {
-        id: item.id,
-        itemId: item.itemId || null,
-        itemName: item.itemName || "",
-        description: item.description || null,
-        hsnSac: item.hsnSac || null,
-        quantity: toNum(item.quantity),
-        unit: item.unit || null,
-        rate: unitPrice,
-        price: unitPrice,
-        discount: toNum(item.discount),
-        discountType: item.discountType || "PERCENTAGE",
-        taxRate: toNum(item.taxRate),
-        taxAmount: toNum(item.taxAmount),
-        cgstRate: toNum(item.cgstRate),
-        cgstAmount: toNum(item.cgstAmount),
-        sgstRate: toNum(item.sgstRate),
-        sgstAmount: toNum(item.sgstAmount),
-        igstRate: toNum(item.igstRate),
-        igstAmount: toNum(item.igstAmount),
-        amount: toNum(item.amount ?? item.total),
-        total: toNum(item.total ?? item.amount),
-      };
-    }),
+  financialYear: rest.financialYear || null,
 
-    totalItems: rest.totalItems,
-    totalQuantity: rest.totalQuantity,
-    taxableAmount: rest.taxableAmount,
-    discountAmount: rest.discountAmount,
-    cgstAmount: rest.cgstAmount,
-    sgstAmount: rest.sgstAmount,
-    igstAmount: rest.igstAmount,
-    cessAmount: rest.cessAmount,
-    roundOffAmount: rest.roundOffAmount,
-    grandTotal: rest.grandTotal,
+  businessName: rest.businessName,
+  businessLegalName: rest.businessLegalName || null,
+  businessGSTIN: rest.businessGSTIN || null,
+  businessPAN: rest.businessPAN || null,
+  businessPhone: rest.businessPhone || null,
+  businessEmail: rest.businessEmail || null,
+  businessAddressLine1:
+    rest.businessAddressLine1 || null,
+  businessAddressLine2:
+    rest.businessAddressLine2 || null,
+  businessCity: rest.businessCity || null,
+  businessState: rest.businessState || null,
+  businessStateCode:
+    rest.businessStateCode || null,
+  businessPincode:
+    rest.businessPincode || null,
+  businessCountry:
+    rest.businessCountry || "India",
 
-    notes: rest.notes || null,
-    termsAndConditions: rest.termsAndConditions || null,
-  };
+  showBankDetails:
+    rest.showBankDetails ?? false,
+
+  showUPIDetails:
+    rest.showUPIDetails ?? false,
+
+  ...(rest.showBankDetails
+    ? {
+        businessBankName:
+          rest.businessBankName || null,
+
+        businessBankAccountNumber:
+          rest.businessBankAccountNumber || null,
+
+        businessBankIFSC:
+          rest.businessBankIFSC || null,
+
+        businessBankBranch:
+          rest.businessBankBranch || null,
+      }
+    : {}),
+
+  ...(rest.showUPIDetails
+    ? {
+        businessUPIId:
+          rest.businessUPIId || null,
+      }
+    : {}),
+
+  prospectName: rest.prospectName,
+  prospectCompanyName:
+    rest.prospectCompanyName || null,
+  prospectGSTIN:
+    rest.prospectGSTIN || null,
+  prospectPAN:
+    rest.prospectPAN || null,
+  prospectPhone:
+    rest.prospectPhone || null,
+  prospectEmail:
+    rest.prospectEmail || null,
+  prospectAddressLine1:
+    rest.prospectAddressLine1 || null,
+  prospectAddressLine2:
+    rest.prospectAddressLine2 || null,
+  prospectCity:
+    rest.prospectCity || null,
+  prospectState:
+    rest.prospectState || null,
+  prospectStateCode:
+    rest.prospectStateCode || null,
+  prospectPincode:
+    rest.prospectPincode || null,
+  prospectCountry:
+    rest.prospectCountry || "India",
+
+  customerId: rest.customerId || null,
+  placeOfSupply: rest.placeOfSupply || null,
+  placeOfSupplyCode:
+    rest.placeOfSupplyCode || null,
+
+  taxType: rest.taxType || "INTRA_STATE",
+  reverseCharge: rest.reverseCharge ?? false,
+  isExport: rest.isExport ?? false,
+  isSEZ: rest.isSEZ ?? false,
+
+  currency: rest.currency || "INR",
+  exchangeRate: rest.exchangeRate ?? null,
+
+  items: rest.items.map((item) => {
+    const unitPrice = getUnitPrice(item);
+
+    return {
+      id: item.id,
+      itemId: item.itemId || null,
+      itemName: item.itemName || "",
+      description: item.description || null,
+      hsnSac: item.hsnSac || null,
+      quantity: toNum(item.quantity),
+      unit: item.unit || null,
+      rate: unitPrice,
+      price: unitPrice,
+      discount: toNum(item.discount),
+      discountType:
+        item.discountType || "PERCENTAGE",
+      taxRate: toNum(item.taxRate),
+      taxAmount: toNum(item.taxAmount),
+      cgstRate: toNum(item.cgstRate),
+      cgstAmount: toNum(item.cgstAmount),
+      sgstRate: toNum(item.sgstRate),
+      sgstAmount: toNum(item.sgstAmount),
+      igstRate: toNum(item.igstRate),
+      igstAmount: toNum(item.igstAmount),
+      amount: toNum(
+        item.amount ?? item.total,
+      ),
+      total: toNum(
+        item.total ?? item.amount,
+      ),
+    };
+  }),
+
+  totalItems: rest.totalItems,
+  totalQuantity: rest.totalQuantity,
+  taxableAmount: rest.taxableAmount,
+  discountAmount: rest.discountAmount,
+  cgstAmount: rest.cgstAmount,
+  sgstAmount: rest.sgstAmount,
+  igstAmount: rest.igstAmount,
+  cessAmount: rest.cessAmount,
+  roundOffAmount: rest.roundOffAmount,
+  grandTotal: rest.grandTotal,
+
+  notes: rest.notes || null,
+  termsAndConditions:
+    rest.termsAndConditions || null,
+};
 }
 
 export function sanitizeUpdatePayload(

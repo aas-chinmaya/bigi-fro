@@ -76,6 +76,16 @@ export interface Quotation {
   businessPincode?: string | null;
   businessCountry: string;
 
+
+businessBankName?: string | null;
+businessBankAccountNumber?: string | null;
+businessBankIFSC?: string | null;
+businessBankBranch?: string | null;
+businessUPIId?: string | null;
+
+showBankDetails: boolean;
+showUPIDetails: boolean;
+
   prospectName: string;
   prospectCompanyName?: string | null;
   prospectGSTIN?: string | null;
@@ -185,6 +195,16 @@ export interface QuotationCreatePayload {
   businessStateCode?: string | null;
   businessPincode?: string | null;
   businessCountry?: string;
+
+
+businessBankName?: string | null;
+businessBankAccountNumber?: string | null;
+businessBankIFSC?: string | null;
+businessBankBranch?: string | null;
+businessUPIId?: string | null;
+
+showBankDetails?: boolean;
+showUPIDetails?: boolean;
 
   prospectName: string;
   prospectCompanyName?: string | null;

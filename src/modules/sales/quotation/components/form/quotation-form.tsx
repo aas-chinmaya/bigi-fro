@@ -30,7 +30,7 @@ import { useCurrentSession } from "@/modules/sales/shared/hooks/use-current-sess
 import { QuotationCustomerFields } from "./quotation-customer-fields";
 import { QuotationIssuerFields } from "./quotation-issuer-fields";
 import { QuotationItemsSection } from "./quotation-items-section";
-import { QuotationFooterSection } from "./quotation-footer-section";
+import { QuotationSummary } from "./quotation-summary";
 import { QuotationFormActions } from "./quotation-form-actions";
 
 export function QuotationForm({
@@ -217,9 +217,9 @@ export function QuotationForm({
           <QuotationItemsSection />
           <div className="border-t border-slate-100 pt-5">
             <h2 className="mb-4 text-sm font-semibold text-slate-800">
-              Payment & notes
+              Payment Summary
             </h2>
-            <QuotationFooterSection />
+            <QuotationSummary />
           </div>
         </section>
 

@@ -133,7 +133,7 @@ export function QuotationSignatureSection() {
         <div className="flex items-center gap-1.5">
           <Button
             type="button"
-            variant={mode === "draw" ? "default" : "outline"}
+            variant={mode === "draw" ? "primary" : "outline"}
             size="sm"
             className="h-8 gap-1.5"
             onClick={() => switchMode("draw")}
@@ -143,7 +143,7 @@ export function QuotationSignatureSection() {
           </Button>
           <Button
             type="button"
-            variant={mode === "upload" ? "default" : "outline"}
+            variant={mode === "upload" ? "primary" : "outline"}
             size="sm"
             className="h-8 gap-1.5"
             onClick={() => {

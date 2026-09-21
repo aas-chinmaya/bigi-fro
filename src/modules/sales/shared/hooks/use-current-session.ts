@@ -1,5 +1,11 @@
 
-// @/modules/sales/shared/hooks/use-current-session.ts
+
+
+
+
+
+
+
 "use client";
 
 import { useMemo } from "react";
@@ -25,6 +31,7 @@ export interface SessionBusiness {
   pan?: string | null;
   phone?: string | null;
   email?: string | null;
+
   addressLine1?: string | null;
   addressLine2?: string | null;
   city?: string | null;
@@ -32,6 +39,16 @@ export interface SessionBusiness {
   stateCode?: string | null;
   pincode?: string | null;
   country: string;
+
+  // Bank details
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIFSC?: string | null;
+  bankBranch?: string | null;
+
+  // UPI
+  upiId?: string | null;
+
   branchId?: string | null;
   branchName?: string | null;
 }
@@ -48,7 +65,7 @@ export interface CurrentSessionResponse {
 }
 
 // ============================================================
-// DUMMY RESPONSE (current)
+// DUMMY RESPONSE
 // ============================================================
 
 const DUMMY_RESPONSE: CurrentSessionResponse = {
@@ -63,14 +80,18 @@ const DUMMY_RESPONSE: CurrentSessionResponse = {
       role: "admin",
       avatar: "https://ui-avatars.com/api/?name=Chinmaya+Das",
     },
+
     business: {
       id: "aas-international",
       name: "AAS International",
       legalName: "AAS International Private Limited",
+
       gstin: "21AABCA1234A1Z5",
       pan: "AABCA1234A",
+
       phone: "+91 6742571111",
       email: "marketing@aas.technology",
+
       addressLine1: "Plot No. 52, 2nd Floor, Bapuji Nagar",
       addressLine2: "Bhubaneswar",
       city: "Bhubaneswar",
@@ -78,6 +99,16 @@ const DUMMY_RESPONSE: CurrentSessionResponse = {
       stateCode: "21",
       pincode: "751009",
       country: "India",
+
+      // Bank details
+      bankName: "State Bank of India",
+      bankAccountNumber: "123456789012",
+      bankIFSC: "SBIN0001234",
+      bankBranch: "Bhubaneswar Main Branch",
+
+      // UPI
+      upiId: "aasinternational@upi",
+
       branchId: "AASI-BR-001",
       branchName: "Bhubaneswar Head Office",
     },
@@ -103,6 +134,7 @@ export function useCurrentSession(): {
   // ----------------------------------------------------------
   // CURRENT (Dummy)
   // ----------------------------------------------------------
+
   const data = useMemo(() => DUMMY_RESPONSE.data, []);
 
   return {
@@ -115,8 +147,10 @@ export function useCurrentSession(): {
   // ----------------------------------------------------------
   // FUTURE (Real API) - Uncomment when ready
   // ----------------------------------------------------------
+
   /*
-  const { data, isLoading, isError, error } = useGetCurrentSessionQuery();
+  const { data, isLoading, isError, error } =
+    useGetCurrentSessionQuery();
 
   return {
     data: data?.data ?? null,
