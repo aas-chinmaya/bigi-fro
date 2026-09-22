@@ -106,11 +106,20 @@ export const quotationApi = baseApi.injectEndpoints({
       QuotationListResponse,
       QuotationListParams | undefined
     >({
+      // query: (params) => ({
+      //    url: `${QUOTATION_ENDPOINT}/list/`,
+      //   method: "GET",
+      //   params,
+      // }),
       query: (params) => ({
-        url: QUOTATION_ENDPOINT,
-        method: "GET",
-        params,
-      }),
+  url: `${QUOTATION_ENDPOINT}/list/`,
+  method: "GET",
+  params: {
+    ...params,
+    businessId: "aas-international",
+    branchId: "AASI-BR-001",
+  },
+}),
       transformResponse: (response: unknown) => unwrapList(response),
       providesTags: (result) =>
         result?.data?.length
@@ -151,7 +160,7 @@ export const quotationApi = baseApi.injectEndpoints({
       QuotationCreatePayload
     >({
       query: (data) => ({
-        url: QUOTATION_ENDPOINT,
+         url: `${QUOTATION_ENDPOINT}/create`,
         method: "POST",
         data,
       }),

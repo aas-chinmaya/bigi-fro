@@ -34,11 +34,7 @@ export function QuotationItemsTable({
           <th className="min-w-[140px] border-r border-b border-slate-800 px-2 py-1.5 text-left font-medium">
             Item
           </th>
-          <th className="w-[48px] border-r border-b border-slate-800 px-1 py-1.5 text-center font-medium">
-            GST
-            <br />
-            Rate
-          </th>
+          
           <th className="w-[50px] border-r border-b border-slate-800 px-1 py-1.5 text-center font-medium">
             Qty
           </th>
@@ -96,9 +92,7 @@ export function QuotationItemsTable({
                   </div>
                 )}
               </td>
-              <td className="border-r border-b border-slate-800 px-1 py-1.5 text-center align-top">
-                {taxRate}%
-              </td>
+             
               <td className="border-r border-b border-slate-800 px-1 py-1.5 text-center align-top">
                 {qty}
               </td>
@@ -106,27 +100,27 @@ export function QuotationItemsTable({
                 {item.unit || "—"}
               </td>
               <td className="border-r border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                {formatCurrency(rate)}
+                {rate}
               </td>
               <td className="border-r border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                {formatCurrency(taxable)}
+                {taxable}
               </td>
               {isInter ? (
                 <td className="border-r border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                  {formatCurrency(tax)}
+                  {tax}
                 </td>
               ) : (
                 <>
                   <td className="border-r border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                    {formatCurrency(half)}
+                    {half}
                   </td>
                   <td className="border-r border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                    {formatCurrency(half)}
+                    {half}
                   </td>
                 </>
               )}
               <td className="border-b border-slate-800 px-1 py-1.5 text-right align-top">
-                {formatCurrency(lineTotal)}
+                {lineTotal}
               </td>
             </tr>
           );

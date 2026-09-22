@@ -244,10 +244,7 @@ amountInWords={amountInWords(quotation.grandTotal)}        />
         notes={quotation.notes}
       />
 
-      <div className="mt-3 flex flex-col gap-1 text-[10px] text-slate-500 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
-        <span>This is a computer generated quotation.</span>
-        <span>{quotation.quotationNumber}</span>
-      </div>
+     
     </div>
   );
 }

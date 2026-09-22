@@ -97,11 +97,7 @@ export default function SalesQuotationListPage() {
         </Button>
       </div>
 
-      {isError && (
-        <div className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Failed to load quotations. Please try again.
-        </div>
-      )}
+   
 
       <QuotationTable
         quotations={quotations}
