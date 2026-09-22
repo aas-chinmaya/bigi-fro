@@ -59,35 +59,6 @@ const paymentMethodConfig: Record<
   },
 };
 
-/* -------------------------------------------------------------------------- */
-/* Receipt Source Config                                                     */
-/* -------------------------------------------------------------------------- */
-
-const sourceConfig = {
-  MANUAL: {
-    label: "Manual",
-    icon: FileText,
-    className: "bg-neutral/10 text-neutral",
-  },
-
-  ONLINE: {
-    label: "Online",
-    icon: Globe,
-    className: "bg-violet/10 text-violet",
-  },
-
-  OTHER: {
-    label: "Other",
-    icon: FileText,
-    className: "bg-neutral/10 text-neutral",
-  },
-
-  POS: {
-    label: "POS",
-    icon: Store,
-    className: "bg-info/10 text-info",
-  },
-} as const;
 
 /* -------------------------------------------------------------------------- */
 /* Receipt Status Config                                                     */

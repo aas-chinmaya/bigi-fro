@@ -201,7 +201,7 @@ export function QuotationForm({
       if (mode === "create") {
         const payload = sanitizeCreatePayload({
           ...withStatus,
-          businessId: values.businessId || session?.business?.id || "",
+          tenantId: values.tenantId || session?.business?.id || "",
           createdBy: values.createdBy || currentUserId,
         });
         const res = await createQuotation(payload as any).unwrap();

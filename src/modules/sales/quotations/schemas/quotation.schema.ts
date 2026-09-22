@@ -181,7 +181,7 @@ export const quotationItemSchema = z
   });
 
 export const quotationBaseSchema = z.object({
-  businessId: z.string().min(1, "Business is required"),
+  tenantId: z.string().min(1, "TenantId is required"),
   createdBy: z.string().min(1, "Created by is required"),
   branchId: optionalString,
 

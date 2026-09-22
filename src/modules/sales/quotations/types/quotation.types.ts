@@ -56,7 +56,7 @@ export interface QuotationItem {
 
 export interface Quotation {
   id: string;
-  businessId: string;
+  tenantId: string;
   branchId?: string | null;
   quotationNumber?: string | null;
   quotationDate: string;
@@ -179,7 +179,7 @@ export interface QuotationResponse {
 }
 
 export interface QuotationCreatePayload {
-  businessId: string;
+  tenantId: string;
   branchId?: string | null;
   quotationDate: string;
   validUntil: string;
@@ -254,7 +254,7 @@ showUPIDetails?: boolean;
 }
 
 export interface QuotationUpdatePayload
-  extends Partial<Omit<QuotationCreatePayload, "businessId" | "createdBy">> {
+  extends Partial<Omit<QuotationCreatePayload, "tenantId" | "createdBy">> {
   updatedBy?: string;
 }
 

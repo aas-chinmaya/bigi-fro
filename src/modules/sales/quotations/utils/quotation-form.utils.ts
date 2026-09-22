@@ -305,11 +305,11 @@ export function resolveFinancialYear(dateStr?: string | null): string {
 }
 
 export function getDefaultQuotationValues(
-  businessId = "",
+  tenantId = "",
   createdBy = "",
 ): QuotationFormValues {
   return {
-    businessId,
+    tenantId,
     createdBy,
     branchId: null,
     quotationDate: new Date().toISOString().slice(0, 10),
@@ -383,11 +383,11 @@ showUPIDetails: false,
 
 export function mapQuotationToFormValues(
   q: Quotation,
-  fallbackBusinessId?: string,
+  fallbacktenantId?: string,
   fallbackCreatedBy?: string,
 ): QuotationFormValues {
   return {
-    businessId: q.businessId || fallbackBusinessId || "",
+    tenantId: q.tenantId || fallbacktenantId || "",
     createdBy: q.createdBy || fallbackCreatedBy || "",
     branchId: q.branchId ?? null,
     quotationDate: q.quotationDate?.slice(0, 10) ?? "",
@@ -523,7 +523,7 @@ export function getSessionFormDefaults(session: {
     business?.stateCode || getStateCode(business?.state || undefined) || null;
 
   return {
-    businessId: business?.id ?? "",
+    tenantId: business?.id ?? "",
     createdBy: user?.id ?? "",
     branchId: business?.branchId ?? null,
     businessName: business?.name ?? "",
@@ -607,7 +607,7 @@ export function sanitizeCreatePayload(
 
 
 return {
-  businessId: rest.businessId,
+  tenantId: rest.tenantId,
   createdBy: rest.createdBy,
   branchId: rest.branchId || null,
 
@@ -768,7 +768,7 @@ export function sanitizeUpdatePayload(
   updatedBy: string,
 ): QuotationUpdatePayload {
   const createPayload = sanitizeCreatePayload(values);
-  const { businessId: _b, createdBy: _c, ...rest } = createPayload;
+  const { tenantId: _b, createdBy: _c, ...rest } = createPayload;
   return { ...rest, updatedBy };
 }
 

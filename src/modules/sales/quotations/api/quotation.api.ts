@@ -116,7 +116,7 @@ export const quotationApi = baseApi.injectEndpoints({
   method: "GET",
   params: {
     ...params,
-    businessId: "aas-international",
+    tenantId: "aas-international",
     branchId: "AASI-BR-001",
   },
 }),
