@@ -36,8 +36,9 @@ import {
   // Sales
   FileText,
   FileCheck,
-  RotateCcw,
   CreditCard,
+  FilePlus,
+  FileMinus,
 
   // Purchase
   ClipboardList,
@@ -267,33 +268,42 @@ export const sidebarItems: SidebarItem[] = [
     ],
   },
 
-  {
-    title: "Sales",
-    icon: ShoppingCart,
-    children: [
-      {
-        title: "Invoices",
-        href: "/sales/invoice",
-        icon: FileText,
-      },
-      {
-        title: "Quotations",
-        href: "/sales/quotation",
-        icon: FileCheck,
-      },
-      {
-        title: "Returns",
-        href: "/sales/returns",
-        icon: RotateCcw,
-      },
-      {
-        title: "Payments",
-        href: "/sales/payment-receipt",
-        icon: CreditCard,
-      },
-    ],
-  },
-
+{
+  title: "Sales & Billing",
+  icon: ShoppingCart,
+  children: [
+    {
+      title: "Quotations",
+      href: "/sales/quotations",
+      icon: FileCheck,
+    },
+    {
+      title: "Delivery Challans",
+      href: "/sales/delivery-challans",
+      icon: Truck,
+    },
+    {
+      title: "Invoices",
+      href: "/sales/invoices",
+      icon: FileText,
+    },
+    {
+      title: "Payment Receipts",
+      href: "/sales/payment-receipts",
+      icon: CreditCard,
+    },
+    {
+      title: "Credit Notes",
+      href: "/sales/credit-notes",
+      icon: FileMinus,
+    },
+    {
+      title: "Debit Notes",
+      href: "/sales/debit-notes",
+      icon: FilePlus,
+    },
+  ],
+},
   {
     title: "Purchase",
     icon: Receipt,
